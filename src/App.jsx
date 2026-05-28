@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"; // v2
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
