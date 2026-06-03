@@ -121,7 +121,7 @@ const COURS = [
   { id: 10, jour: "Sam", heure: "10h45", classe: "Atelier Samedi 10h45", formateur: "Intervenant", salle: "Piste B", nb: 2, presences: [] },
 ];
 
-const COURS_JEAN_LUC = COURS.filter(c => c.formateur === "Jean Luc");
+const COURS_JEAN_LUC = COURS.filter(c => c.formateur === "Prime");
 
 const PROJETS = [
   { id: 1, titre: "Cirque en Fusion 2026", type: "Festival", date: "25–28 Nov 2026", statut: "En préparation", public: true, formateurs: ["Jean Luc", "Spéro", "Youssou", "Prime"] },
