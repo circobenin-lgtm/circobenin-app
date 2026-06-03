@@ -435,7 +435,7 @@ export default function App() {
           {page === "dashboard" && (role === "directeur" || role === "admin") && (
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 24 }}>
-                <StatCard label="Élèves inscrits" value={68} icon="◈" color={C.vert} />
+                <StatCard label="Élèves inscrits" value={32} icon="◈" color={C.vert} />
                 <StatCard label="Cours / semaine" value={7} icon="◫" color={C.or} />
                 <StatCard label="Paiements en attente" value={2} icon="₦" color={C.rouge} />
                 <StatCard label="Projets actifs" value={5} icon="◉" color={C.violet} />
@@ -471,7 +471,7 @@ export default function App() {
                   <div style={{ background: C.vert, borderRadius: 16, padding: 24, color: "#fff" }}>
                     <div style={{ fontSize: 12, color: C.orClair, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" }}>Prochain événement</div>
                     <div style={{ fontFamily: FT, fontSize: 20, color: C.orClair, fontWeight: 700 }}>Cirque en Fusion 2026</div>
-                    <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Festival annuel · Juillet 2025</div>
+                    <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Festival annuel · 25-28 Nov 2026</div>
                   </div>
                 </div>
               </div>
@@ -482,7 +482,7 @@ export default function App() {
           {page === "dashboard" && role === "ca" && (
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
-                <StatCard label="Élèves inscrits" value={68} icon="◈" color={C.vert} />
+                <StatCard label="Élèves inscrits" value={32} icon="◈" color={C.vert} />
                 <StatCard label="Recettes ce mois" value="513 000 F" icon="₦" color={C.bleu} />
                 <StatCard label="Projets en cours" value={5} icon="◉" color={C.violet} />
               </div>
