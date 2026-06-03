@@ -15,12 +15,12 @@ const FT = "'Playfair Display', Georgia, serif";
 const FB = "'DM Sans', sans-serif";
 
 const ROLES = {
-  directeur: { label: "Directeur", color: C.vert, initiale: "PE", nom: "Prime Ezinse" },
-  ca: { label: "Conseil d'Administration", color: C.bleu, initiale: "CA", nom: "Membre CA" },
-  admin: { label: "Administrateur", color: C.orange, initiale: "AD", nom: "Administrateur" },
-  formateur: { label: "Formateur", color: C.violet, initiale: "JL", nom: "Jean Luc" },
-  public: { label: "Public", color: C.gris, initiale: "?", nom: "Visiteur" },
-  parent: { label: "Espace Parent", color: C.vert, initiale: "PA", nom: "Parent" },
+  directeur: { label: "Direction", color: C.vert, initiale: "DI", nom: "Direction" },
+  ca: { label: "Conseil d'Administration", color: C.bleu, initiale: "CA", nom: "Conseil d'Administration" },
+  admin: { label: "Administration", color: C.orange, initiale: "AD", nom: "Administration" },
+  formateur: { label: "Intervenants", color: C.violet, initiale: "IN", nom: "Intervenants" },
+  public: { label: "Visiteurs", color: C.gris, initiale: "VI", nom: "Visiteurs" },
+  parent: { label: "Parents & Apprenants Pro", color: C.magenta, initiale: "PA", nom: "Parents & Apprenants Pro" },
 };
 
 const NAV_PAR_ROLE = {
@@ -40,6 +40,7 @@ const NAV_PAR_ROLE = {
     { id: "finances", icon: "₦", label: "Finances" },
     { id: "projets", icon: "◉", label: "Projets" },
     { id: "rapports", icon: "▦", label: "Rapports" },
+    { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
   admin: [
@@ -47,17 +48,20 @@ const NAV_PAR_ROLE = {
     { id: "eleves", icon: "◈", label: "Élèves" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "paiements", icon: "₦", label: "Paiements" },
+    { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
   formateur: [
     { id: "mon_planning", icon: "◫", label: "Mon Planning" },
     { id: "mes_projets", icon: "◉", label: "Mes Projets" },
     { id: "presences", icon: "✓", label: "Présences" },
+    { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
   public: [
     { id: "accueil", icon: "⬡", label: "Accueil" },
     { id: "programme", icon: "◫", label: "Programme" },
+    { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "inscription", icon: "◈", label: "Inscrire" },
     { id: "contact", icon: "✉", label: "Contact" },
     { id: "payer", icon: "₦", label: "Payer" },
@@ -66,31 +70,61 @@ const NAV_PAR_ROLE = {
     { id: "mon_enfant", icon: "◈", label: "Mon enfant" },
     { id: "planning_enfant", icon: "◫", label: "Planning" },
     { id: "paiements_enfant", icon: "₦", label: "Paiements" },
+    { id: "compagnie", icon: "🎪", label: "Compagnie" },
   ],};
 
 const ELEVES = [
-  { id: 1, nom: "Adjobi Kossivi", age: 12, classe: "Juniors", discipline: "Acrobatie", statut: "actif", paye: true, presence: 85 },
-  { id: 2, nom: "Fatoumata Diallo", age: 9, classe: "Enfants", discipline: "Jonglerie", statut: "actif", paye: true, presence: 92 },
-  { id: 3, nom: "Séraphin Agbossou", age: 16, classe: "Ados", discipline: "Diabolo", statut: "actif", paye: false, presence: 78 },
-  { id: 4, nom: "Bénédicte Hounkpe", age: 7, classe: "Petits", discipline: "Équilibre", statut: "actif", paye: true, presence: 95 },
-  { id: 5, nom: "Kodjo Mensah", age: 19, classe: "Adultes", discipline: "Aérien", statut: "actif", paye: false, presence: 60 },
-  { id: 6, nom: "Aïcha Traoré", age: 14, classe: "Ados", discipline: "Expression", statut: "inactif", paye: false, presence: 40 },
+  { id: 1, nom: "Dupont Noa", classe: "Lun 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 90 },
+  { id: 2, nom: "Andre Lison", classe: "Lun 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 88 },
+  { id: 3, nom: "MARA Colauti", classe: "Lun 18h / Mer 19h", discipline: "Cirque", statut: "actif", paye: true, presence: 85 },
+  { id: 4, nom: "Elisa Clerix", classe: "Lun 18h / Mer 19h", discipline: "Cirque", statut: "actif", paye: true, presence: 82 },
+  { id: 5, nom: "Pascal Segura", classe: "Lun 18h / Mer 19h", discipline: "Cirque", statut: "actif", paye: true, presence: 80 },
+  { id: 6, nom: "Camila Takhedmit", classe: "Lun 18h / Mer 19h", discipline: "Cirque", statut: "actif", paye: true, presence: 78 },
+  { id: 7, nom: "DeCastel BAJAC Alienor", classe: "Mer 15h45", discipline: "Cirque", statut: "actif", paye: true, presence: 92 },
+  { id: 8, nom: "Dupont Alya", classe: "Mer 15h45", discipline: "Cirque", statut: "actif", paye: true, presence: 90 },
+  { id: 9, nom: "TOSSAVI Monique", classe: "Mer 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 87 },
+  { id: 10, nom: "BOAZ Follet", classe: "Mer 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 85 },
+  { id: 11, nom: "FADOUL William", classe: "Mer 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 83 },
+  { id: 12, nom: "Fauve Potier", classe: "Mer 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 80 },
+  { id: 13, nom: "Delafaille Romane", classe: "Mer 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 78 },
+  { id: 14, nom: "Andre Malou", classe: "Mer 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 88 },
+  { id: 15, nom: "Andre Zoe", classe: "Mer 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 86 },
+  { id: 16, nom: "Karam Thea", classe: "Mer 17h45", discipline: "Cirque", statut: "actif", paye: true, presence: 91 },
+  { id: 17, nom: "Fadoul Claudia", classe: "Mer 17h45", discipline: "Cirque", statut: "actif", paye: true, presence: 89 },
+  { id: 18, nom: "TOSSAVI Precieux", classe: "Mer 17h45", discipline: "Cirque", statut: "actif", paye: true, presence: 87 },
+  { id: 19, nom: "Name Kiara", classe: "Jeu 17h", discipline: "Cirque", statut: "actif", paye: true, presence: 85 },
+  { id: 20, nom: "Chagouri Rhea", classe: "Jeu 17h", discipline: "Cirque", statut: "actif", paye: true, presence: 83 },
+  { id: 21, nom: "SESTI Clemence", classe: "Jeu 17h", discipline: "Cirque", statut: "actif", paye: true, presence: 90 },
+  { id: 22, nom: "SESTI Louise", classe: "Jeu 17h", discipline: "Cirque", statut: "actif", paye: true, presence: 88 },
+  { id: 23, nom: "Ganza Nia", classe: "Ven 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 86 },
+  { id: 24, nom: "Abikou Alice", classe: "Ven 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 84 },
+  { id: 25, nom: "Ganza Abbie", classe: "Ven 16h30", discipline: "Cirque", statut: "actif", paye: true, presence: 82 },
+  { id: 26, nom: "Abikou Alma", classe: "Ven 17h30", discipline: "Cirque", statut: "actif", paye: true, presence: 90 },
+  { id: 27, nom: "Dansou Elinor", classe: "Ven 17h30", discipline: "Cirque", statut: "actif", paye: true, presence: 88 },
+  { id: 28, nom: "EZINSE Pharell", classe: "Ven 17h30", discipline: "Diabolo", statut: "actif", paye: true, presence: 95 },
+  { id: 29, nom: "Laleye Garance", classe: "Ven 17h30", discipline: "Cirque", statut: "actif", paye: true, presence: 87 },
+  { id: 30, nom: "HUCHON Mariette", classe: "Ven 17h30", discipline: "Cirque", statut: "actif", paye: true, presence: 85 },
+  { id: 31, nom: "Benezech Appoline", classe: "Sam 10h45", discipline: "Cirque", statut: "actif", paye: true, presence: 92 },
+  { id: 32, nom: "SEWA Medegan Fagla", classe: "Sam 10h45", discipline: "Cirque", statut: "actif", paye: true, presence: 90 },
 ];
 
 const COURS = [
-  { id: 1, jour: "Lun", heure: "16h00", classe: "Petits (6-8 ans)", formateur: "Jean Luc", salle: "Piste A", nb: 12, presences: [true,true,false,true,true,true,false,true,true,true,true,false] },
-  { id: 2, jour: "Lun", heure: "17h30", classe: "Enfants (9-11 ans)", formateur: "Spéro", salle: "Piste B", nb: 15, presences: [] },
-  { id: 3, jour: "Mar", heure: "16h00", classe: "Juniors (12-14 ans)", formateur: "Prime", salle: "Piste A", nb: 14, presences: [] },
-  { id: 4, jour: "Mer", heure: "14h00", classe: "Projet Tokpa", formateur: "Jean Luc", salle: "Piste C", nb: 22, presences: [] },
-  { id: 5, jour: "Jeu", heure: "16h00", classe: "Ados (15-17 ans)", formateur: "Youssou", salle: "Piste A", nb: 10, presences: [] },
-  { id: 6, jour: "Sam", heure: "09h00", classe: "Adultes & Pro", formateur: "Prime", salle: "Piste B", nb: 8, presences: [] },
-  { id: 7, jour: "Sam", heure: "11h00", classe: "Cirque adapté", formateur: "Spéro", salle: "Piste C", nb: 6, presences: [] },
+  { id: 1, jour: "Lun", heure: "16h30", classe: "Atelier Lundi 16h30", formateur: "Intervenant", salle: "Piste A", nb: 2, presences: [] },
+  { id: 2, jour: "Lun", heure: "18h00", classe: "Atelier Lundi 18h", formateur: "Intervenant", salle: "Piste B", nb: 4, presences: [] },
+  { id: 3, jour: "Mer", heure: "15h45", classe: "Atelier Mercredi 15h45", formateur: "Intervenant", salle: "Piste A", nb: 2, presences: [] },
+  { id: 4, jour: "Mer", heure: "16h30", classe: "Atelier Mercredi 16h30", formateur: "Intervenant", salle: "Piste B", nb: 7, presences: [] },
+  { id: 5, jour: "Mer", heure: "17h45", classe: "Atelier Mercredi 17h45", formateur: "Intervenant", salle: "Piste A", nb: 3, presences: [] },
+  { id: 6, jour: "Mer", heure: "19h00", classe: "Atelier Mercredi 19h", formateur: "Intervenant", salle: "Piste B", nb: 4, presences: [] },
+  { id: 7, jour: "Jeu", heure: "17h00", classe: "Atelier Jeudi 17h", formateur: "Intervenant", salle: "Piste A", nb: 4, presences: [] },
+  { id: 8, jour: "Ven", heure: "16h30", classe: "Atelier Vendredi 16h30", formateur: "Prime", salle: "Piste B", nb: 3, presences: [] },
+  { id: 9, jour: "Ven", heure: "17h30", classe: "Atelier Vendredi 17h30", formateur: "Prime", salle: "Piste A", nb: 5, presences: [] },
+  { id: 10, jour: "Sam", heure: "10h45", classe: "Atelier Samedi 10h45", formateur: "Intervenant", salle: "Piste B", nb: 2, presences: [] },
 ];
 
 const COURS_JEAN_LUC = COURS.filter(c => c.formateur === "Jean Luc");
 
 const PROJETS = [
-  { id: 1, titre: "Cirque en Fusion 2025", type: "Festival", date: "Juil 2025", statut: "En préparation", public: true, formateurs: ["Jean Luc", "Spéro", "Youssou", "Prime"] },
+  { id: 1, titre: "Cirque en Fusion 2026", type: "Festival", date: "25–28 Nov 2026", statut: "En préparation", public: true, formateurs: ["Jean Luc", "Spéro", "Youssou", "Prime"] },
   { id: 2, titre: "Stage vacances de Pâques", type: "Stage", date: "Avr 2025", statut: "Inscriptions ouvertes", public: true, formateurs: ["Jean Luc", "Prime"] },
   { id: 3, titre: "Formation formateurs AOF", type: "Formation", date: "Sept 2025", statut: "À venir", public: true, formateurs: ["Prime"] },
   { id: 4, titre: "HXEDESSOU KPEHOU 2025", type: "Social", date: "Jan–Déc 2025", statut: "En cours", public: false, formateurs: ["Jean Luc", "Spéro"] },
@@ -198,6 +232,9 @@ export default function App() {
   const [modePaiement, setModePaiement] = useState(null);
   const [searchEleve, setSearchEleve] = useState("");
   const [parentCode, setParentCode] = useState(null);
+  const [pendingRole, setPendingRole] = useState(null);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
   const [parentCodeInput, setParentCodeInput] = useState("");
 
   // ── LOGIN ──
@@ -215,7 +252,7 @@ export default function App() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {Object.entries(ROLES).map(([key, r]) => (
-            <div key={key} onClick={() => { if (key === "parent") { setRole("__parent_pending__"); } else { setRole(key); setPage(NAV_PAR_ROLE[key][0].id); } }} style={{
+            <div key={key} onClick={() => { if (key === "parent") { setRole("__parent_pending__"); } else if (key !== "public") { setRole("__pin_pending__"); setPendingRole(key); } else { setRole(key); setPage(NAV_PAR_ROLE[key][0].id); } }} style={{
               display: "flex", alignItems: "center", gap: 14,
               padding: "14px 18px", borderRadius: 12,
               border: `2px solid ${C.grisClair}`, cursor: "pointer",
@@ -231,12 +268,48 @@ export default function App() {
               }}>{r.initiale}</div>
               <div>
                 <div style={{ fontWeight: 700, color: C.noir, fontSize: 14 }}>{r.nom}</div>
-                <div style={{ fontSize: 12, color: C.gris }}>{r.label}</div>
+                <div style={{ fontSize: 12, color: C.gris }}>{r.pin ? "Accès sécurisé" : r.nom === "Visiteurs" ? "Accès libre" : "Code personnel"}</div>
               </div>
               <div style={{ marginLeft: "auto", color: C.gris, fontSize: 18 }}>→</div>
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+
+  // ── ECRAN PIN ROLES INTERNES ──
+  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'formateur': 'Profcirc@531'};
+  if (role === "__pin_pending__") return (
+    <div style={{
+      minHeight: "100vh", background: "linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FB,
+    }}>
+      <div style={{ background: "#fff", borderRadius: 24, padding: 48, width: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.4)", textAlign: "center" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
+        <h2 style={{ fontFamily: FT, color: "#1A1A1A", margin: "0 0 8px" }}>Accès sécurisé</h2>
+        <p style={{ color: C.gris, fontSize: 14, marginBottom: 28 }}>Saisissez votre mot de passe</p>
+        <input
+          type="password"
+          value={pinInput}
+          onChange={e => { setPinInput(e.target.value); setPinError(false); }}
+          placeholder="Mot de passe"
+          style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: pinError ? "2px solid #e53935" : "2px solid #eee", fontSize: 15, marginBottom: 8, boxSizing: "border-box", outline: "none", textAlign: "center", fontFamily: FB }}
+        />
+        {pinError && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>Mot de passe incorrect</div>}
+        {!pinError && <div style={{ marginBottom: 12 }}></div>}
+        <div onClick={() => {
+          if (pinInput === CODES_ROLES[pendingRole]) {
+            setRole(pendingRole);
+            setPage(NAV_PAR_ROLE[pendingRole][0].id);
+            setPinInput("");
+          } else {
+            setPinError(true);
+          }
+        }} style={{ background: "#1A1A1A", color: "#fff", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14, marginBottom: 12 }}>
+          Accéder →
+        </div>
+        <div onClick={() => { setRole(null); setPendingRole(null); setPinInput(""); setPinError(false); }} style={{ color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
       </div>
     </div>
   );
@@ -337,7 +410,7 @@ export default function App() {
             <h1 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: 0, fontWeight: 700 }}>
               {nav.find(n => n.id === page)?.label}
             </h1>
-            <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2024–2025 · Cotonou, Bénin</div>
+            <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2025–2026 · Cotonou, Bénin</div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <div style={{
@@ -397,7 +470,7 @@ export default function App() {
                   </Card>
                   <div style={{ background: C.vert, borderRadius: 16, padding: 24, color: "#fff" }}>
                     <div style={{ fontSize: 12, color: C.orClair, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" }}>Prochain événement</div>
-                    <div style={{ fontFamily: FT, fontSize: 20, color: C.orClair, fontWeight: 700 }}>Cirque en Fusion 2025</div>
+                    <div style={{ fontFamily: FT, fontSize: 20, color: C.orClair, fontWeight: 700 }}>Cirque en Fusion 2026</div>
                     <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Festival annuel · Juillet 2025</div>
                   </div>
                 </div>
@@ -1289,7 +1362,7 @@ export default function App() {
           {page === "programme" && (
             <div>
               <Card style={{ marginBottom: 20 }}>
-                <SectionTitle>Programme des cours 2024–2025</SectionTitle>
+                <SectionTitle>Programme des cours 2025–2026</SectionTitle>
                 {COURS.map(c => (
                   <div key={c.id} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: `1px solid ${C.grisClair}`, alignItems: "center" }}>
                     <Badge text={c.jour} bg={C.vert} color="#fff" />
