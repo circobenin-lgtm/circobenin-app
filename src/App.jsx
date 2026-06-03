@@ -258,7 +258,7 @@ export default function App() {
           placeholder="Code secret"
           style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `2px solid ${C.grisClair}`, fontSize: 16, marginBottom: 16, boxSizing: "border-box", outline: "none", textAlign: "center", letterSpacing: 6 }}
         />
-        {parentCodeInput.length >= 4   const r = ROLES[role];  const r = ROLES[role]; (
+        {parentCodeInput.length >= 4 && (
           <Btn onClick={() => { setParentCode(parentCodeInput); setRole("parent"); setPage("mon_enfant"); }}>Accéder à mon espace →</Btn>
         )}
         <div onClick={() => { setRole(null); setParentCodeInput(""); }} style={{ marginTop: 16, color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
