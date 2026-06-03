@@ -436,7 +436,7 @@ export default function App() {
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 24 }}>
                 <StatCard label="Élèves inscrits" value={32} icon="◈" color={C.vert} />
-                <StatCard label="Cours / semaine" value={7} icon="◫" color={C.or} />
+                <StatCard label="Cours / semaine" value={10} icon="◫" color={C.or} />
                 <StatCard label="Paiements en attente" value={2} icon="₦" color={C.rouge} />
                 <StatCard label="Projets actifs" value={5} icon="◉" color={C.violet} />
               </div>
@@ -975,7 +975,7 @@ export default function App() {
                 <Card>
                   <SectionTitle>Statistiques globales</SectionTitle>
                   {[
-                    { label: "Élèves actifs", val: 67 },
+                    { label: "Élèves actifs", val: 32 },
                     { label: "Cours dispensés cette année", val: 142 },
                     { label: "Artistes pro formés", val: 10 },
                     { label: "Projets sociaux actifs", val: 3 },
@@ -1070,7 +1070,7 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 24 }}>
                 <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>🤸</div>
-                  <div style={{ fontWeight: 700, fontSize: 22, color: C.vert, fontFamily: FT }}>36</div>
+                  <div style={{ fontWeight: 700, fontSize: 22, color: C.vert, fontFamily: FT }}>32</div>
                   <div style={{ fontSize: 13, color: C.gris }}>Élèves actifs</div>
                 </Card>
                 <Card style={{ textAlign: "center", borderTop: "4px solid #e91e8c" }}>
