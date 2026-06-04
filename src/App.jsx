@@ -460,6 +460,47 @@ export default function App() {
             <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2025–2026 · Cotonou, Bénin</div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
+            {(role === "directeur") && (
+              <a href="https://mail.ovh.net" target="_blank" rel="noreferrer" style={{
+                background: C.fond, borderRadius: 20, padding: "8px 16px",
+                fontSize: 13, color: C.gris, cursor: "pointer", textDecoration: "none",
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                📧 <span>prime.ezinse@</span>
+              </a>
+            )}
+            {(role === "admin") && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <a href="https://mail.ovh.net" target="_blank" rel="noreferrer" style={{
+                  background: C.fond, borderRadius: 20, padding: "8px 16px",
+                  fontSize: 13, color: C.gris, cursor: "pointer", textDecoration: "none",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>📧 admin@</a>
+                <a href="https://mail.ovh.net" target="_blank" rel="noreferrer" style={{
+                  background: C.fond, borderRadius: 20, padding: "8px 16px",
+                  fontSize: 13, color: C.gris, cursor: "pointer", textDecoration: "none",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>📧 accueil@</a>
+              </div>
+            )}
+            {(role === "ca") && (
+              <a href="https://mail.ovh.net" target="_blank" rel="noreferrer" style={{
+                background: C.fond, borderRadius: 20, padding: "8px 16px",
+                fontSize: 13, color: C.gris, cursor: "pointer", textDecoration: "none",
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                📧 <span>ca@</span>
+              </a>
+            )}
+            {(role === "formateur") && (
+              <a href="https://mail.ovh.net" target="_blank" rel="noreferrer" style={{
+                background: C.fond, borderRadius: 20, padding: "8px 16px",
+                fontSize: 13, color: C.gris, cursor: "pointer", textDecoration: "none",
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                📧 <span>intervenants@</span>
+              </a>
+            )}
             <div style={{
               background: C.fond, borderRadius: 20, padding: "8px 16px",
               fontSize: 13, color: C.gris, cursor: "pointer", position: "relative",
