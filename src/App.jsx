@@ -53,8 +53,9 @@ const NAV_PAR_ROLE = {
   ],
   formateur: [
     { id: "mon_planning", icon: "◫", label: "Mon Planning" },
-    { id: "mes_projets", icon: "◉", label: "Mes Projets" },
     { id: "presences", icon: "✓", label: "Présences" },
+    { id: "mon_bilan", icon: "⏱", label: "Mon Bilan" },
+    { id: "mes_projets", icon: "◉", label: "Mes Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
@@ -109,19 +110,60 @@ const ELEVES = [
 ];
 
 const COURS = [
-  { id: 1, jour: "Lun", heure: "16h30", classe: "Atelier Lundi 16h30", formateur: "Intervenant", salle: "Piste A", nb: 2, presences: [] },
-  { id: 2, jour: "Lun", heure: "18h00", classe: "Atelier Lundi 18h", formateur: "Intervenant", salle: "Piste B", nb: 4, presences: [] },
-  { id: 3, jour: "Mer", heure: "15h45", classe: "Atelier Mercredi 15h45", formateur: "Intervenant", salle: "Piste A", nb: 2, presences: [] },
-  { id: 4, jour: "Mer", heure: "16h30", classe: "Atelier Mercredi 16h30", formateur: "Intervenant", salle: "Piste B", nb: 7, presences: [] },
-  { id: 5, jour: "Mer", heure: "17h45", classe: "Atelier Mercredi 17h45", formateur: "Intervenant", salle: "Piste A", nb: 3, presences: [] },
-  { id: 6, jour: "Mer", heure: "19h00", classe: "Atelier Mercredi 19h", formateur: "Intervenant", salle: "Piste B", nb: 4, presences: [] },
-  { id: 7, jour: "Jeu", heure: "17h00", classe: "Atelier Jeudi 17h", formateur: "Intervenant", salle: "Piste A", nb: 4, presences: [] },
-  { id: 8, jour: "Ven", heure: "16h30", classe: "Atelier Vendredi 16h30", formateur: "Prime", salle: "Piste B", nb: 3, presences: [] },
-  { id: 9, jour: "Ven", heure: "17h30", classe: "Atelier Vendredi 17h30", formateur: "Prime", salle: "Piste A", nb: 5, presences: [] },
-  { id: 10, jour: "Sam", heure: "10h45", classe: "Atelier Samedi 10h45", formateur: "Intervenant", salle: "Piste B", nb: 2, presences: [] },
+  { id: 1, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [] },
+  { id: 2, jour: "Lun", heure: "18h00", fin: "19h00", duree: 1, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [] },
+  { id: 3, jour: "Mer", heure: "15h45", fin: "16h30", duree: 0.75, classe: "Atelier Mercredi 15h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [] },
+  { id: 4, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 7, presences: [] },
+  { id: 5, jour: "Mer", heure: "17h45", fin: "18h45", duree: 1, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 3, presences: [] },
+  { id: 6, jour: "Mer", heure: "19h00", fin: "20h00", duree: 1, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [] },
+  { id: 7, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 4, presences: [] },
+  { id: 8, jour: "Ven", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Vendredi 16h30", formateurs: ["Prime"], salle: "Piste B", nb: 3, presences: [] },
+  { id: 9, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Prime"], salle: "Piste A", nb: 5, presences: [] },
+  { id: 10, jour: "Sam", heure: "10h45", fin: "11h45", duree: 1, classe: "Atelier Samedi 10h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 2, presences: [] },
 ];
 
-const COURS_JEAN_LUC = COURS.filter(c => c.formateur === "Prime");
+const INTERVENANTS = {
+  "Jean Luc": {
+    code: "JEAN531",
+    couleur: "#7c3aed",
+    heures_circo: 8,
+    heures_montaigne: 6,
+    heures_talon: 0,
+    heures_prepa: 3,
+    total_semaine: 17,
+    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
+    extra: [
+      { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
+    ]
+  },
+  "Spéro": {
+    code: "SPER531",
+    couleur: "#7c3aed",
+    heures_circo: 8,
+    heures_montaigne: 6,
+    heures_talon: 2,
+    heures_prepa: 3,
+    total_semaine: 19,
+    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
+    extra: [
+      { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
+      { lieu: "Manoel Talon", type: "Ateliers", heures: 2, note: "Mardi 15h30-17h30" },
+    ]
+  },
+  "Youssou": {
+    code: "YOUS531",
+    couleur: "#7c3aed",
+    heures_circo: 5.75,
+    heures_montaigne: 0,
+    heures_talon: 0,
+    heures_prepa: 0,
+    total_semaine: 5.75,
+    cours_ids: [1, 2, 3, 4, 5, 6],
+    extra: []
+  },
+};
+
+const COURS_JEAN_LUC = COURS.filter(c => c.formateurs && c.formateurs.includes("Jean Luc"));
 
 const PROJETS = [
   { id: 1, titre: "Cirque en Fusion 2026", type: "Festival", date: "25–28 Nov 2026", statut: "En préparation", public: true, formateurs: ["Jean Luc", "Spéro", "Youssou", "Prime"] },
@@ -235,6 +277,7 @@ export default function App() {
   const [pendingRole, setPendingRole] = useState(null);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [nomIntervenant, setNomIntervenant] = useState("");
   const [parentCodeInput, setParentCodeInput] = useState("");
 
   // ── LOGIN ──
@@ -280,6 +323,7 @@ export default function App() {
 
   // ── ECRAN PIN ROLES INTERNES ──
   const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'formateur': 'Profcirc@531'};
+  const CODES_INTERVENANTS = {'Jean Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
   if (role === "__pin_pending__") return (
     <div style={{
       minHeight: "100vh", background: "linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%)",
@@ -300,6 +344,8 @@ export default function App() {
         {!pinError && <div style={{ marginBottom: 12 }}></div>}
         <div onClick={() => {
           if (pinInput === CODES_ROLES[pendingRole]) {
+            const nom = Object.keys(CODES_INTERVENANTS || {}).find(n => CODES_INTERVENANTS[n] === pinInput) || "";
+            setNomIntervenant(nom);
             setRole(pendingRole);
             setPage(NAV_PAR_ROLE[pendingRole][0].id);
             setPinInput("");
@@ -517,59 +563,151 @@ export default function App() {
           {/* ── MON PLANNING (formateur) ── */}
           {page === "mon_planning" && (
             <div>
-              <Card style={{ marginBottom: 24, background: C.vert, color: "#fff" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              {(() => {
+                const intervenant = pendingRole === "formateur" ? null : null;
+                const nomInter = nomIntervenant || "Jean Luc";
+                const infoInter = INTERVENANTS[nomInter] || {};
+                const mesCours = COURS.filter(c => c.formateurs && c.formateurs.includes(nomInter));
+                return (
                   <div>
-                    <div style={{ fontFamily: FT, fontSize: 20 }}>Bonjour, Jean Luc 👋</div>
-                    <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Vous avez {COURS_JEAN_LUC.length} cours cette semaine</div>
-                  </div>
-                  <div style={{ fontSize: 40, opacity: 0.3 }}>◫</div>
-                </div>
-              </Card>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-                {COURS_JEAN_LUC.map(c => (
-                  <Card key={c.id} style={{ borderLeft: `4px solid ${C.or}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                      <Badge text={c.jour} bg={C.vert} color="#fff" />
-                      <Badge text={c.heure} bg={C.fond} color={C.vert} />
+                    <Card style={{ marginBottom: 24, background: C.vert, color: "#fff" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontFamily: FT, fontSize: 20 }}>Bonjour, {nomInter} 👋</div>
+                          <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>{mesCours.length} cours à Circo Bénin cette semaine</div>
+                        </div>
+                        <div style={{ fontSize: 40, opacity: 0.3 }}>◫</div>
+                      </div>
+                    </Card>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
+                      {mesCours.map(c => (
+                        <Card key={c.id} style={{ borderLeft: `4px solid ${C.or}` }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                            <Badge text={c.jour} bg={C.vert} color="#fff" />
+                            <Badge text={c.heure} bg={C.fond} color={C.vert} />
+                          </div>
+                          <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{c.classe}</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>📍 {c.salle} · ⏱ {c.duree === 0.75 ? "45min" : c.duree + "h"}</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 12 }}>👥 {c.nb} élèves</div>
+                          <Btn small onClick={() => { setActiveCours(c.id); setPage("presences"); }}>✓ Présences</Btn>
+                        </Card>
+                      ))}
                     </div>
-                    <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{c.classe}</div>
-                    <div style={{ fontSize: 13, color: C.gris, marginBottom: 4 }}>📍 {c.salle}</div>
-                    <div style={{ fontSize: 13, color: C.gris, marginBottom: 16 }}>👥 {c.nb} élèves</div>
-                    <Btn small onClick={() => { setActiveCours(c.id); setPage("presences"); }}>
-                      ✓ Prendre les présences
-                    </Btn>
-                  </Card>
-                ))}
-              </div>
+                    {infoInter.extra && infoInter.extra.length > 0 && (
+                      <Card style={{ borderTop: `4px solid ${C.magenta}` }}>
+                        <SectionTitle>Autres interventions</SectionTitle>
+                        {infoInter.extra.map((e, i) => (
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #eee" }}>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{e.lieu}</div>
+                              <div style={{ fontSize: 12, color: C.gris }}>{e.note}</div>
+                            </div>
+                            <Badge text={e.heures + "h/sem"} bg="#e8f5e9" color={C.vert} />
+                          </div>
+                        ))}
+                      </Card>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
           {/* ── MES PROJETS (formateur) ── */}
           {page === "mes_projets" && (
             <div>
-              <p style={{ color: C.gris, fontSize: 14, marginBottom: 24 }}>
-                Projets dans lesquels vous êtes impliqué(e)
-              </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                {PROJETS.filter(p => p.formateurs.includes("Jean Luc")).map(p => (
-                  <Card key={p.id} style={{ borderTop: `4px solid ${p.public ? C.vert : C.gris}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                      <Badge text={p.type} bg={C.fond} color={C.vert} />
-                      <Badge text={p.public ? "Public" : "Interne"} bg={p.public ? "#E8F5E9" : C.grisClair} color={p.public ? C.vert : C.gris} />
+              {(() => {
+                const nomInter = nomIntervenant || "Jean Luc";
+                return (
+                  <div>
+                    <p style={{ color: C.gris, fontSize: 14, marginBottom: 24 }}>
+                      Projets dans lesquels vous êtes impliqué(e)
+                    </p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                      {PROJETS.filter(p => p.formateurs.includes(nomInter)).map(p => (
+                        <Card key={p.id} style={{ borderTop: `4px solid ${p.public ? C.vert : C.gris}` }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                            <Badge text={p.type} bg={C.fond} color={C.vert} />
+                            <Badge text={p.public ? "Public" : "Interne"} bg={p.public ? "#E8F5E9" : C.grisClair} color={p.public ? C.vert : C.gris} />
+                          </div>
+                          <div style={{ fontFamily: FT, fontSize: 17, marginBottom: 8 }}>{p.titre}</div>
+                          <div style={{ fontSize: 13, color: C.gris, marginBottom: 12 }}>📅 {p.date}</div>
+                          <Badge text={p.statut}
+                            bg={p.statut === "En cours" ? "#E3F2FD" : p.statut === "Inscriptions ouvertes" ? "#E8F5E9" : "#FFF8E1"}
+                            color={p.statut === "En cours" ? C.bleu : p.statut === "Inscriptions ouvertes" ? C.vert : C.orange}
+                          />
+                          <div style={{ marginTop: 16, fontSize: 12, color: C.gris }}>
+                            Intervenants : {p.formateurs.join(", ")}
+                          </div>
+                        </Card>
+                      ))}
                     </div>
-                    <div style={{ fontFamily: FT, fontSize: 17, marginBottom: 8 }}>{p.titre}</div>
-                    <div style={{ fontSize: 13, color: C.gris, marginBottom: 12 }}>📅 {p.date}</div>
-                    <Badge text={p.statut}
-                      bg={p.statut === "En cours" ? "#E3F2FD" : p.statut === "Inscriptions ouvertes" ? "#E8F5E9" : "#FFF8E1"}
-                      color={p.statut === "En cours" ? C.bleu : p.statut === "Inscriptions ouvertes" ? C.vert : C.orange}
-                    />
-                    <div style={{ marginTop: 16, fontSize: 12, color: C.gris }}>
-                      Intervenants : {p.formateurs.join(", ")}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* ── MON BILAN D'HEURES ── */}
+          {page === "mon_bilan" && (
+            <div>
+              {(() => {
+                const nomInter = nomIntervenant || "Jean Luc";
+                const info = INTERVENANTS[nomInter] || {};
+                const semaines = 35;
+                return (
+                  <div>
+                    <div style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", borderRadius: 20, padding: "36px 32px", color: "#fff", marginBottom: 24 }}>
+                      <h2 style={{ fontFamily: FT, fontSize: 26, margin: "0 0 6px" }}>Bilan d'heures — {nomInter}</h2>
+                      <p style={{ opacity: 0.85, margin: 0 }}>Rentrée 2025-2026 · {semaines} semaines</p>
                     </div>
-                  </Card>
-                ))}
-              </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+                      <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
+                        <div style={{ fontSize: 28, marginBottom: 6 }}>🎪</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: C.vert }}>{info.heures_circo || 0}h</div>
+                        <div style={{ fontSize: 12, color: C.gris }}>Circo Bénin / sem</div>
+                        <div style={{ fontSize: 11, color: C.vert, marginTop: 4 }}>= {((info.heures_circo || 0) * semaines).toFixed(0)}h / an</div>
+                      </Card>
+                      <Card style={{ textAlign: "center", borderTop: "4px solid #e91e8c" }}>
+                        <div style={{ fontSize: 28, marginBottom: 6 }}>🏫</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: C.magenta }}>{(info.heures_montaigne || 0) + (info.heures_talon || 0)}h</div>
+                        <div style={{ fontSize: 12, color: C.gris }}>Partenariats / sem</div>
+                        <div style={{ fontSize: 11, color: C.magenta, marginTop: 4 }}>= {(((info.heures_montaigne || 0) + (info.heures_talon || 0)) * semaines).toFixed(0)}h / an</div>
+                      </Card>
+                      <Card style={{ textAlign: "center", borderTop: "4px solid #7c3aed" }}>
+                        <div style={{ fontSize: 28, marginBottom: 6 }}>⏱</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{info.total_semaine || 0}h</div>
+                        <div style={{ fontSize: 12, color: C.gris }}>Total / sem</div>
+                        <div style={{ fontSize: 11, color: "#7c3aed", marginTop: 4 }}>= {((info.total_semaine || 0) * semaines).toFixed(0)}h / an</div>
+                      </Card>
+                    </div>
+                    <Card>
+                      <SectionTitle>Détail hebdomadaire</SectionTitle>
+                      {[
+                        { label: "Ateliers Circo Bénin", h: info.heures_circo, note: "10 créneaux hebdo" },
+                        { label: "École Montaigne", h: info.heures_montaigne, note: "6 groupes × 1h" },
+                        { label: "Manoel Talon", h: info.heures_talon, note: "Mardi 15h30-17h30" },
+                        { label: "Temps de préparation", h: info.heures_prepa, note: "Inclus dans le contrat" },
+                      ].filter(r => r.h > 0).map((r, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #eee" }}>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 14 }}>{r.label}</div>
+                            <div style={{ fontSize: 12, color: C.gris }}>{r.note}</div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontWeight: 700, fontSize: 16, color: C.vert }}>{r.h}h/sem</div>
+                            <div style={{ fontSize: 11, color: C.gris }}>{(r.h * semaines).toFixed(0)}h/an</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ marginTop: 16, padding: "16px", background: "#f3f4f6", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ fontWeight: 700, fontSize: 15 }}>TOTAL ANNUEL</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{((info.total_semaine || 0) * semaines).toFixed(0)}h</div>
+                      </div>
+                    </Card>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -588,7 +726,7 @@ export default function App() {
                           <Badge text={c.heure} bg={C.fond} color={C.vert} />
                         </div>
                         <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700 }}>{c.classe}</div>
-                        <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>{c.formateur} · {c.nb} élèves</div>
+                        <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>{c.formateurs ? c.formateurs.join(", ") : ""} · {c.nb} élèves</div>
                         <div style={{ marginTop: 12 }}>
                           <Btn small>Ouvrir →</Btn>
                         </div>
