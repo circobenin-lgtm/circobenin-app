@@ -343,7 +343,8 @@ export default function App() {
         {pinError && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>Mot de passe incorrect</div>}
         {!pinError && <div style={{ marginBottom: 12 }}></div>}
         <div onClick={() => {
-          if (pinInput === CODES_ROLES[pendingRole]) {
+          const isIntervenantCode = pendingRole === "formateur" && Object.values(CODES_INTERVENANTS || {}).includes(pinInput);
+          if (pinInput === CODES_ROLES[pendingRole] || isIntervenantCode) {
             const nom = Object.keys(CODES_INTERVENANTS || {}).find(n => CODES_INTERVENANTS[n] === pinInput) || "";
             setNomIntervenant(nom);
             setRole(pendingRole);
