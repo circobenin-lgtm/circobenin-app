@@ -1266,7 +1266,7 @@ export default function App() {
                             const res = await fetch("/api/send-email", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ from: "Circo Benin <" + fromEmail + ">", to: emailTo, subject: emailSubject, html: "<p>" + emailBody.split("
+                              body: JSON.stringify({ from: "Circo Benin <" + fromEmail + ">", to: emailTo, subject: emailSubject, html: "<p>" + emailBody.split("\n").join("<br/>") + "</p>" }),
 ").join("<br/>") + "</p><hr/><small>Envoye depuis app Circo Benin</small>" }),
                             });
                             if (res.ok) {
