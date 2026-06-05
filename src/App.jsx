@@ -285,6 +285,13 @@ export default function App() {
   const [pinError, setPinError] = useState(false);
   const [nomIntervenant, setNomIntervenant] = useState("");
   const [parentCodeInput, setParentCodeInput] = useState("");
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailStatus, setEmailStatus] = useState(null);
+  const [emailsEnvoyes, setEmailsEnvoyes] = useState([]);
+  const [composeMode, setComposeMode] = useState(false);
 
   // ── LOGIN ──
   if (!role) return (
@@ -1177,63 +1184,113 @@ export default function App() {
             </div>
           )}
 
-          {/* ── MESSAGERIE ── */}
+          {/* ── MESSAGERIE EMAIL ── */}
           {page === "tchat" && (
             <div style={{ display: "flex", gap: 20, height: "calc(100vh - 180px)" }}>
-              <div style={{ width: 260, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", overflow: "auto", flexShrink: 0 }}>
-                <div style={{ padding: "18px 16px 12px", borderBottom: `1px solid ${C.grisClair}` }}>
-                  <SectionTitle>Messages</SectionTitle>
+              <div style={{ width: 280, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", flexShrink: 0 }}>
+                <div style={{ padding: "18px 16px 12px", borderBottom: `1px solid ${C.grisClair}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <SectionTitle>Messagerie</SectionTitle>
+                  <div onClick={() => { setComposeMode(true); setEmailTo(""); setEmailSubject(""); setEmailBody(""); setEmailStatus(null); }} style={{ background: C.vert, color: "#fff", borderRadius: 8, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>+ Nouveau</div>
                 </div>
-                {[
-                  { nom: "Jean Luc", role: "Formateur", init: "JL", nl: 1 },
-                  { nom: "Spéro", role: "Formateur", init: "SP", nl: 1 },
-                  { nom: "Youssou", role: "Formateur", init: "YO", nl: 0 },
-                  { nom: "Institut Français", role: "Partenaire", init: "IF", nl: 0 },
-                  { nom: "Équipe Circo Bénin", role: "Groupe", init: "🎪", nl: 0 },
-                ].map((c, i) => (
-                  <div key={i} onClick={() => setActiveMsg(c.nom)} style={{
-                    padding: "12px 16px", display: "flex", gap: 10, alignItems: "center", cursor: "pointer",
-                    background: activeMsg === c.nom ? C.fond : "transparent", borderBottom: `1px solid ${C.grisClair}`,
-                  }}>
-                    <div style={{ width: 38, height: 38, borderRadius: "50%", background: C.vert, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{c.init}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nom}</div>
-                      <div style={{ fontSize: 11, color: C.gris }}>{c.role}</div>
-                    </div>
-                    {c.nl > 0 && <div style={{ background: C.or, color: C.vert, borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700 }}>{c.nl}</div>}
-                  </div>
-                ))}
-              </div>
-              <div style={{ flex: 1, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column" }}>
-                {activeMsg ? (
-                  <>
-                    <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.grisClair}`, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: C.vert, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{activeMsg[0]}</div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700 }}>{activeMsg}</div>
-                        <div style={{ fontSize: 11, color: C.vert }}>● En ligne</div>
+                <div style={{ padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
+                  <div style={{ padding: "6px 16px", fontSize: 11, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em" }}>Contacts rapides</div>
+                  {[
+                    { nom: "Jean Luc", email: "intervenants@circobenin.com", init: "JL" },
+                    { nom: "Spéro", email: "intervenants@circobenin.com", init: "SP" },
+                    { nom: "CA", email: "ca@circobenin.com", init: "CA" },
+                    { nom: "Administration", email: "admin@circobenin.com", init: "AD" },
+                    { nom: "Direction", email: "prime.ezinse@circobenin.com", init: "DI" },
+                  ].map((c, i) => (
+                    <div key={i} onClick={() => { setComposeMode(true); setEmailTo(c.email); setEmailSubject(""); setEmailBody(""); setEmailStatus(null); }} style={{
+                      padding: "10px 16px", display: "flex", gap: 10, alignItems: "center", cursor: "pointer",
+                      background: "transparent", borderBottom: `1px solid ${C.grisClair}`,
+                    }}>
+                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: C.vert, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{c.init}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nom}</div>
+                        <div style={{ fontSize: 10, color: C.gris }}>{c.email}</div>
                       </div>
                     </div>
-                    <div style={{ flex: 1, padding: 24, overflow: "auto" }}>
-                      {MESSAGES.filter(m => m.de === activeMsg).map(m => (
-                        <div key={m.id} style={{ marginBottom: 16 }}>
-                          <div style={{ background: C.fond, borderRadius: "12px 12px 12px 0", padding: "10px 16px", display: "inline-block", maxWidth: "70%" }}>
-                            <div style={{ fontSize: 14 }}>{m.texte}</div>
-                            <div style={{ fontSize: 11, color: C.gris, marginTop: 4 }}>{m.heure}</div>
-                          </div>
+                  ))}
+                </div>
+                <div style={{ flex: 1, overflow: "auto" }}>
+                  <div style={{ padding: "10px 16px 6px", fontSize: 11, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em" }}>Envoyés récemment</div>
+                  {emailsEnvoyes.length === 0 ? (
+                    <div style={{ padding: "16px", fontSize: 13, color: C.gris, textAlign: "center" }}>Aucun email envoyé</div>
+                  ) : (
+                    emailsEnvoyes.map((e, i) => (
+                      <div key={i} style={{ padding: "10px 16px", borderBottom: `1px solid ${C.grisClair}` }}>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{e.subject}</div>
+                        <div style={{ fontSize: 11, color: C.gris }}>→ {e.to}</div>
+                        <div style={{ fontSize: 10, color: C.gris }}>{e.time}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div style={{ flex: 1, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column" }}>
+                {composeMode ? (
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: "16px 24px", borderBottom: `1px solid ${C.grisClair}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>Nouveau message</div>
+                      <div onClick={() => setComposeMode(false)} style={{ cursor: "pointer", color: C.gris, fontSize: 20 }}>×</div>
+                    </div>
+                    <div style={{ padding: "20px 24px", flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, marginBottom: 6 }}>DE</div>
+                        <div style={{ background: C.fond, borderRadius: 8, padding: "10px 14px", fontSize: 14, color: C.gris, border: `1px solid ${C.grisClair}` }}>
+                          {role === "directeur" ? "prime.ezinse@circobenin.com" : role === "ca" ? "ca@circobenin.com" : role === "admin" ? "admin@circobenin.com" : role === "formateur" ? "intervenants@circobenin.com" : "accueil@circobenin.com"}
                         </div>
-                      ))}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, marginBottom: 6 }}>À</div>
+                        <input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder="destinataire@exemple.com"
+                          style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${C.grisClair}`, fontSize: 14, background: C.fond, outline: "none", fontFamily: FB, boxSizing: "border-box" }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, marginBottom: 6 }}>SUJET</div>
+                        <input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Objet de votre message"
+                          style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${C.grisClair}`, fontSize: 14, background: C.fond, outline: "none", fontFamily: FB, boxSizing: "border-box" }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, marginBottom: 6 }}>MESSAGE</div>
+                        <textarea value={emailBody} onChange={e => setEmailBody(e.target.value)} placeholder="Écrivez votre message ici..."
+                          style={{ width: "100%", height: 160, padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.grisClair}`, fontSize: 14, background: C.fond, outline: "none", fontFamily: FB, resize: "none", boxSizing: "border-box" }} />
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <div onClick={async () => {
+                          if (!emailTo || !emailSubject || !emailBody) return;
+                          setEmailSending(true); setEmailStatus(null);
+                          const fromEmail = role === "directeur" ? "prime.ezinse@circobenin.com" : role === "ca" ? "ca@circobenin.com" : role === "admin" ? "admin@circobenin.com" : role === "formateur" ? "intervenants@circobenin.com" : "accueil@circobenin.com";
+                          try {
+                            const res = await fetch("/api/send-email", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ from: "Circo Benin <" + fromEmail + ">", to: emailTo, subject: emailSubject, html: "<p>" + emailBody.replace(/
+/g, "<br/>") + "</p><hr/><small>Envoyé depuis l'app Circo Bénin</small>" }),
+                            });
+                            if (res.ok) {
+                              setEmailStatus("success");
+                              setEmailsEnvoyes(prev => [{ to: emailTo, subject: emailSubject, time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) }, ...prev.slice(0, 9)]);
+                              await supabase.from("messages").insert([{ from_email: fromEmail, to_email: emailTo, subject: emailSubject, body: emailBody, role: role, lu: false }]);
+                              setEmailTo(""); setEmailSubject(""); setEmailBody("");
+                            } else { setEmailStatus("error"); }
+                          } catch { setEmailStatus("error"); }
+                          setEmailSending(false);
+                        }} style={{ background: emailSending ? C.gris : C.vert, color: "#fff", borderRadius: 10, padding: "12px 24px", cursor: emailSending ? "wait" : "pointer", fontWeight: 700, fontSize: 14, display: "inline-block" }}>
+                          {emailSending ? "Envoi..." : "📤 Envoyer"}
+                        </div>
+                        {emailStatus === "success" && <div style={{ fontSize: 13, color: C.vert, fontWeight: 600 }}>✅ Envoyé !</div>}
+                        {emailStatus === "error" && <div style={{ fontSize: 13, color: C.rouge, fontWeight: 600 }}>❌ Erreur envoi</div>}
+                      </div>
                     </div>
-                    <div style={{ padding: "14px 24px", borderTop: `1px solid ${C.grisClair}`, display: "flex", gap: 10 }}>
-                      <input value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Écrire un message..."
-                        style={{ flex: 1, padding: "10px 16px", borderRadius: 24, border: `1px solid ${C.grisClair}`, fontSize: 14, background: C.fond, outline: "none", fontFamily: FB }} />
-                      <div style={{ background: C.vert, color: "#fff", borderRadius: "50%", width: 42, height: 42, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16 }}>→</div>
-                    </div>
-                  </>
+                  </div>
                 ) : (
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-                    <div style={{ fontSize: 40, color: C.grisClair }}>◎</div>
-                    <div style={{ fontFamily: FT, fontSize: 16, color: C.vert }}>Sélectionnez une conversation</div>
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
+                    <div style={{ fontSize: 56, color: C.grisClair }}>📧</div>
+                    <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>Messagerie Circo Bénin</div>
+                    <div style={{ fontSize: 14, color: C.gris, textAlign: "center", maxWidth: 300 }}>Envoyez des emails depuis votre adresse @circobenin.com.</div>
+                    <Btn onClick={() => { setComposeMode(true); setEmailTo(""); setEmailSubject(""); setEmailBody(""); setEmailStatus(null); }}>+ Nouveau message</Btn>
                   </div>
                 )}
               </div>
