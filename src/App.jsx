@@ -302,6 +302,230 @@ const Btn = ({ children, onClick, color = C.vert, small = false }) => (
   }}>{children}</div>
 );
 
+function InscriptionForm({ onPayer, onContact }) {
+  const [step, setStep] = useState(0);
+  const [typeInscription, setTypeInscription] = useState(null);
+  const [form, setForm] = useState({
+    prenom: "", nom: "", dateNaissance: "", email: "", telephone: "",
+    discipline: "", navette: false, autoPhoto: null,
+    prenomParent: "", nomParent: "", emailParent: "", telParent: "",
+  });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState(false);
+
+  const types = [
+    { id: "hebdo", emoji: "🎪", titre: "Atelier hebdomadaire", desc: "Rentrée septembre 2026", couleur: "#2d7a4f" },
+    { id: "ete", emoji: "☀️", titre: "Stage été", desc: "Juillet – Août 2026", couleur: "#ff9800" },
+    { id: "toussaint", emoji: "🍂", titre: "Stage Toussaint", desc: "Vacances de Toussaint 2026", couleur: "#7c3aed" },
+    { id: "noel", emoji: "🎄", titre: "Stage Noël", desc: "Vacances de Noël 2026", couleur: "#e91e8c" },
+    { id: "formation", emoji: "🎓", titre: "Formation professionnelle", desc: "Parcours 3 ans", couleur: "#1565C0" },
+    { id: "bebe", emoji: "👶", titre: "Bébé Cirque", desc: "18 – 36 mois, avec parent/nounou", couleur: "#ff9800" },
+  ];
+
+  const disciplines = ["Jonglerie", "Acrobatie", "Aérien", "Équilibre", "Expression", "Diabolo"];
+  const isMineur = () => {
+    if (!form.dateNaissance) return false;
+    const age = new Date().getFullYear() - new Date(form.dateNaissance).getFullYear();
+    return age < 18;
+  };
+  const isBebe = typeInscription === "bebe";
+
+  const handleSend = async () => {
+    setSending(true);
+    setError(false);
+    const type = types.find(t => t.id === typeInscription);
+    const bodyAccueil = `
+      <h2>Nouvelle inscription — ${type.titre}</h2>
+      <p><b>Nom :</b> ${form.prenom} ${form.nom}</p>
+      <p><b>Date de naissance :</b> ${form.dateNaissance}</p>
+      <p><b>Email :</b> ${form.email}</p>
+      <p><b>Téléphone :</b> ${form.telephone}</p>
+      <p><b>Discipline :</b> ${form.discipline}</p>
+      <p><b>Navette scolaire :</b> ${form.navette ? "Oui" : "Non"}</p>
+      <p><b>Autorisation photo :</b> ${form.autoPhoto === true ? "Oui" : form.autoPhoto === false ? "Non" : "Non renseigné"}</p>
+      ${isMineur() || isBebe ? "<h3>Parent / Tuteur</h3><p><b>Nom :</b> " + form.prenomParent + " " + form.nomParent + "</p><p><b>Email :</b> " + form.emailParent + "</p><p><b>Tél :</b> " + form.telParent + "</p>" : ""}
+    `;
+    const bodyConfirm = `
+      <h2>Bienvenue à Circo Bénin !</h2>
+      <p>Bonjour ${form.prenom},</p>
+      <p>Nous avons bien reçu votre demande d'inscription pour : <b>${type.titre}</b>.</p>
+      <p>Notre équipe vous contactera très prochainement pour finaliser votre inscription.</p>
+      <br/>
+      <p>📍 Cadjehoun I Lot 1066, Cotonou, Bénin</p>
+      <p>📞 +229 01 96 14 63 60</p>
+      <p>Circo Bénin — Première école des arts du cirque du Bénin</p>
+    `;
+    try {
+      await fetch("/api/send-email", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: "accueil@circobenin.com", subject: "Nouvelle inscription — " + type.titre + " — " + form.prenom + " " + form.nom, html: bodyAccueil }),
+      });
+      const destEmail = isMineur() || isBebe ? form.emailParent : form.email;
+      if (destEmail) {
+        await fetch("/api/send-email", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: destEmail, subject: "Confirmation inscription Circo Bénin — " + type.titre, html: bodyConfirm }),
+        });
+      }
+      setSent(true);
+    } catch { setError(true); }
+    setSending(false);
+  };
+
+  const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, background: "#f9fafb", outline: "none", fontFamily: "Inter,sans-serif", boxSizing: "border-box" };
+  const labelStyle = { fontSize: 12, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 6 };
+
+  if (sent) return (
+    <div style={{ maxWidth: 520, margin: "0 auto" }}>
+      <div style={{ background: "#fff", borderRadius: 20, padding: 40, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", textAlign: "center" }}>
+        <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+        <div style={{ fontFamily: "Playfair Display,serif", fontSize: 24, color: "#2d7a4f", marginBottom: 12 }}>Inscription envoyée !</div>
+        <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 24 }}>Nous avons bien reçu votre demande. Un email de confirmation vous a été envoyé. Notre équipe vous contactera très prochainement.</p>
+        <div onClick={() => { setSent(false); setStep(0); setTypeInscription(null); setForm({ prenom:"",nom:"",dateNaissance:"",email:"",telephone:"",discipline:"",navette:false,autoPhoto:null,prenomParent:"",nomParent:"",emailParent:"",telParent:"" }); }}
+          style={{ background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>
+          Nouvelle inscription
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "32px 36px", color: "#fff", marginBottom: 24 }}>
+        <h2 style={{ fontFamily: "Playfair Display,serif", fontSize: 26, margin: "0 0 8px" }}>Inscription à Circo Bénin</h2>
+        <p style={{ opacity: 0.85, margin: 0, fontSize: 14 }}>Remplissez le formulaire ou contactez-nous directement</p>
+      </div>
+
+      {/* Bouton contact */}
+      <div style={{ background: "#fff", borderRadius: 14, padding: "14px 20px", marginBottom: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 14, color: "#6b7280" }}>Une question avant de s'inscrire ?</div>
+        <div onClick={onContact} style={{ background: "#f3f4f6", borderRadius: 10, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#2d7a4f" }}>✉️ Nous contacter</div>
+      </div>
+
+      <div style={{ background: "#fff", borderRadius: 20, padding: 32, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+
+        {/* Étape 1 — Type */}
+        {step === 0 && (
+          <div>
+            <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#2d7a4f", marginBottom: 20 }}>Étape 1 — Choisissez votre inscription</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {types.map(t => (
+                <div key={t.id} onClick={() => setTypeInscription(t.id)} style={{
+                  padding: "16px", borderRadius: 14, border: `2px solid ${typeInscription === t.id ? t.couleur : "#e5e7eb"}`,
+                  cursor: "pointer", background: typeInscription === t.id ? t.couleur + "10" : "#fff", transition: "all 0.2s",
+                }}>
+                  <div style={{ fontSize: 28, marginBottom: 6 }}>{t.emoji}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: typeInscription === t.id ? t.couleur : "#111" }}>{t.titre}</div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+            {typeInscription && (
+              <div onClick={() => setStep(1)} style={{ marginTop: 24, background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>
+                Continuer →
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Étape 2 — Infos */}
+        {step === 1 && (
+          <div>
+            <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#2d7a4f", marginBottom: 20 }}>Étape 2 — Informations personnelles</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} value={form.prenom} onChange={e => setForm({...form, prenom: e.target.value})} placeholder="Prénom" /></div>
+              <div><label style={labelStyle}>Nom *</label><input style={inputStyle} value={form.nom} onChange={e => setForm({...form, nom: e.target.value})} placeholder="Nom" /></div>
+            </div>
+            <div style={{ marginBottom: 14 }}><label style={labelStyle}>Date de naissance *</label><input type="date" style={inputStyle} value={form.dateNaissance} onChange={e => setForm({...form, dateNaissance: e.target.value})} /></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={labelStyle}>Email *</label><input style={inputStyle} value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="email@exemple.com" /></div>
+              <div><label style={labelStyle}>Téléphone *</label><input style={inputStyle} value={form.telephone} onChange={e => setForm({...form, telephone: e.target.value})} placeholder="+229..." /></div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Discipline souhaitée</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {disciplines.map(d => (
+                  <div key={d} onClick={() => setForm({...form, discipline: d})} style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, cursor: "pointer", border: `2px solid ${form.discipline === d ? "#2d7a4f" : "#e5e7eb"}`, background: form.discipline === d ? "#e8f5e9" : "#fff", color: form.discipline === d ? "#2d7a4f" : "#374151", fontWeight: form.discipline === d ? 700 : 400 }}>{d}</div>
+                ))}
+              </div>
+            </div>
+            {(typeInscription === "hebdo" || typeInscription === "bebe") && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>🚌 Service navette scolaire</label>
+                <div style={{ display: "flex", gap: 10 }}>
+                  {["Oui", "Non"].map(v => (
+                    <div key={v} onClick={() => setForm({...form, navette: v === "Oui"})} style={{ padding: "8px 20px", borderRadius: 10, fontSize: 13, cursor: "pointer", border: `2px solid ${(form.navette && v === "Oui") || (!form.navette && v === "Non") ? "#2d7a4f" : "#e5e7eb"}`, background: (form.navette && v === "Oui") || (!form.navette && v === "Non") ? "#e8f5e9" : "#fff", fontWeight: 600 }}>{v}</div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>📸 Autorisation photo / vidéo *</label>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[{v: true, l: "✅ J'autorise"}, {v: false, l: "❌ Je refuse"}].map(opt => (
+                  <div key={opt.l} onClick={() => setForm({...form, autoPhoto: opt.v})} style={{ padding: "10px 20px", borderRadius: 10, fontSize: 13, cursor: "pointer", border: `2px solid ${form.autoPhoto === opt.v ? "#2d7a4f" : "#e5e7eb"}`, background: form.autoPhoto === opt.v ? "#e8f5e9" : "#fff", fontWeight: 600 }}>{opt.l}</div>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>Photos et vidéos prises lors des activités Circo Bénin (réseaux sociaux, supports de communication)</div>
+            </div>
+            {(isMineur() || isBebe) && (
+              <div style={{ background: "#fff8e1", borderRadius: 14, padding: "18px 20px", marginBottom: 20, border: "1px solid #ffe082" }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#f59e0b", marginBottom: 14 }}>👨‍👩‍👧 Informations parent / tuteur légal</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div><label style={labelStyle}>Prénom parent *</label><input style={inputStyle} value={form.prenomParent} onChange={e => setForm({...form, prenomParent: e.target.value})} placeholder="Prénom" /></div>
+                  <div><label style={labelStyle}>Nom parent *</label><input style={inputStyle} value={form.nomParent} onChange={e => setForm({...form, nomParent: e.target.value})} placeholder="Nom" /></div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div><label style={labelStyle}>Email parent *</label><input style={inputStyle} value={form.emailParent} onChange={e => setForm({...form, emailParent: e.target.value})} placeholder="email@exemple.com" /></div>
+                  <div><label style={labelStyle}>Téléphone parent *</label><input style={inputStyle} value={form.telParent} onChange={e => setForm({...form, telParent: e.target.value})} placeholder="+229..." /></div>
+                </div>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 12 }}>
+              <div onClick={() => setStep(0)} style={{ background: "#f3f4f6", color: "#374151", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>← Retour</div>
+              <div onClick={() => { if (form.prenom && form.nom && form.email) setStep(2); }} style={{ background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>Continuer →</div>
+            </div>
+          </div>
+        )}
+
+        {/* Étape 3 — Confirmation */}
+        {step === 2 && (
+          <div>
+            <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#2d7a4f", marginBottom: 20 }}>Étape 3 — Confirmation</div>
+            <div style={{ background: "#f9fafb", borderRadius: 14, padding: 20, marginBottom: 20 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: "#111" }}>Récapitulatif</div>
+              {[
+                { l: "Type", v: types.find(t => t.id === typeInscription)?.titre },
+                { l: "Nom", v: form.prenom + " " + form.nom },
+                { l: "Date de naissance", v: form.dateNaissance },
+                { l: "Email", v: form.email },
+                { l: "Téléphone", v: form.telephone },
+                { l: "Discipline", v: form.discipline || "Non renseigné" },
+                { l: "Navette", v: form.navette ? "Oui" : "Non" },
+                { l: "Autorisation photo", v: form.autoPhoto === true ? "Oui" : form.autoPhoto === false ? "Non" : "Non renseigné" },
+                ...(isMineur() || isBebe ? [{ l: "Parent", v: form.prenomParent + " " + form.nomParent + " — " + form.emailParent }] : []),
+              ].map((r, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e5e7eb", fontSize: 13 }}>
+                  <span style={{ color: "#6b7280" }}>{r.l}</span>
+                  <span style={{ fontWeight: 600 }}>{r.v}</span>
+                </div>
+              ))}
+            </div>
+            {error && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>❌ Erreur lors de l'envoi. Réessayez.</div>}
+            <div style={{ display: "flex", gap: 12 }}>
+              <div onClick={() => setStep(1)} style={{ background: "#f3f4f6", color: "#374151", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>← Retour</div>
+              <div onClick={handleSend} style={{ background: sending ? "#9ca3af" : "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: sending ? "wait" : "pointer", fontWeight: 600, fontSize: 14 }}>
+                {sending ? "Envoi en cours..." : "✅ Confirmer l'inscription"}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [role, setRole] = useState(null);
   const [page, setPage] = useState("dashboard");
@@ -1718,26 +1942,7 @@ export default function App() {
 
           {/* ── INSCRIPTION PUBLIC ── */}
           {page === "inscription" && (
-            <div style={{ maxWidth: 480, margin: "0 auto" }}>
-              <Card>
-                <SectionTitle>Formulaire d'inscription</SectionTitle>
-                {["Nom et prénom", "Date de naissance", "Email ou téléphone", "Nom du parent / tuteur"].map(l => (
-                  <div key={l} style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: C.gris, display: "block", marginBottom: 6 }}>{l}</label>
-                    <div style={{ background: C.fond, borderRadius: 8, padding: "12px 14px", border: `1px solid ${C.grisClair}`, fontSize: 14, color: C.gris }}>—</div>
-                  </div>
-                ))}
-                <div style={{ marginBottom: 20 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.gris, display: "block", marginBottom: 8 }}>Discipline souhaitée</label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {["Jonglerie", "Acrobatie", "Aérien", "Équilibre", "Expression"].map(d => (
-                      <div key={d} style={{ background: C.fond, borderRadius: 20, padding: "6px 14px", fontSize: 13, cursor: "pointer", border: `1px solid ${C.grisClair}` }}>{d}</div>
-                    ))}
-                  </div>
-                </div>
-                <Btn onClick={() => setPage("payer")}>Valider et procéder au paiement →</Btn>
-              </Card>
-            </div>
+            <InscriptionForm onPayer={() => setPage("payer")} onContact={() => setPage("contact")} />
           )}
 
         </div>
