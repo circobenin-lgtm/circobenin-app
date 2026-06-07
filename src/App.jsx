@@ -172,7 +172,13 @@ const INTERVENANTS = {
 
 const FORMATION_FORMATEURS = {
   duree: "1 an — 2 semestres",
-  conditions: ["Niveau Terminale minimum", "OU expérience artistique cirque significative", "Entretien de sélection"],
+  conditions: [
+    "Niveau Terminale minimum",
+    "ET aptitudes sportives avérées",
+    "OU artiste de cirque (débutant ou confirmé)",
+    "OU diplôme de professeur de sport (INJEPS ou équivalent)",
+    "Entretien de sélection obligatoire",
+  ],
   certification: "Certificat de Formateur Circo Bénin",
   semestres: [
     {
@@ -560,6 +566,7 @@ function InscriptionForm({ onPayer, onContact }) {
     { id: "noel", emoji: "🎄", titre: "Stage Noël", desc: "Vacances de Noël 2026", couleur: "#e91e8c" },
     { id: "formation", emoji: "🎓", titre: "Formation professionnelle", desc: "Parcours 3 ans", couleur: "#1565C0" },
     { id: "bebe", emoji: "👶", titre: "Bébé Cirque", desc: "18 – 36 mois, avec parent/nounou", couleur: "#ff9800" },
+    { id: "formateurs", emoji: "👨‍🏫", titre: "Formation des Formateurs", desc: "Parcours 1 an — Niveau Terminale requis", couleur: "#1565C0" },
   ];
 
   const disciplines = ["Jonglerie", "Acrobatie", "Aérien", "Équilibre", "Expression", "Diabolo"];
@@ -1927,9 +1934,10 @@ export default function App() {
                           </div>
                         ))}
                       </div>
-                      <div style={{ background: "#e3f2fd", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1565C0", fontWeight: 600 }}>
+                      <div style={{ background: "#e3f2fd", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1565C0", fontWeight: 600, marginBottom: 12 }}>
                         🎓 {FORMATION_FORMATEURS.certification}
                       </div>
+                      <Btn onClick={() => setPage("inscription")} color="#1565C0">S'inscrire à la formation →</Btn>
                     </div>
                     <div>
                       {FORMATION_FORMATEURS.semestres.map((s, i) => (
