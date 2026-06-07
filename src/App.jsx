@@ -70,6 +70,7 @@ const NAV_PAR_ROLE = {
     { id: "programme", icon: "◫", label: "Programme" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "inscription", icon: "◈", label: "Inscrire" },
+    { id: "adhesion", icon: "🤝", label: "Adhésion" },
     { id: "contact", icon: "✉", label: "Contact" },
     { id: "payer", icon: "₦", label: "Payer" },
   ],
@@ -169,6 +170,22 @@ const INTERVENANTS = {
   },
 };
 
+const FORMATION_FORMATEURS = {
+  duree: "1 an — 2 semestres",
+  conditions: ["Niveau Terminale minimum", "OU expérience artistique cirque significative", "Entretien de sélection"],
+  certification: "Certificat de Formateur Circo Bénin",
+  semestres: [
+    {
+      num: 1, titre: "Pédagogie & Sécurité", couleur: "#1565C0",
+      modules: ["Techniques pédagogiques pour le cirque", "Sécurité et prévention des accidents", "Gestion de groupe (enfants, ados, adultes)", "Psychologie de l'apprentissage"],
+    },
+    {
+      num: 2, titre: "Pratique & Création", couleur: "#2d7a4f",
+      modules: ["Conception et animation d'ateliers", "Création de progressions pédagogiques", "Mise en situation réelle — stage pratique", "Projet de fin de formation"],
+    },
+  ],
+};
+
 const COURS_JEAN_LUC = COURS.filter(c => c.formateurs && c.formateurs.includes("Jean Luc"));
 
 const PROJETS = [
@@ -191,7 +208,7 @@ const EVENEMENTS = [
 const ATELIERS_LOISIR = [
   { emoji: "👶", titre: "Bébé Cirque", age: "18 – 36 mois", desc: "Éveil sensoriel et moteur par le cirque. Présence d'un parent ou d'une nounou obligatoire.", couleur: "#ff9800" },
   { emoji: "🧒", titre: "Enfants", age: "6 – 10 ans", desc: "Éveil cirque, jonglerie, acrobatie au sol. Service navette scolaire disponible.", couleur: "#e91e8c", navette: true },
-  { emoji: "🧑", titre: "Ados", age: "11 – 17 ans", desc: "Cirque général, découverte et approfondissement des disciplines.", couleur: "#2d7a4f" },
+  { emoji: "🧑", titre: "Ados", age: "11 – 17 ans", desc: "Cirque général, découverte et approfondissement des disciplines. Service navette scolaire disponible.", couleur: "#2d7a4f", navette: true },
   { emoji: "🧑‍🦱", titre: "Adultes", age: "18 ans et +", desc: "Cirque loisir, bien-être et expression corporelle.", couleur: "#7c3aed" },
 ];
 
@@ -301,6 +318,121 @@ const Btn = ({ children, onClick, color = C.vert, small = false }) => (
     display: "inline-block",
   }}>{children}</div>
 );
+
+function AdhesionForm() {
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({ prenom: "", nom: "", dateNaissance: "", email: "", telephone: "", adresse: "", profession: "", motivation: "", autoPhoto: null });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState(false);
+
+  const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, background: "#f9fafb", outline: "none", fontFamily: "Inter,sans-serif", boxSizing: "border-box" };
+  const labelStyle = { fontSize: 12, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 6 };
+
+  const handleSend = async () => {
+    setSending(true); setError(false);
+    try {
+      await fetch("/api/send-email", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "Circo Benin <accueil@circobenin.com>",
+          to: "accueil@circobenin.com",
+          subject: "Nouvelle demande d'adhésion — " + form.prenom + " " + form.nom,
+          html: "<h2>Nouvelle demande d'adhésion</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Date de naissance :</b> " + form.dateNaissance + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Téléphone :</b> " + form.telephone + "</p><p><b>Adresse :</b> " + form.adresse + "</p><p><b>Profession :</b> " + form.profession + "</p><p><b>Motivation :</b> " + form.motivation + "</p><p><b>Autorisation photo :</b> " + (form.autoPhoto ? "Oui" : "Non") + "</p>",
+        }),
+      });
+      await fetch("/api/send-email", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "Circo Benin <accueil@circobenin.com>",
+          to: form.email,
+          subject: "Bienvenue dans l'association Circo Bénin !",
+          html: "<h2>Merci pour votre demande d'adhésion !</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'adhésion à l'association Circo Bénin.</p><p>La cotisation annuelle est de <b>15 000 FCFA</b>. Notre équipe vous contactera très prochainement pour finaliser votre adhésion.</p><br/><p>📍 Cadjehoun I Lot 1066, Cotonou, Bénin</p><p>📞 +229 01 96 14 63 60</p><p>Circo Bénin — Première école des arts du cirque du Bénin</p>",
+        }),
+      });
+      setSent(true);
+    } catch { setError(true); }
+    setSending(false);
+  };
+
+  if (sent) return (
+    <div style={{ maxWidth: 520, margin: "0 auto" }}>
+      <div style={{ background: "#fff", borderRadius: 20, padding: 40, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", textAlign: "center" }}>
+        <div style={{ fontSize: 64, marginBottom: 16 }}>🤝</div>
+        <div style={{ fontFamily: "Playfair Display,serif", fontSize: 24, color: "#2d7a4f", marginBottom: 12 }}>Demande envoyée !</div>
+        <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 8 }}>Bienvenue dans la famille Circo Bénin !</p>
+        <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 24 }}>Nous vous contacterons pour finaliser votre adhésion et le règlement de la cotisation de <b>15 000 FCFA</b>.</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ background: "linear-gradient(135deg, #1565C0, #0d47a1)", borderRadius: 20, padding: "40px 36px", color: "#fff", marginBottom: 24, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", right: -20, top: -20, fontSize: 120, opacity: 0.07 }}>🤝</div>
+        <div style={{ display: "inline-block", background: "rgba(255,255,255,0.15)", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 600, marginBottom: 16, letterSpacing: 1 }}>ASSOCIATION</div>
+        <h2 style={{ fontFamily: "Playfair Display,serif", fontSize: 28, margin: "0 0 8px" }}>Adhérer à Circo Bénin</h2>
+        <p style={{ opacity: 0.85, margin: 0, fontSize: 14 }}>Rejoignez l'association et participez au développement des arts du cirque au Bénin</p>
+      </div>
+
+      {/* Avantages */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+        {[
+          { emoji: "🗳️", titre: "Droit de vote", desc: "Participez aux Assemblées Générales et aux décisions de l'association" },
+          { emoji: "🎪", titre: "Accès privilégié", desc: "Tarifs préférentiels sur les stages, événements et le festival" },
+          { emoji: "🌍", titre: "Mission sociale", desc: "Contribuez au développement du cirque en Afrique de l'Ouest" },
+        ].map((a, i) => (
+          <div key={i} style={{ background: "#fff", borderRadius: 16, padding: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.06)", textAlign: "center" }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>{a.emoji}</div>
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, color: "#1565C0" }}>{a.titre}</div>
+            <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.5 }}>{a.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: "#e3f2fd", borderRadius: 14, padding: "16px 20px", marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 16, color: "#1565C0" }}>Cotisation annuelle</div>
+          <div style={{ fontSize: 13, color: "#6b7280" }}>Valable 1 an à partir de la date d'adhésion</div>
+        </div>
+        <div style={{ fontFamily: "Playfair Display,serif", fontSize: 28, fontWeight: 700, color: "#1565C0" }}>15 000 FCFA</div>
+      </div>
+
+      <div style={{ background: "#fff", borderRadius: 20, padding: 32, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+        <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#1565C0", marginBottom: 20 }}>Formulaire d'adhésion</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+          <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} value={form.prenom} onChange={e => setForm({...form, prenom: e.target.value})} placeholder="Prénom" /></div>
+          <div><label style={labelStyle}>Nom *</label><input style={inputStyle} value={form.nom} onChange={e => setForm({...form, nom: e.target.value})} placeholder="Nom" /></div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+          <div><label style={labelStyle}>Date de naissance *</label><input type="date" style={inputStyle} value={form.dateNaissance} onChange={e => setForm({...form, dateNaissance: e.target.value})} /></div>
+          <div><label style={labelStyle}>Profession</label><input style={inputStyle} value={form.profession} onChange={e => setForm({...form, profession: e.target.value})} placeholder="Votre profession" /></div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+          <div><label style={labelStyle}>Email *</label><input style={inputStyle} value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="email@exemple.com" /></div>
+          <div><label style={labelStyle}>Téléphone *</label><input style={inputStyle} value={form.telephone} onChange={e => setForm({...form, telephone: e.target.value})} placeholder="+229..." /></div>
+        </div>
+        <div style={{ marginBottom: 14 }}><label style={labelStyle}>Adresse</label><input style={inputStyle} value={form.adresse} onChange={e => setForm({...form, adresse: e.target.value})} placeholder="Votre adresse" /></div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Pourquoi souhaitez-vous adhérer à Circo Bénin ?</label>
+          <textarea style={{ ...inputStyle, height: 100, resize: "none" }} value={form.motivation} onChange={e => setForm({...form, motivation: e.target.value})} placeholder="Votre motivation..." />
+        </div>
+        <div style={{ marginBottom: 24 }}>
+          <label style={labelStyle}>📸 Autorisation photo / vidéo *</label>
+          <div style={{ display: "flex", gap: 10 }}>
+            {[{v: true, l: "✅ J'autorise"}, {v: false, l: "❌ Je refuse"}].map(opt => (
+              <div key={opt.l} onClick={() => setForm({...form, autoPhoto: opt.v})} style={{ padding: "10px 20px", borderRadius: 10, fontSize: 13, cursor: "pointer", border: "2px solid " + (form.autoPhoto === opt.v ? "#1565C0" : "#e5e7eb"), background: form.autoPhoto === opt.v ? "#e3f2fd" : "#fff", fontWeight: 600, color: form.autoPhoto === opt.v ? "#1565C0" : "#374151" }}>{opt.l}</div>
+            ))}
+          </div>
+        </div>
+        {error && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>❌ Erreur lors de l'envoi. Réessayez.</div>}
+        <div onClick={handleSend} style={{ background: sending ? "#9ca3af" : "#1565C0", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: sending ? "wait" : "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>
+          {sending ? "Envoi en cours..." : "🤝 Envoyer ma demande d'adhésion"}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ContactForm() {
   const [nom, setNom] = useState("");
@@ -1776,6 +1908,45 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Formation Formateurs */}
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 4, height: 32, background: "#1565C0", borderRadius: 2 }} />
+                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>👨‍🏫 Formation des Formateurs</h2>
+                </div>
+                <div style={{ background: "#fff", borderRadius: 20, padding: 28, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", borderTop: "4px solid #1565C0" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                    <div>
+                      <div style={{ fontFamily: FT, fontSize: 18, color: "#1565C0", marginBottom: 12 }}>Un parcours exigeant — 1 an</div>
+                      <p style={{ fontSize: 14, color: C.gris, lineHeight: 1.7, marginBottom: 16 }}>Former les futurs formateurs de cirque du Bénin et d'Afrique de l'Ouest. Un parcours rigoureux alliant pédagogie, pratique artistique et mise en situation réelle.</p>
+                      <div style={{ marginBottom: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Conditions d'entrée</div>
+                        {FORMATION_FORMATEURS.conditions.map((c, i) => (
+                          <div key={i} style={{ display: "flex", gap: 8, fontSize: 13, marginBottom: 6 }}>
+                            <span style={{ color: "#1565C0" }}>▸</span><span>{c}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ background: "#e3f2fd", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1565C0", fontWeight: 600 }}>
+                        🎓 {FORMATION_FORMATEURS.certification}
+                      </div>
+                    </div>
+                    <div>
+                      {FORMATION_FORMATEURS.semestres.map((s, i) => (
+                        <div key={i} style={{ marginBottom: 16, background: "#f9fafb", borderRadius: 12, padding: 16, borderLeft: `4px solid ${s.couleur}` }}>
+                          <div style={{ fontWeight: 700, fontSize: 14, color: s.couleur, marginBottom: 10 }}>Semestre {s.num} — {s.titre}</div>
+                          {s.modules.map((m, j) => (
+                            <div key={j} style={{ display: "flex", gap: 8, fontSize: 13, marginBottom: 5 }}>
+                              <span style={{ color: s.couleur }}>▸</span><span>{m}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* CTA inscription */}
               <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "36px 40px", color: "#fff", textAlign: "center" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🎪</div>
@@ -1787,6 +1958,11 @@ export default function App() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ── ADHÉSION ── */}
+          {page === "adhesion" && (
+            <AdhesionForm />
           )}
 
           {/* ── CONTACT ── */}
