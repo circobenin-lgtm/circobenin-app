@@ -2219,7 +2219,7 @@ export default function App() {
                             </div>
                             <div style={{ textAlign: "right" }}>
                               <div style={{ background: couleur, color: "#fff", borderRadius: 10, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                                onClick={() => {}}>
+                                onClick={() => setPage("inscription")}>
                                 S'inscrire
                               </div>
                             </div>
