@@ -179,6 +179,40 @@ const PROJETS = [
   { id: 5, titre: "Résidence Quilombisme", type: "Résidence", date: "Jan 2027", statut: "En préparation", public: false, formateurs: ["Prime"] },
 ];
 
+const EVENEMENTS = [
+  { id: 1, date: "21 juin 2026", titre: "Spectacle de fin d'année", desc: "Spectacle des enfants de l'école Circo Bénin — familles bienvenues", emoji: "🎪", statut: "À venir", couleur: "#e91e8c" },
+  { id: 2, date: "Juillet – Août 2026", titre: "Ateliers vacances + Stages d'été", desc: "Ateliers hebdomadaires et stages intensifs pendant toutes les vacances", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800" },
+  { id: 3, date: "14 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f" },
+  { id: 4, date: "Toussaint 2026", titre: "Stages de vacances", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed" },
+  { id: 5, date: "25–28 novembre 2026", titre: "Festival Cirque en Fusion", desc: "3ème édition du Festival International des Arts du Cirque — Cotonou", emoji: "🏆", statut: "En préparation", couleur: "#e91e8c" },
+  { id: 6, date: "Décembre 2026", titre: "Stages de vacances de Noël", desc: "Stages de fin d'année — clôture de la saison en beauté", emoji: "🎄", statut: "À venir", couleur: "#2d7a4f" },
+];
+
+const ATELIERS_LOISIR = [
+  { emoji: "👶", titre: "Bébé Cirque", age: "18 – 36 mois", desc: "Éveil sensoriel et moteur par le cirque. Présence d'un parent ou d'une nounou obligatoire.", couleur: "#ff9800" },
+  { emoji: "🧒", titre: "Enfants", age: "6 – 10 ans", desc: "Éveil cirque, jonglerie, acrobatie au sol. Service navette scolaire disponible.", couleur: "#e91e8c", navette: true },
+  { emoji: "🧑", titre: "Ados", age: "11 – 17 ans", desc: "Cirque général, découverte et approfondissement des disciplines.", couleur: "#2d7a4f" },
+  { emoji: "🧑‍🦱", titre: "Adultes", age: "18 ans et +", desc: "Cirque loisir, bien-être et expression corporelle.", couleur: "#7c3aed" },
+];
+
+const FORMATION_PRO = [
+  {
+    annee: 1, titre: "Fondamentaux", couleur: "#2d7a4f",
+    disciplines: ["Acrobatie au sol", "Jonglerie de base (balles, massues, diabolo)", "Expression corporelle", "Initiation aérien"],
+    objectif: "Maîtriser les bases de 3 disciplines circassiennes",
+  },
+  {
+    annee: 2, titre: "Spécialisation", couleur: "#e91e8c",
+    disciplines: ["Discipline principale au choix", "Approfondissement technique", "Portés acrobatiques", "Création de numéro solo"],
+    objectif: "Construire son identité artistique et son premier numéro",
+  },
+  {
+    annee: 3, titre: "Professionnalisation", couleur: "#7c3aed",
+    disciplines: ["Création de spectacle", "Gestion de projet artistique", "Techniques scéniques (lumière, son, costume)", "Mise en scène"],
+    objectif: "Numéro professionnel — Certificat de Formation Artistique Circo Bénin",
+  },
+];
+
 const PAIEMENTS = [
   { id: 1, eleve: "Adjobi Kossivi", montant: 15000, mode: "MTN Momo", date: "03/01/2025", statut: "payé" },
   { id: 2, eleve: "Fatoumata Diallo", montant: 15000, mode: "Carte", date: "05/01/2025", statut: "payé" },
@@ -1299,6 +1333,7 @@ export default function App() {
           {/* ── ESPACE PUBLIC ── */}
           {(page === "public" || page === "accueil") && (
             <div>
+              {/* Hero */}
               <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "48px 40px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", right: -30, top: -30, fontSize: 160, opacity: 0.06 }}>🎪</div>
                 <div style={{ display: "inline-block", background: "rgba(255,255,255,0.15)", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 600, marginBottom: 16, letterSpacing: 1 }}>COTONOU · BÉNIN</div>
@@ -1309,7 +1344,9 @@ export default function App() {
                   <Btn onClick={() => setPage("programme")} color="rgba(255,255,255,0.15)">Voir le programme</Btn>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 24 }}>
+
+              {/* Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 32 }}>
                 <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>🤸</div>
                   <div style={{ fontWeight: 700, fontSize: 22, color: C.vert, fontFamily: FT }}>32</div>
@@ -1326,37 +1363,97 @@ export default function App() {
                   <div style={{ fontSize: 13, color: C.gris }}>Festival Cirque en Fusion</div>
                 </Card>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                <Card>
-                  <SectionTitle>Événements & Annonces</SectionTitle>
-                  {PROJETS.filter(p => p.public).map(p => (
-                    <div key={p.id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <Badge text={p.type} bg={C.fond} color={C.vert} />
-                        <span style={{ fontSize: 12, color: C.gris }}>{p.date}</span>
+
+              {/* Ateliers Loisir */}
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 4, height: 32, background: C.or, borderRadius: 2 }} />
+                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>🎪 Ateliers Loisir</h2>
+                </div>
+                <p style={{ fontSize: 14, color: C.gris, marginBottom: 20 }}>Des ateliers hebdomadaires pour tous les âges — venir s'épanouir, jouer et créer par le cirque.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  {ATELIERS_LOISIR.map((a, i) => (
+                    <Card key={i} style={{ borderLeft: `4px solid ${a.couleur}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                        <div style={{ fontSize: 32 }}>{a.emoji}</div>
+                        <div>
+                          <div style={{ fontFamily: FT, fontSize: 17, fontWeight: 700 }}>{a.titre}</div>
+                          <Badge text={a.age} bg={a.couleur + "22"} color={a.couleur} />
+                        </div>
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 600, marginTop: 6 }}>{p.titre}</div>
-                      <div style={{ fontSize: 12, color: C.vert, marginTop: 4 }}>{p.statut}</div>
+                      <div style={{ fontSize: 13, color: C.gris, lineHeight: 1.6 }}>{a.desc}</div>
+                      {a.navette && (
+                        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.vert, fontWeight: 600 }}>
+                          🚌 Service navette scolaire disponible
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Formation Professionnelle */}
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 4, height: 32, background: C.magenta, borderRadius: 2 }} />
+                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>🎓 Formation Professionnelle</h2>
+                </div>
+                <p style={{ fontSize: 14, color: C.gris, marginBottom: 20 }}>Un parcours sur 3 ans pour devenir artiste de cirque professionnel. Sanctionné par le <strong>Certificat de Formation Artistique Circo Bénin</strong>.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  {FORMATION_PRO.map((f, i) => (
+                    <Card key={i} style={{ borderTop: `4px solid ${f.couleur}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: f.couleur, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16, flexShrink: 0 }}>{f.annee}</div>
+                        <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700 }}>Année {f.annee} — {f.titre}</div>
+                      </div>
+                      <div style={{ marginBottom: 14 }}>
+                        {f.disciplines.map((d, j) => (
+                          <div key={j} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "5px 0", borderBottom: "1px solid #f0f0f0", fontSize: 13 }}>
+                            <span style={{ color: f.couleur, flexShrink: 0 }}>▸</span>
+                            <span>{d}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ background: f.couleur + "15", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: f.couleur, fontWeight: 600 }}>
+                        🎯 {f.objectif}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Calendrier événements */}
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 4, height: 32, background: C.vert, borderRadius: 2 }} />
+                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>📅 Agenda 2025–2026</h2>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {EVENEMENTS.map((e, i) => (
+                    <div key={i} style={{ background: "#fff", borderRadius: 14, padding: "16px 20px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", display: "flex", gap: 16, alignItems: "center", borderLeft: `4px solid ${e.couleur}` }}>
+                      <div style={{ fontSize: 28, flexShrink: 0 }}>{e.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{e.titre}</div>
+                        <div style={{ fontSize: 13, color: C.gris }}>{e.desc}</div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: e.couleur, marginBottom: 4 }}>{e.date}</div>
+                        <Badge text={e.statut} bg={e.couleur + "18"} color={e.couleur} />
+                      </div>
                     </div>
                   ))}
-                </Card>
-                <Card>
-                  <SectionTitle>Disciplines enseignées</SectionTitle>
-                  {[
-                    { emoji: "🤹", nom: "Jonglerie", desc: "Balles, massues, diabolo, bâton du diable" },
-                    { emoji: "🤸", nom: "Acrobatie", desc: "Sol, portés acrobatiques, pyramides" },
-                    { emoji: "🎗️", nom: "Aérien", desc: "Tissu, cerceau, corde, barre fixe" },
-                    { emoji: "🎭", nom: "Expression", desc: "Clown, mime, danse-cirque" },
-                  ].map(d => (
-                    <div key={d.nom} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid #eee" }}>
-                      <span style={{ fontSize: 22 }}>{d.emoji}</span>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>{d.nom}</div>
-                        <div style={{ fontSize: 12, color: C.gris }}>{d.desc}</div>
-                      </div>
-                    </div>
-                  ))}
-                </Card>
+                </div>
+              </div>
+
+              {/* CTA inscription */}
+              <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "36px 40px", color: "#fff", textAlign: "center" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🎪</div>
+                <h3 style={{ fontFamily: FT, fontSize: 24, margin: "0 0 10px" }}>Rejoins Circo Bénin !</h3>
+                <p style={{ opacity: 0.85, margin: "0 0 24px", fontSize: 15 }}>Inscriptions ouvertes pour la saison 2025–2026</p>
+                <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                  <Btn onClick={() => setPage("inscription")} color="rgba(255,255,255,0.25)">S'inscrire →</Btn>
+                  <Btn onClick={() => setPage("contact")} color="rgba(255,255,255,0.15)">Nous contacter</Btn>
+                </div>
               </div>
             </div>
           )}
