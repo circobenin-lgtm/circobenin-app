@@ -2173,19 +2173,70 @@ export default function App() {
           {/* ── PROGRAMME PUBLIC ── */}
           {page === "programme" && (
             <div>
-              <Card style={{ marginBottom: 20 }}>
-                <SectionTitle>Programme des cours 2025–2026</SectionTitle>
-                {COURS.map(c => (
-                  <div key={c.id} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: `1px solid ${C.grisClair}`, alignItems: "center" }}>
-                    <Badge text={c.jour} bg={C.vert} color="#fff" />
-                    <Badge text={c.heure} bg={C.fond} color={C.vert} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{c.classe}</div>
-                      <div style={{ fontSize: 12, color: C.gris }}>{c.salle}</div>
+              <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "36px 40px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", right: -20, top: -20, fontSize: 120, opacity: 0.07 }}>◫</div>
+                <h2 style={{ fontFamily: FT, fontSize: 28, margin: "0 0 8px" }}>Programme des cours</h2>
+                <p style={{ opacity: 0.85, margin: 0, fontSize: 14 }}>Saison 2025–2026 · Circo Bénin · Cotonou, Bénin</p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                {["Lun", "Mer", "Jeu", "Ven", "Sam"].map(jour => {
+                  const coursJour = COURS.filter(c => c.jour === jour);
+                  if (coursJour.length === 0) return null;
+                  const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+                  const couleurs = { Lun: "#2d7a4f", Mer: "#e91e8c", Jeu: "#7c3aed", Ven: "#1565C0", Sam: "#ff9800" };
+                  const couleur = couleurs[jour] || "#2d7a4f";
+                  return (
+                    <div key={jour} style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                      <div style={{ background: couleur, padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ fontFamily: FT, fontSize: 20, color: "#fff", fontWeight: 700 }}>{joursComplets[jour]}</div>
+                        <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 20, padding: "2px 12px", fontSize: 12, color: "#fff", fontWeight: 600 }}>{coursJour.length} atelier{coursJour.length > 1 ? "s" : ""}</div>
+                      </div>
+                      <div style={{ padding: "8px 0" }}>
+                        {coursJour.map((c, i) => (
+                          <div key={c.id} style={{
+                            display: "grid", gridTemplateColumns: "160px 1fr auto",
+                            alignItems: "center", gap: 16, padding: "14px 24px",
+                            borderBottom: i < coursJour.length - 1 ? "1px solid #f3f4f6" : "none",
+                          }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <div style={{ background: couleur + "15", borderRadius: 10, padding: "8px 14px", textAlign: "center" }}>
+                                <div style={{ fontSize: 16, fontWeight: 800, color: couleur, fontFamily: FT }}>{c.heure}</div>
+                                <div style={{ fontSize: 11, color: couleur, opacity: 0.8 }}>→ {c.fin}</div>
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>{c.classe}</div>
+                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                <span style={{ fontSize: 12, color: "#6b7280" }}>📍 {c.salle}</span>
+                                <span style={{ fontSize: 12, color: "#6b7280" }}>⏱ {c.duree === 0.75 ? "45 min" : c.duree + "h"}</span>
+                                <span style={{ fontSize: 12, color: "#6b7280" }}>👥 {c.nb} élève{c.nb > 1 ? "s" : ""}</span>
+                              </div>
+                              <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                {c.formateurs.map((f, j) => (
+                                  <span key={j} style={{ background: couleur + "15", color: couleur, borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 600 }}>{f}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <div style={{ background: couleur, color: "#fff", borderRadius: 10, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                                onClick={() => {}}>
+                                S'inscrire
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </Card>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 24, background: "#f9fafb", borderRadius: 16, padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>Vous souhaitez vous inscrire ?</div>
+                  <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>Choisissez votre créneau et rejoignez Circo Bénin</div>
+                </div>
+                <Btn onClick={() => setPage("inscription")}>S'inscrire →</Btn>
+              </div>
             </div>
           )}
 
