@@ -302,6 +302,113 @@ const Btn = ({ children, onClick, color = C.vert, small = false }) => (
   }}>{children}</div>
 );
 
+function ContactForm() {
+  const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
+  const [sujet, setSujet] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState(false);
+
+  const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, background: "#f9fafb", outline: "none", fontFamily: "Inter,sans-serif", boxSizing: "border-box" };
+  const labelStyle = { fontSize: 12, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 6 };
+
+  const handleSend = async () => {
+    if (!nom || !email || !message) return;
+    setSending(true); setError(false);
+    try {
+      await fetch("/api/send-email", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "Circo Benin <accueil@circobenin.com>",
+          to: "accueil@circobenin.com",
+          subject: "Message de " + nom + " — " + (sujet || "Contact site"),
+          html: "<h2>Nouveau message depuis le site</h2><p><b>Nom :</b> " + nom + "</p><p><b>Email :</b> " + email + "</p><p><b>Sujet :</b> " + (sujet || "—") + "</p><p><b>Message :</b></p><p>" + message.split("\n").join("<br/>") + "</p>",
+        }),
+      });
+      await fetch("/api/send-email", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "Circo Benin <accueil@circobenin.com>",
+          to: email,
+          subject: "Votre message a bien été reçu — Circo Bénin",
+          html: "<h2>Merci de nous avoir contactés !</h2><p>Bonjour " + nom + ",</p><p>Nous avons bien reçu votre message et reviendrons vers vous très prochainement.</p><br/><p>📍 Cadjehoun I Lot 1066, Cotonou, Bénin</p><p>📞 +229 01 96 14 63 60</p><p>Circo Bénin — Première école des arts du cirque du Bénin</p>",
+        }),
+      });
+      setSent(true);
+    } catch { setError(true); }
+    setSending(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "40px 36px", color: "#fff", marginBottom: 24 }}>
+        <h2 style={{ fontFamily: "Playfair Display,serif", fontSize: 28, margin: "0 0 8px" }}>Nous contacter</h2>
+        <p style={{ opacity: 0.85, margin: 0 }}>Circo Bénin — Première école de cirque du Bénin</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 18 }}>
+        <div style={{ background: "#fff", borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", borderTop: "4px solid #2d7a4f" }}>
+          <div style={{ fontSize: 28, marginBottom: 12 }}>📍</div>
+          <div style={{ fontFamily: "Playfair Display,serif", color: "#2d7a4f", fontSize: 17, marginBottom: 12 }}>Adresse</div>
+          <div style={{ fontSize: 14, lineHeight: 1.8 }}><strong>Cadjehoun I</strong><br/>Lot 1066<br/>Cotonou, Bénin</div>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", borderTop: "4px solid #e91e8c" }}>
+          <div style={{ fontSize: 28, marginBottom: 12 }}>📞</div>
+          <div style={{ fontFamily: "Playfair Display,serif", color: "#2d7a4f", fontSize: 17, marginBottom: 12 }}>Téléphone</div>
+          <a href="tel:+22901961463 60" style={{ color: "#2d7a4f", fontWeight: 600, textDecoration: "none", display: "block", fontSize: 14, marginBottom: 6 }}>+229 01 96 14 63 60</a>
+          <a href="tel:+22901527633 33" style={{ color: "#2d7a4f", fontWeight: 600, textDecoration: "none", display: "block", fontSize: 14 }}>+229 01 52 76 33 33</a>
+        </div>
+      </div>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 18 }}>
+        <div style={{ fontFamily: "Playfair Display,serif", color: "#2d7a4f", fontSize: 17, marginBottom: 16 }}>Horaires d'ouverture</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {[
+            { j: "Lundi", h: "09h – 12h / 14h – 18h" },
+            { j: "Mardi", h: "09h – 12h / 14h – 18h" },
+            { j: "Mercredi", h: "09h – 12h / 14h – 18h" },
+            { j: "Jeudi", h: "09h – 12h / 14h – 18h" },
+            { j: "Vendredi", h: "09h – 12h / 14h – 18h" },
+            { j: "Sam / Dim", h: "Fermé" },
+          ].map(h => (
+            <div key={h.j} style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", background: "#f9fafb", borderRadius: 8, fontSize: 13 }}>
+              <span style={{ fontWeight: 600 }}>{h.j}</span>
+              <span style={{ color: h.h === "Fermé" ? "#9ca3af" : "#2d7a4f" }}>{h.h}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ background: "#fff", borderRadius: 20, padding: 32, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+        {sent ? (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
+            <div style={{ fontFamily: "Playfair Display,serif", fontSize: 22, color: "#2d7a4f", marginBottom: 8 }}>Message envoyé !</div>
+            <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 24 }}>Nous vous répondrons très prochainement. Un email de confirmation vous a été envoyé.</p>
+            <div onClick={() => { setSent(false); setNom(""); setEmail(""); setSujet(""); setMessage(""); }} style={{ background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>Nouveau message</div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontFamily: "Playfair Display,serif", color: "#2d7a4f", fontSize: 18, marginBottom: 20 }}>Envoyez-nous un message</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={labelStyle}>Nom et prénom *</label><input style={inputStyle} value={nom} onChange={e => setNom(e.target.value)} placeholder="Votre nom" /></div>
+              <div><label style={labelStyle}>Email *</label><input style={inputStyle} value={email} onChange={e => setEmail(e.target.value)} placeholder="votre@email.com" /></div>
+            </div>
+            <div style={{ marginBottom: 14 }}><label style={labelStyle}>Sujet</label><input style={inputStyle} value={sujet} onChange={e => setSujet(e.target.value)} placeholder="Ex: Renseignements inscription, Stage été..." /></div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Message *</label>
+              <textarea style={{ ...inputStyle, height: 140, resize: "none" }} value={message} onChange={e => setMessage(e.target.value)} placeholder="Votre message..." />
+            </div>
+            {error && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>❌ Erreur lors de l'envoi. Réessayez.</div>}
+            <div onClick={handleSend} style={{ background: sending ? "#9ca3af" : "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: sending ? "wait" : "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>
+              {sending ? "Envoi en cours..." : "📤 Envoyer le message"}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function InscriptionForm({ onPayer, onContact }) {
   const [step, setStep] = useState(0);
   const [typeInscription, setTypeInscription] = useState(null);
@@ -1684,49 +1791,7 @@ export default function App() {
 
           {/* ── CONTACT ── */}
           {page === "contact" && (
-            <div style={{ maxWidth: 600, margin: "0 auto" }}>
-              <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "40px 36px", color: "#fff", marginBottom: 24 }}>
-                <h2 style={{ fontFamily: FT, fontSize: 28, margin: "0 0 8px" }}>Nous contacter</h2>
-                <p style={{ opacity: 0.85, margin: 0 }}>Circo Bénin — Première école de cirque du Bénin</p>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 18 }}>
-                <Card style={{ borderTop: "4px solid #2d7a4f" }}>
-                  <div style={{ fontSize: 28, marginBottom: 12 }}>📍</div>
-                  <SectionTitle>Adresse</SectionTitle>
-                  <div style={{ fontSize: 14, lineHeight: 1.8, color: C.noir }}>
-                    <strong>Cadjehoun I</strong><br />
-                    Lot 1066<br />
-                    Cotonou, Bénin
-                  </div>
-                </Card>
-                <Card style={{ borderTop: "4px solid #e91e8c" }}>
-                  <div style={{ fontSize: 28, marginBottom: 12 }}>📞</div>
-                  <SectionTitle>Téléphone</SectionTitle>
-                  <div style={{ fontSize: 14, lineHeight: 2.2, color: C.noir }}>
-                    <a href="tel:+22901961463 60" style={{ color: C.vert, fontWeight: 600, textDecoration: "none", display: "block" }}>+229 01 96 14 63 60</a>
-                    <a href="tel:+22901527633 33" style={{ color: C.vert, fontWeight: 600, textDecoration: "none", display: "block" }}>+229 01 52 76 33 33</a>
-                  </div>
-                </Card>
-              </div>
-              <Card>
-                <SectionTitle>Horaires d'ouverture</SectionTitle>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {[
-                    { j: "Lundi", h: "16h00 – 19h00" },
-                    { j: "Mardi", h: "16h00 – 19h00" },
-                    { j: "Mercredi", h: "14h00 – 18h00" },
-                    { j: "Jeudi", h: "16h00 – 19h00" },
-                    { j: "Samedi", h: "09h00 – 13h00" },
-                    { j: "Ven / Dim", h: "Fermé" },
-                  ].map(h => (
-                    <div key={h.j} style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", background: C.fond, borderRadius: 8, fontSize: 13 }}>
-                      <span style={{ fontWeight: 600 }}>{h.j}</span>
-                      <span style={{ color: h.h === "Fermé" ? C.gris : C.vert }}>{h.h}</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
+            <ContactForm />
           )}
 
           {/* ── ESPACE PARENT : MON ENFANT ── */}
