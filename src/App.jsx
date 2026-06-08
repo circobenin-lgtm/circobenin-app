@@ -213,6 +213,7 @@ const EVENEMENTS = [
 
 const ATELIERS_LOISIR = [
   { emoji: "👶", titre: "Bébé Cirque", age: "18 – 36 mois", desc: "Éveil sensoriel et moteur par le cirque. Présence d'un parent ou d'une nounou obligatoire.", couleur: "#ff9800" },
+  { emoji: "🧒", titre: "Petits", age: "3 – 5 ans", desc: "Premiers pas dans le cirque — jonglerie, équilibre, acrobatie ludique.", couleur: "#43a047" },
   { emoji: "🧒", titre: "Enfants", age: "6 – 10 ans", desc: "Éveil cirque, jonglerie, acrobatie au sol. Service navette scolaire disponible.", couleur: "#e91e8c", navette: true },
   { emoji: "🧑", titre: "Ados", age: "11 – 17 ans", desc: "Cirque général, découverte et approfondissement des disciplines. Service navette scolaire disponible.", couleur: "#2d7a4f", navette: true },
   { emoji: "🧑‍🦱", titre: "Adultes", age: "18 ans et +", desc: "Cirque loisir, bien-être et expression corporelle.", couleur: "#7c3aed" },
@@ -1003,7 +1004,7 @@ export default function App() {
             <h1 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: 0, fontWeight: 700 }}>
               {nav.find(n => n.id === page)?.label}
             </h1>
-            <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2025–2026 · Cotonou, Bénin</div>
+            <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2026–2027 · Cotonou, Bénin</div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             {(role === "directeur") && (
@@ -1247,7 +1248,7 @@ export default function App() {
                   <div>
                     <div style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", borderRadius: 20, padding: "36px 32px", color: "#fff", marginBottom: 24 }}>
                       <h2 style={{ fontFamily: FT, fontSize: 26, margin: "0 0 6px" }}>Bilan d'heures — {nomInter}</h2>
-                      <p style={{ opacity: 0.85, margin: 0 }}>Rentrée 2025-2026 · {semaines} semaines</p>
+                      <p style={{ opacity: 0.85, margin: 0 }}>Rentrée 2026-2027 · {semaines} semaines</p>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
                       <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
@@ -1925,7 +1926,7 @@ export default function App() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
                   <div style={{ width: 4, height: 32, background: C.vert, borderRadius: 2 }} />
-                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>📅 Agenda 2025–2026</h2>
+                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>📅 Agenda 2026–2027</h2>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {EVENEMENTS.map((e, i) => (
@@ -1988,7 +1989,7 @@ export default function App() {
               <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "36px 40px", color: "#fff", textAlign: "center" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🎪</div>
                 <h3 style={{ fontFamily: FT, fontSize: 24, margin: "0 0 10px" }}>Rejoins Circo Bénin !</h3>
-                <p style={{ opacity: 0.85, margin: "0 0 24px", fontSize: 15 }}>Inscriptions ouvertes pour la saison 2025–2026</p>
+                <p style={{ opacity: 0.85, margin: "0 0 24px", fontSize: 15 }}>Inscriptions ouvertes pour la saison 2026–2027</p>
                 <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
                   <Btn onClick={() => setPage("inscription")} color="rgba(255,255,255,0.25)">S'inscrire →</Btn>
                   <Btn onClick={() => setPage("contact")} color="rgba(255,255,255,0.15)">Nous contacter</Btn>
@@ -2205,7 +2206,7 @@ export default function App() {
               <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "36px 40px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", right: -20, top: -20, fontSize: 120, opacity: 0.07 }}>◫</div>
                 <h2 style={{ fontFamily: FT, fontSize: 28, margin: "0 0 8px" }}>Programme des cours</h2>
-                <p style={{ opacity: 0.85, margin: 0, fontSize: 14 }}>Saison 2025–2026 · Circo Bénin · Cotonou, Bénin</p>
+                <p style={{ opacity: 0.85, margin: 0, fontSize: 14 }}>Saison 2026–2027 · Circo Bénin · Cotonou, Bénin</p>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {["Lun", "Mer", "Jeu", "Ven", "Sam"].map(jour => {
