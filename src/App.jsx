@@ -1023,7 +1023,7 @@ export default function App() {
               {!isMobile && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>Rentrée 2026–2027 · Cotonou, Bénin</div>}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          {!isMobile && <div style={{ display: "flex", gap: 10 }}>
             {(role === "directeur") && (
               <a href="https://mail.ovh.net" target="_blank" rel="noreferrer" style={{
                 background: C.fond, borderRadius: 20, padding: "8px 16px",
@@ -1078,7 +1078,15 @@ export default function App() {
                 }}>{MESSAGES.filter(m => !m.lu).length}</span>
               )}
             </div>
-          </div>
+          </div>}
+          {isMobile && (
+            <div onClick={() => setPage("tchat")} style={{ position: "relative", padding: 8 }}>
+              <span style={{ fontSize: 22, color: "#fff" }}>◎</span>
+              {MESSAGES.filter(m => !m.lu).length > 0 && (
+                <span style={{ position: "absolute", top: 4, right: 4, background: C.rouge, color: "#fff", borderRadius: "50%", width: 14, height: 14, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>{MESSAGES.filter(m => !m.lu).length}</span>
+              )}
+            </div>
+          )}
         </header>
 
         <div style={{ flex: 1, padding: isMobile ? "16px 12px" : "28px 32px", overflow: "auto" }}>
