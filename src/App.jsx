@@ -213,7 +213,7 @@ const EVENEMENTS = [
 
 const ATELIERS_LOISIR = [
   { emoji: "👶", titre: "Bébé Cirque", age: "18 – 36 mois", desc: "Éveil sensoriel et moteur par le cirque. Présence d'un parent ou d'une nounou obligatoire.", couleur: "#ff9800" },
-  { emoji: "🧒", titre: "Petits", age: "3 – 5 ans", desc: "Premiers pas dans le cirque — jonglerie, équilibre, acrobatie ludique.", couleur: "#43a047" },
+  { emoji: "🧒", titre: "Petits", age: "3 – 5 ans", desc: "Premiers pas dans le cirque — jonglerie, équilibre, acrobatie ludique. Service navette scolaire disponible.", couleur: "#43a047", navette: true },
   { emoji: "🧒", titre: "Enfants", age: "6 – 10 ans", desc: "Éveil cirque, jonglerie, acrobatie au sol. Service navette scolaire disponible.", couleur: "#e91e8c", navette: true },
   { emoji: "🧑", titre: "Ados", age: "11 – 17 ans", desc: "Cirque général, découverte et approfondissement des disciplines. Service navette scolaire disponible.", couleur: "#2d7a4f", navette: true },
   { emoji: "🧑‍🦱", titre: "Adultes", age: "18 ans et +", desc: "Cirque loisir, bien-être et expression corporelle.", couleur: "#7c3aed" },
