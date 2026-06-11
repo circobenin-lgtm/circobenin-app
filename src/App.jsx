@@ -1,20 +1,4 @@
 import { useState, useEffect } from "react";
-
-const mobileCSS = `
-@media (max-width: 768px) {
-  .sidebar-desktop { display: none !important; }
-  .main-content { padding: 12px !important; }
-  .header-desktop-only { display: none !important; }
-  .grid-4col { grid-template-columns: 1fr 1fr !important; }
-  .grid-3col { grid-template-columns: 1fr !important; }
-  .grid-2col { grid-template-columns: 1fr !important; }
-  .grid-7col { grid-template-columns: 1fr 1fr 1fr !important; }
-  .tchat-panel { flex-direction: column !important; height: auto !important; }
-  .nav-mobile { display: flex !important; }
-  .page-maxwidth { max-width: 100% !important; margin: 0 !important; }
-}
-.nav-mobile { display: none; }
-`;
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -453,24 +437,6 @@ function AdhesionForm() {
           {sending ? "Envoi en cours..." : "🤝 Envoyer ma demande d'adhésion"}
         </div>
       </div>
-      {/* Nav mobile */}
-      <nav className="nav-mobile" style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
-        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}>
-        {nav.slice(0, 5).map(item => (
-          <div key={item.id} onClick={() => setPage(item.id)} style={{
-            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
-            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
-          }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
-            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
-          </div>
-        ))}
-      </nav>
     </div>
   );
 }
@@ -578,24 +544,6 @@ function ContactForm() {
           </div>
         )}
       </div>
-      {/* Nav mobile */}
-      <nav className="nav-mobile" style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
-        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}>
-        {nav.slice(0, 5).map(item => (
-          <div key={item.id} onClick={() => setPage(item.id)} style={{
-            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
-            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
-          }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
-            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
-          </div>
-        ))}
-      </nav>
     </div>
   );
 }
@@ -634,27 +582,8 @@ function InscriptionForm({ onPayer, onContact }) {
     setSending(true);
     setError(false);
     const type = types.find(t => t.id === typeInscription);
-    const bodyAccueil = `
-      <h2>Nouvelle inscription — ${type.titre}</h2>
-      <p><b>Nom :</b> ${form.prenom} ${form.nom}</p>
-      <p><b>Date de naissance :</b> ${form.dateNaissance}</p>
-      <p><b>Email :</b> ${form.email}</p>
-      <p><b>Téléphone :</b> ${form.telephone}</p>
-      <p><b>Discipline :</b> ${form.discipline}</p>
-      <p><b>Navette scolaire :</b> ${form.navette ? "Oui" : "Non"}</p>
-      <p><b>Autorisation photo :</b> ${form.autoPhoto === true ? "Oui" : form.autoPhoto === false ? "Non" : "Non renseigné"}</p>
-      ${isMineur() || isBebe ? "<h3>Parent / Tuteur</h3><p><b>Nom :</b> " + form.prenomParent + " " + form.nomParent + "</p><p><b>Email :</b> " + form.emailParent + "</p><p><b>Tél :</b> " + form.telParent + "</p>" : ""}
-    `;
-    const bodyConfirm = `
-      <h2>Bienvenue à Circo Bénin !</h2>
-      <p>Bonjour ${form.prenom},</p>
-      <p>Nous avons bien reçu votre demande d'inscription pour : <b>${type.titre}</b>.</p>
-      <p>Notre équipe vous contactera très prochainement pour finaliser votre inscription.</p>
-      <br/>
-      <p>📍 Cadjehoun I Lot 1066, Cotonou, Bénin</p>
-      <p>📞 +229 01 96 14 63 60</p>
-      <p>Circo Bénin — Première école des arts du cirque du Bénin</p>
-    `;
+    const bodyAccueil = "<h2>Nouvelle inscription - " + type.titre + "</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Naissance :</b> " + form.dateNaissance + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Tel :</b> " + form.telephone + "</p><p><b>Discipline :</b> " + form.discipline + "</p><p><b>Navette :</b> " + (form.navette ? "Oui" : "Non") + "</p><p><b>Photo :</b> " + (form.autoPhoto === true ? "Oui" : "Non") + "</p>" + (isMineur() || isBebe ? "<p><b>Parent :</b> " + form.prenomParent + " " + form.nomParent + " - " + form.emailParent + "</p>" : "");
+    const bodyConfirm = "<h2>Bienvenue a Circo Benin !</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien recu votre demande d inscription pour : " + type.titre + ".</p><p>Notre equipe vous contactera tres prochainement.</p><p>Circo Benin - Cotonou, Benin</p>";
     try {
       await fetch("/api/send-email", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -850,24 +779,6 @@ function InscriptionForm({ onPayer, onContact }) {
           </div>
         )}
       </div>
-      {/* Nav mobile */}
-      <nav className="nav-mobile" style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
-        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}>
-        {nav.slice(0, 5).map(item => (
-          <div key={item.id} onClick={() => setPage(item.id)} style={{
-            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
-            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
-          }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
-            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
-          </div>
-        ))}
-      </nav>
     </div>
   );
 }
@@ -1009,10 +920,9 @@ export default function App() {
   // ── LAYOUT ──
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: FB, background: C.fond, overflow: "hidden" }}>
-      <style>{mobileCSS}</style>
 
       {/* Sidebar */}
-      <aside className="sidebar-desktop" style={{
+      <aside style={{
         width: sidebar ? 240 : 64, background: "#1A1A1A",
         display: "flex", flexDirection: "column",
         transition: "width 0.3s ease", flexShrink: 0,
@@ -1135,7 +1045,7 @@ export default function App() {
           </div>
         </header>
 
-        <div className="main-content" style={{ flex: 1, padding: "28px 32px", overflow: "auto" }}>
+        <div style={{ flex: 1, padding: "28px 32px", overflow: "auto" }}>
 
           {/* ── DASHBOARD (directeur / admin) ── */}
           {page === "dashboard" && (role === "directeur" || role === "admin") && (
@@ -2349,24 +2259,6 @@ export default function App() {
 
         </div>
       </main>
-      {/* Nav mobile */}
-      <nav className="nav-mobile" style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
-        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}>
-        {nav.slice(0, 5).map(item => (
-          <div key={item.id} onClick={() => setPage(item.id)} style={{
-            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
-            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
-          }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
-            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
-          </div>
-        ))}
-      </nav>
     </div>
   );
 }
