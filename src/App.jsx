@@ -1,4 +1,14 @@
 import { useState, useEffect } from "react";
+
+const mobileCSS = `
+@media (max-width: 768px) {
+  .sidebar-desktop { display: none !important; }
+  .main-content { padding: 12px 10px 80px !important; }
+  .nav-mobile { display: flex !important; }
+  div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+}
+.nav-mobile { display: none; }
+`;
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -437,6 +447,23 @@ function AdhesionForm() {
           {sending ? "Envoi en cours..." : "🤝 Envoyer ma demande d'adhésion"}
         </div>
       </div>
+      <nav className="nav-mobile" style={{
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
+        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}>
+        {nav.slice(0, 5).map(item => (
+          <div key={item.id} onClick={() => setPage(item.id)} style={{
+            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
+            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
+          }}>
+            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
+          </div>
+        ))}
+      </nav>
     </div>
   );
 }
@@ -544,6 +571,23 @@ function ContactForm() {
           </div>
         )}
       </div>
+      <nav className="nav-mobile" style={{
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
+        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}>
+        {nav.slice(0, 5).map(item => (
+          <div key={item.id} onClick={() => setPage(item.id)} style={{
+            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
+            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
+          }}>
+            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
+          </div>
+        ))}
+      </nav>
     </div>
   );
 }
@@ -779,6 +823,23 @@ function InscriptionForm({ onPayer, onContact }) {
           </div>
         )}
       </div>
+      <nav className="nav-mobile" style={{
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
+        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}>
+        {nav.slice(0, 5).map(item => (
+          <div key={item.id} onClick={() => setPage(item.id)} style={{
+            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
+            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
+          }}>
+            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
+          </div>
+        ))}
+      </nav>
     </div>
   );
 }
@@ -920,9 +981,10 @@ export default function App() {
   // ── LAYOUT ──
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: FB, background: C.fond, overflow: "hidden" }}>
+      <style>{mobileCSS}</style>
 
       {/* Sidebar */}
-      <aside style={{
+      <aside className="sidebar-desktop" style={{
         width: sidebar ? 240 : 64, background: "#1A1A1A",
         display: "flex", flexDirection: "column",
         transition: "width 0.3s ease", flexShrink: 0,
@@ -1045,7 +1107,7 @@ export default function App() {
           </div>
         </header>
 
-        <div style={{ flex: 1, padding: "28px 32px", overflow: "auto" }}>
+        <div className="main-content" style={{ flex: 1, padding: "28px 32px", overflow: "auto" }}>
 
           {/* ── DASHBOARD (directeur / admin) ── */}
           {page === "dashboard" && (role === "directeur" || role === "admin") && (
@@ -2259,6 +2321,23 @@ export default function App() {
 
         </div>
       </main>
+      <nav className="nav-mobile" style={{
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
+        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}>
+        {nav.slice(0, 5).map(item => (
+          <div key={item.id} onClick={() => setPage(item.id)} style={{
+            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
+            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
+          }}>
+            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
+          </div>
+        ))}
+      </nav>
     </div>
   );
 }
