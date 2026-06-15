@@ -218,7 +218,7 @@ const EVENEMENTS = [
     details: "Pendant les grandes vacances, Circo Benin propose des stages intensifs sur 10 jours pour decouvrir ou se perfectionner dans les arts du cirque. Ouvert a tous les ages, encadrement par des formateurs professionnels." },
   { id: 3, date: "14 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f", typeInscription: "hebdo",
     details: "La rentree 2026-2027 marque la reprise des ateliers hebdomadaires pour tous les ages : Bebe Cirque, Petits, Enfants, Ados et Adultes. Inscrivez-vous des maintenant pour reserver votre creneau." },
-  { id: 4, date: "Toussaint 2026", titre: "Stages de vacances", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed", typeInscription: "toussaint",
+  { id: 4, date: "Toussaint 2026", titre: "Stage de Toussaint", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed", typeInscription: "toussaint",
     details: "Profitez des vacances de Toussaint pour un stage intensif de cirque ! Jonglerie, acrobatie, aerien, equilibre et expression au programme." },
   { id: 5, date: "25–28 novembre 2026", titre: "Festival Cirque en Fusion", desc: "3ème édition du Festival International des Arts du Cirque — Cotonou", emoji: "🏆", statut: "En préparation", couleur: "#e91e8c", typeInscription: null,
     details: "La 3eme edition du Festival International des Arts du Cirque \"Cirque en Fusion\" se tiendra du 25 au 28 novembre 2026 a Cotonou, sur le theme \"Rythmes et Corporalites\". Spectacles, ateliers et rencontres avec des artistes internationaux." },
@@ -1834,9 +1834,19 @@ export default function App() {
                 <div style={{ display: "inline-block", background: "rgba(255,255,255,0.15)", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 600, marginBottom: 16, letterSpacing: 1 }}>COTONOU · BÉNIN</div>
                 <h2 style={{ fontFamily: FT, fontSize: 36, margin: "0 0 10px", lineHeight: 1.1 }}>Circo Bénin</h2>
                 <p style={{ fontSize: 16, opacity: 0.9, margin: "0 0 24px", maxWidth: 500 }}>Première école des arts du cirque du Bénin — acrobatie, jonglerie, aérien, équilibre, expression.</p>
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
                   <Btn onClick={() => setPage("inscription")} color="rgba(255,255,255,0.25)">S'inscrire →</Btn>
                   <Btn onClick={() => setPage("programme")} color="rgba(255,255,255,0.15)">Voir le programme</Btn>
+                  {/* Badge rond cliquable Festival - emplacement pour logo officiel plus tard */}
+                  <div onClick={() => { setActiveEvenement(5); setPage("evenement_detail"); }} style={{
+                    width: 66, height: 66, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
+                    border: "2px solid rgba(255,255,255,0.35)", display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", cursor: "pointer", textAlign: "center",
+                    fontSize: 9, fontWeight: 700, lineHeight: 1.15, padding: 4, flexShrink: 0,
+                  }}>
+                    <span style={{ fontSize: 20, marginBottom: 2 }}>🏆</span>
+                    Cirque en Fusion
+                  </div>
                 </div>
               </div>
 
@@ -1921,7 +1931,7 @@ export default function App() {
                   <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>🎓 Formation Professionnelle</h2>
                 </div>
                 <p style={{ fontSize: 14, color: C.gris, marginBottom: 20 }}>Un parcours sur 3 ans pour devenir artiste de cirque professionnel. Sanctionné par le <strong>Certificat de Formation Artistique Circo Bénin</strong>.</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
                   {FORMATION_PRO.map((f, i) => (
                     <Card key={i} style={{ borderTop: `4px solid ${f.couleur}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -1942,6 +1952,7 @@ export default function App() {
                     </Card>
                   ))}
                 </div>
+                <Btn onClick={() => { setPreselectType("formation"); setPage("inscription"); }} color={C.magenta}>S'inscrire à la Formation Professionnelle →</Btn>
               </div>
 
               {/* Formation Formateurs */}
@@ -1966,7 +1977,7 @@ export default function App() {
                       <div style={{ background: "#e3f2fd", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#1565C0", fontWeight: 600, marginBottom: 12 }}>
                         🎓 {FORMATION_FORMATEURS.certification}
                       </div>
-                      <Btn onClick={() => setPage("inscription")} color="#1565C0">S'inscrire à la formation →</Btn>
+                      <Btn onClick={() => { setPreselectType("formateurs"); setPage("inscription"); }} color="#1565C0">S'inscrire à la formation →</Btn>
                     </div>
                     <div>
                       {FORMATION_FORMATEURS.semestres.map((s, i) => (
