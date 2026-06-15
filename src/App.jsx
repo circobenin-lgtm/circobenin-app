@@ -1837,15 +1837,13 @@ export default function App() {
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
                   <Btn onClick={() => setPage("inscription")} color="rgba(255,255,255,0.25)">S'inscrire →</Btn>
                   <Btn onClick={() => setPage("programme")} color="rgba(255,255,255,0.15)">Voir le programme</Btn>
-                  {/* Badge rond cliquable Festival - emplacement pour logo officiel plus tard */}
+                  {/* Badge rond cliquable Festival avec logo officiel */}
                   <div onClick={() => { setActiveEvenement(5); setPage("evenement_detail"); }} style={{
-                    width: 66, height: 66, borderRadius: "50%", background: "rgba(255,255,255,0.15)",
-                    border: "2px solid rgba(255,255,255,0.35)", display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", cursor: "pointer", textAlign: "center",
-                    fontSize: 9, fontWeight: 700, lineHeight: 1.15, padding: 4, flexShrink: 0,
+                    width: 66, height: 66, borderRadius: "50%", background: "#fff",
+                    border: "2px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center",
+                    justifyContent: "center", cursor: "pointer", overflow: "hidden", flexShrink: 0,
                   }}>
-                    <span style={{ fontSize: 20, marginBottom: 2 }}>🏆</span>
-                    Cirque en Fusion
+                    <img src="/festival-logo.jpg" alt="Cirque en Fusion" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
                 </div>
               </div>
