@@ -263,46 +263,41 @@ const MESSAGES = [
 
 const jours = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
-const ARTISTES = [
-  { id: 1, nom: "Prime Ezinse", discipline: "Diabolo, Jonglerie", bio: "Fondateur de Circo Bénin, Diplômé d'État de prof de cirque, artiste interprète Cie Thomas Guérineau (Maputo Mozambique)", statut: "pro", photo: "PE" },
-  { id: 2, nom: "Jean Luc", discipline: "Acrobatie, Portés", bio: "Formateur et artiste interprète, spécialiste acrobatie au sol et portés acrobatiques", statut: "pro", photo: "JL" },
-  { id: 3, nom: "Spéro", discipline: "Aérien, Tissu", bio: "Artiste aérien spécialisé tissu et cerceau, formateur cirque adapté", statut: "pro", photo: "SP" },
-  { id: 4, nom: "Youssou", discipline: "Jonglerie, Équilibre", bio: "Jongleur multi-disciplines, artiste de rue et formateur", statut: "pro", photo: "YO" },
-  { id: 5, nom: "Kossivi Adjobé", discipline: "Acrobatie", bio: "Jeune artiste pro formé à Circo Bénin, membre de la troupe depuis 2022", statut: "pro", photo: "KA" },
-  { id: 6, nom: "Mariama Sow", discipline: "Expression, Danse-cirque", bio: "Artiste interprète, spécialiste de la fusion danse et arts du cirque", statut: "pro", photo: "MS" },
-];
-
 const SPECTACLES = [
   {
-    id: 1, titre: "A Fon de Cirk", type: "Cabaret itinérant", duree: "60 min",
-    public_cible: "Tout public", description: "Cabaret circassien itinérant né de la collaboration avec le Serious Road Trip. Mélange de jonglerie, acrobatie et expression, il a parcouru tout le Bénin.",
-    dates: [
-      { lieu: "Institut Français de Cotonou", date: "15 Juil 2025", statut: "confirmé" },
-      { lieu: "Espace Culturel de Porto-Novo", date: "22 Juil 2025", statut: "confirmé" },
-      { lieu: "Festival Cirque en Fusion", date: "28 Juil 2025", statut: "confirmé" },
-    ],
-    artistes: ["Prime Ezinse", "Jean Luc", "Spéro"],
+    id: 1, titre: "FIL", type: "Solo", duree: "20 min",
+    description: "Un solo de diabolo où le fil devient métaphore du lien humain. 3 diabolos blancs et 2 diabolos lumineux LED, dispositif de fils tendus (horizontal et vertical), paysage musical africain (Toumani Diabaté, Ballaké Sissoko, Fatoumata Diawara) et textes poétiques sur les liens entre les êtres.",
+    phare: true,
   },
   {
-    id: 2, titre: "HXEDESSOU KPEHOU", type: "Spectacle social", duree: "45 min",
-    public_cible: "Tout public / Sensibilisation",
-    description: "Spectacle issu du projet d'insertion sociale avec les jeunes du marché Dantokpa. Une performance touchante sur la résilience et la capacité de chacun à se transformer.",
-    dates: [
-      { lieu: "Marché Dantokpa, Cotonou", date: "10 Août 2025", statut: "confirmé" },
-      { lieu: "Centre Social de Fidjrossè", date: "À confirmer", statut: "en discussion" },
-    ],
-    artistes: ["Jean Luc", "Spéro", "Youssou", "Kossivi Adjobé"],
+    id: 2, titre: "Entre deux", type: "Création", duree: "—",
+    description: "Création disponible pour programmation au Bénin et à l'international.",
+    phare: false,
   },
   {
-    id: 3, titre: "Cirque en Fusion — Gala", type: "Gala annuel", duree: "90 min",
-    public_cible: "Tout public",
-    description: "Le grand spectacle annuel de Circo Bénin réunissant élèves, artistes professionnels et invités internationaux. Vitrine de l'école et de ses artistes.",
-    dates: [
-      { lieu: "Palais des Congrès de Cotonou", date: "Juil 2025", statut: "en préparation" },
-    ],
-    artistes: ["Prime Ezinse", "Jean Luc", "Spéro", "Youssou", "Kossivi Adjobé", "Mariama Sow"],
+    id: 3, titre: "Entre ciel et elles", type: "Création", duree: "—",
+    description: "Création disponible pour programmation au Bénin et à l'international.",
+    phare: false,
+  },
+  {
+    id: 4, titre: "Oréojonglé", type: "Création", duree: "—",
+    description: "Création disponible pour programmation au Bénin et à l'international.",
+    phare: false,
+  },
+  {
+    id: 5, titre: "L'Antichambre des dieux", type: "Création", duree: "—",
+    description: "Création disponible pour programmation au Bénin et à l'international.",
+    phare: false,
   },
 ];
+
+const ARCHIVES_SPECTACLES = [
+  { titre: "Le Souffle des corps", annee: "2021" },
+  { titre: "Fragments de hauteurs", annee: "2020" },
+  { titre: "Équilibres invisibles", annee: "2019" },
+];
+
+const PARTENAIRES_EVENEMENTIEL = ["La Roche", "Sobebra", "Moov-Bénin", "Fleur d'Ébène", "Institut Français du Bénin", "ADAC"];
 
 const Badge = ({ text, bg, color }) => (
   <span style={{ background: bg, color, borderRadius: 20, padding: "3px 12px", fontSize: 12, fontWeight: 600 }}>{text}</span>
@@ -1477,74 +1472,54 @@ export default function App() {
           {/* ── COMPAGNIE & SPECTACLES (back-office) ── */}
           {page === "compagnie" && (
             <div>
-              {/* Artistes */}
+              {/* Spectacles en diffusion */}
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                  <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: 0 }}>Artistes de l'association</h2>
-                  <Btn small>+ Ajouter un artiste</Btn>
+                  <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: 0 }}>Spectacles en diffusion</h2>
+                  <Btn small>+ Ajouter un spectacle</Btn>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-                  {ARTISTES.map(a => (
-                    <Card key={a.id} style={{ borderTop: `3px solid ${C.or}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                        <div style={{
-                          width: 48, height: 48, borderRadius: "50%", background: C.vert,
-                          color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 14, fontWeight: 700, flexShrink: 0,
-                        }}>{a.photo}</div>
-                        <div>
-                          <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700 }}>{a.nom}</div>
-                          <Badge text={a.discipline} bg={C.fond} color={C.vert} />
-                        </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  {SPECTACLES.map(s => (
+                    <Card key={s.id} style={{ borderLeft: `4px solid ${s.phare ? C.magenta : C.or}` }}>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                        <Badge text={s.type} bg={C.fond} color={C.vert} />
+                        {s.duree !== "—" && <Badge text={s.duree} bg="#FFF8E1" color={C.orange} />}
+                        {s.phare && <Badge text="Spectacle phare" bg="#fde7f0" color={C.magenta} />}
                       </div>
-                      <div style={{ fontSize: 13, color: C.gris, lineHeight: 1.5 }}>{a.bio}</div>
+                      <div style={{ fontFamily: FT, fontSize: 19, fontWeight: 700, marginBottom: 8 }}>{s.titre}</div>
+                      <div style={{ fontSize: 13, color: C.gris, lineHeight: 1.6 }}>{s.description}</div>
                     </Card>
                   ))}
                 </div>
               </div>
 
-              {/* Catalogue spectacles */}
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                  <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: 0 }}>Catalogue des spectacles</h2>
-                  <Btn small>+ Ajouter un spectacle</Btn>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {SPECTACLES.map(s => (
-                    <Card key={s.id} style={{ borderLeft: `4px solid ${C.or}` }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 20 }}>
-                        <div>
-                          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                            <Badge text={s.type} bg={C.fond} color={C.vert} />
-                            <Badge text={s.duree} bg="#FFF8E1" color={C.orange} />
-                            <Badge text={s.public_cible} bg="#E3F2FD" color={C.bleu} />
-                          </div>
-                          <div style={{ fontFamily: FT, fontSize: 19, fontWeight: 700, marginBottom: 8 }}>{s.titre}</div>
-                          <div style={{ fontSize: 13, color: C.gris, lineHeight: 1.6, marginBottom: 12 }}>{s.description}</div>
-                          <div style={{ fontSize: 12, color: C.gris }}>
-                            <strong style={{ color: C.noir }}>Artistes : </strong>{s.artistes.join(", ")}
-                          </div>
-                        </div>
-                        <div style={{ minWidth: 220 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Dates & Lieux</div>
-                          {s.dates.map((d, i) => (
-                            <div key={i} style={{
-                              background: C.fond, borderRadius: 8, padding: "8px 12px", marginBottom: 8,
-                              borderLeft: `3px solid ${d.statut === "confirmé" ? C.vert : d.statut === "en discussion" ? C.or : C.gris}`,
-                            }}>
-                              <div style={{ fontSize: 13, fontWeight: 600 }}>{d.date}</div>
-                              <div style={{ fontSize: 12, color: C.gris }}>{d.lieu}</div>
-                              <Badge text={d.statut}
-                                bg={d.statut === "confirmé" ? "#E8F5E9" : d.statut === "en discussion" ? "#FFF8E1" : C.grisClair}
-                                color={d.statut === "confirmé" ? C.vert : d.statut === "en discussion" ? C.orange : C.gris}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+              {/* Archives */}
+              <div style={{ marginBottom: 32 }}>
+                <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Archives de création</h2>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  {ARCHIVES_SPECTACLES.map((a, i) => (
+                    <Card key={i} style={{ textAlign: "center", borderTop: `3px solid ${C.grisClair}` }}>
+                      <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{a.titre}</div>
+                      <Badge text={a.annee} bg={C.fond} color={C.gris} />
                     </Card>
                   ))}
                 </div>
+              </div>
+
+              {/* Événementiel */}
+              <div>
+                <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Événementiel</h2>
+                <Card style={{ borderTop: `4px solid ${C.bleu}` }}>
+                  <p style={{ fontSize: 14, color: C.gris, lineHeight: 1.7, marginBottom: 16 }}>
+                    Circo Bénin produit et représente des spectacles avec des artistes professionnels pour animer vos événements : fêtes privées, événements d'entreprise, festivals culturels.
+                  </p>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Partenaires</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {PARTENAIRES_EVENEMENTIEL.map((p, i) => (
+                      <Badge key={i} text={p} bg={C.fond} color={C.vert} />
+                    ))}
+                  </div>
+                </Card>
               </div>
             </div>
           )}
@@ -1553,61 +1528,65 @@ export default function App() {
           {page === "compagnie_pub" && (
             <div>
               {/* Hero */}
-              <div style={{ background: C.vert, borderRadius: 16, padding: "32px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden" }}>
+              <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "40px 36px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", right: -20, top: -20, fontSize: 120, opacity: 0.07 }}>🎪</div>
                 <div style={{ fontSize: 12, color: C.orClair, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Compagnie & Spectacles</div>
-                <h2 style={{ fontFamily: FT, fontSize: 26, margin: "0 0 8px" }}>Circo Bénin en tournée</h2>
-                <p style={{ fontSize: 14, opacity: 0.85, margin: 0 }}>Découvrez nos spectacles et nos artistes</p>
+                <h2 style={{ fontFamily: FT, fontSize: 28, margin: "0 0 8px" }}>Circo Bénin en tournée</h2>
+                <p style={{ fontSize: 14, opacity: 0.85, margin: 0, maxWidth: 500 }}>Des créations circassiennes pour la scène, disponibles pour programmation au Bénin et à l'international.</p>
               </div>
 
-              {/* Spectacles publics */}
+              {/* Spectacles en diffusion */}
               <div style={{ marginBottom: 32 }}>
-                <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Nos spectacles</h2>
+                <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Spectacles en diffusion</h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   {SPECTACLES.map(s => (
-                    <Card key={s.id} style={{ borderLeft: `4px solid ${C.or}` }}>
+                    <Card key={s.id} style={{ borderLeft: `4px solid ${s.phare ? C.magenta : C.or}` }}>
                       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                         <Badge text={s.type} bg={C.fond} color={C.vert} />
-                        <Badge text={s.duree} bg="#FFF8E1" color={C.orange} />
-                        <Badge text={s.public_cible} bg="#E3F2FD" color={C.bleu} />
+                        {s.duree !== "—" && <Badge text={s.duree} bg="#FFF8E1" color={C.orange} />}
+                        {s.phare && <Badge text="Spectacle phare" bg="#fde7f0" color={C.magenta} />}
                       </div>
-                      <div style={{ fontFamily: FT, fontSize: 19, fontWeight: 700, marginBottom: 8 }}>{s.titre}</div>
-                      <div style={{ fontSize: 14, color: C.gris, lineHeight: 1.6, marginBottom: 16 }}>{s.description}</div>
-                      <div style={{ borderTop: `1px solid ${C.grisClair}`, paddingTop: 14 }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Prochaines dates</div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                          {s.dates.map((d, i) => (
-                            <div key={i} style={{
-                              background: C.fond, borderRadius: 10, padding: "8px 14px",
-                              borderLeft: `3px solid ${d.statut === "confirmé" ? C.vert : C.or}`,
-                            }}>
-                              <div style={{ fontSize: 13, fontWeight: 700 }}>{d.date}</div>
-                              <div style={{ fontSize: 12, color: C.gris }}>{d.lieu}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      <div style={{ fontFamily: FT, fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{s.titre}</div>
+                      <div style={{ fontSize: 14, color: C.gris, lineHeight: 1.6 }}>{s.description}</div>
                     </Card>
                   ))}
                 </div>
               </div>
 
-              {/* Artistes */}
-              <div>
-                <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Nos artistes</h2>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-                  {ARTISTES.map(a => (
-                    <Card key={a.id} style={{ textAlign: "center" }}>
-                      <div style={{
-                        width: 56, height: 56, borderRadius: "50%", background: C.vert,
-                        color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16, fontWeight: 700, margin: "0 auto 12px",
-                      }}>{a.photo}</div>
-                      <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{a.nom}</div>
-                      <Badge text={a.discipline} bg={C.fond} color={C.vert} />
-                      <div style={{ fontSize: 12, color: C.gris, marginTop: 10, lineHeight: 1.5 }}>{a.bio}</div>
+              {/* Archives */}
+              <div style={{ marginBottom: 32 }}>
+                <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Archives de création</h2>
+                <p style={{ fontSize: 13, color: C.gris, marginBottom: 16 }}>Nos précédentes créations ont marqué les scènes nationales et internationales.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  {ARCHIVES_SPECTACLES.map((a, i) => (
+                    <Card key={i} style={{ textAlign: "center", borderTop: `3px solid ${C.grisClair}` }}>
+                      <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{a.titre}</div>
+                      <Badge text={a.annee} bg={C.fond} color={C.gris} />
                     </Card>
                   ))}
+                </div>
+              </div>
+
+              {/* Événementiel */}
+              <div>
+                <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Événementiel</h2>
+                <Card style={{ borderTop: `4px solid ${C.bleu}`, marginBottom: 20 }}>
+                  <p style={{ fontSize: 14, color: C.gris, lineHeight: 1.7, marginBottom: 16 }}>
+                    Circo Bénin produit et représente des spectacles avec des artistes professionnels pour animer vos événements : fêtes privées, événements d'entreprise, festivals culturels. Des prestations sur mesure pour captiver et émerveiller votre public.
+                  </p>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Ils nous font confiance</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {PARTENAIRES_EVENEMENTIEL.map((p, i) => (
+                      <Badge key={i} text={p} bg={C.fond} color={C.vert} />
+                    ))}
+                  </div>
+                </Card>
+                <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "28px 32px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                  <div>
+                    <div style={{ fontFamily: FT, fontSize: 18, marginBottom: 4 }}>Programmer un spectacle ou un événement</div>
+                    <div style={{ fontSize: 13, opacity: 0.85 }}>Contactez-nous pour accueillir une création de Circo Bénin</div>
+                  </div>
+                  <Btn onClick={() => setPage("contact")} color="rgba(255,255,255,0.25)">Nous contacter →</Btn>
                 </div>
               </div>
             </div>
