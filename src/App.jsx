@@ -834,6 +834,16 @@ export default function App() {
   const [nomIntervenant, setNomIntervenant] = useState("");
   const [parentCodeInput, setParentCodeInput] = useState("");
   const [activeEvenement, setActiveEvenement] = useState(null);
+  const [showModalEleve, setShowModalEleve] = useState(false);
+  const [showModalProjet, setShowModalProjet] = useState(false);
+  const [showModalSpectacle, setShowModalSpectacle] = useState(false);
+  const [nouvelEleve, setNouvelEleve] = useState({ prenom: "", nom: "", age: "", discipline: "Cirque", classe: "" });
+  const [nouveauProjet, setNouveauProjet] = useState({ titre: "", type: "Social", date: "", statut: "En préparation" });
+  const [nouveauSpectacle, setNouveauSpectacle] = useState({ titre: "", type: "Solo", duree: "", description: "" });
+  const [elevesState, setElevesState] = useState(ELEVES);
+  const [projetsState, setProjetsState] = useState(PROJETS);
+  const [spectaclesState, setSpectaclesState] = useState(SPECTACLES);
+  const [presencesFormateurs, setPresencesFormateurs] = useState({});
   const [preselectType, setPreselectType] = useState(null);
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
@@ -1344,7 +1354,9 @@ export default function App() {
                 <div>
                   {(() => {
                     const cours = COURS.find(c => c.id === activeCours);
-                    const elevesClasse = ELEVES.slice(0, cours.nb > ELEVES.length ? ELEVES.length : 4);
+                    const elevesClasse = elevesState.filter(e => e.classe && e.classe.includes(cours.heure)).concat(
+                      elevesState.filter(e => e.classe && !e.classe.includes(cours.heure))
+                    ).slice(0, cours.nb);
                     const pres = presencesCours[activeCours] || {};
                     return (
                       <div>
@@ -1387,7 +1399,34 @@ export default function App() {
                             <div style={{ fontSize: 14, color: C.gris }}>
                               {Object.values(pres).filter(Boolean).length} présent(s) sur {elevesClasse.length}
                             </div>
-                            <Btn>Valider la feuille</Btn>
+                            <Btn onClick={() => alert("Feuille validée !")}>Valider la feuille ✓</Btn>
+                          </div>
+                        </Card>
+                        <Card style={{ marginTop: 20 }}>
+                          <SectionTitle>Présences intervenants</SectionTitle>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+                            {cours.formateurs.map(f => {
+                              const presF = presencesFormateurs[activeCours] || {};
+                              const present = presF[f];
+                              return (
+                                <div key={f} onClick={() => setPresencesFormateurs(prev => ({
+                                  ...prev,
+                                  [activeCours]: { ...(prev[activeCours] || {}), [f]: !present }
+                                }))} style={{
+                                  display: "flex", alignItems: "center", gap: 10, padding: 14,
+                                  borderRadius: 12, cursor: "pointer",
+                                  background: present ? "#E8F5E9" : C.grisClair,
+                                  border: "2px solid " + (present ? C.vert : "transparent"),
+                                }}>
+                                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: present ? C.vert : C.gris, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>{f[0]}</div>
+                                  <div>
+                                    <div style={{ fontSize: 14, fontWeight: 600 }}>{f}</div>
+                                    <div style={{ fontSize: 11, color: C.gris }}>Formateur</div>
+                                  </div>
+                                  <div style={{ fontSize: 20, marginLeft: "auto" }}>{present ? "✅" : "⬜"}</div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </Card>
                       </div>
@@ -1405,7 +1444,7 @@ export default function App() {
                 <input value={searchEleve} onChange={e => setSearchEleve(e.target.value)}
                   placeholder="Rechercher un élève..."
                   style={{ flex: 1, padding: "12px 18px", borderRadius: 12, border: `1px solid ${C.grisClair}`, fontSize: 14, background: "#fff", outline: "none", fontFamily: FB }} />
-                <Btn>+ Inscrire un élève</Btn>
+                <Btn onClick={() => setShowModalEleve(true)}>+ Inscrire un élève</Btn>
               </div>
               <Card style={{ padding: 0, overflow: "hidden" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -1417,7 +1456,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ELEVES.filter(e => e.nom.toLowerCase().includes(searchEleve.toLowerCase())).map((e, i) => (
+                    {elevesState.filter(e => e.nom.toLowerCase().includes(searchEleve.toLowerCase())).map((e, i) => (
                       <tr key={e.id} style={{ borderTop: `1px solid ${C.grisClair}`, background: i % 2 === 0 ? "#fff" : "#FAFFFE" }}>
                         <td style={{ padding: "14px 20px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1476,10 +1515,10 @@ export default function App() {
           {page === "projets" && (
             <div>
               <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
-                {(role === "directeur" || role === "admin") && <Btn>+ Nouveau projet</Btn>}
+                {(role === "directeur" || role === "admin") && <Btn onClick={() => setShowModalProjet(true)}>+ Nouveau projet</Btn>}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                {PROJETS.map(p => (
+                {projetsState.map(p => (
                   <Card key={p.id} style={{ borderTop: `4px solid ${p.public ? C.vert : C.gris}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                       <Badge text={p.type} bg={C.fond} color={C.vert} />
@@ -1507,10 +1546,10 @@ export default function App() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                   <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: 0 }}>Spectacles en diffusion</h2>
-                  <Btn small>+ Ajouter un spectacle</Btn>
+                  <Btn small onClick={() => setShowModalSpectacle(true)}>+ Ajouter un spectacle</Btn>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                  {SPECTACLES.map(s => (
+                  {spectaclesState.map(s => (
                     <Card key={s.id} style={{ borderLeft: `4px solid ${s.phare ? C.magenta : C.or}` }}>
                       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                         <Badge text={s.type} bg={C.fond} color={C.vert} />
@@ -1570,7 +1609,7 @@ export default function App() {
               <div style={{ marginBottom: 32 }}>
                 <h2 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: "0 0 20px" }}>Spectacles en diffusion</h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {SPECTACLES.map(s => (
+                  {spectaclesState.map(s => (
                     <Card key={s.id} style={{ borderLeft: `4px solid ${s.phare ? C.magenta : C.or}` }}>
                       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                         <Badge text={s.type} bg={C.fond} color={C.vert} />
@@ -2338,6 +2377,117 @@ export default function App() {
 
         </div>
       </main>
+
+      {/* ── MODAL Inscrire un élève ── */}
+      {showModalEleve && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: 32, width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>Inscrire un élève</div>
+              <div onClick={() => setShowModalEleve(false)} style={{ cursor: "pointer", fontSize: 22, color: C.gris }}>✕</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Prénom *</label>
+                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.prenom} onChange={e => setNouvelEleve({...nouvelEleve, prenom: e.target.value})} placeholder="Prénom" /></div>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Nom *</label>
+                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.nom} onChange={e => setNouvelEleve({...nouvelEleve, nom: e.target.value})} placeholder="Nom de famille" /></div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Âge</label>
+                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.age} onChange={e => setNouvelEleve({...nouvelEleve, age: e.target.value})} placeholder="Ex: 8" type="number" /></div>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Discipline</label>
+                <select style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.discipline} onChange={e => setNouvelEleve({...nouvelEleve, discipline: e.target.value})}>
+                  {["Cirque", "Diabolo", "Jonglerie", "Acrobatie", "Aérien", "Équilibre"].map(d => <option key={d}>{d}</option>)}
+                </select></div>
+            </div>
+            <div style={{ marginBottom: 24 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Créneau</label>
+              <select style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.classe} onChange={e => setNouvelEleve({...nouvelEleve, classe: e.target.value})}>
+                <option value="">Sélectionner un créneau</option>
+                {COURS.map(c => <option key={c.id} value={c.jour + " " + c.heure}>{c.jour} {c.heure} — {c.age}</option>)}
+              </select></div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div onClick={() => setShowModalEleve(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid #e5e7eb", textAlign: "center", cursor: "pointer", fontSize: 14 }}>Annuler</div>
+              <div onClick={() => {
+                if (!nouvelEleve.prenom || !nouvelEleve.nom) return;
+                const newId = elevesState.length + 1;
+                setElevesState([...elevesState, { id: newId, nom: nouvelEleve.prenom + " " + nouvelEleve.nom, age: parseInt(nouvelEleve.age) || 0, classe: nouvelEleve.classe, discipline: nouvelEleve.discipline, statut: "actif", paye: false, presence: 0 }]);
+                setNouvelEleve({ prenom: "", nom: "", age: "", discipline: "Cirque", classe: "" });
+                setShowModalEleve(false);
+              }} style={{ flex: 1, padding: "12px", borderRadius: 10, background: C.vert, color: "#fff", textAlign: "center", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>Inscrire l'élève ✓</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL Nouveau projet ── */}
+      {showModalProjet && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: 32, width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>Nouveau projet</div>
+              <div onClick={() => setShowModalProjet(false)} style={{ cursor: "pointer", fontSize: 22, color: C.gris }}>✕</div>
+            </div>
+            <div style={{ marginBottom: 14 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Titre du projet *</label>
+              <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouveauProjet.titre} onChange={e => setNouveauProjet({...nouveauProjet, titre: e.target.value})} placeholder="Ex: Stage découverte jonglerie" /></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Type</label>
+                <select style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouveauProjet.type} onChange={e => setNouveauProjet({...nouveauProjet, type: e.target.value})}>
+                  {["Social", "Pédagogique", "Artistique", "Événementiel", "Formation"].map(t => <option key={t}>{t}</option>)}
+                </select></div>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Statut</label>
+                <select style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouveauProjet.statut} onChange={e => setNouveauProjet({...nouveauProjet, statut: e.target.value})}>
+                  {["En préparation", "En cours", "Inscriptions ouvertes", "Terminé"].map(s => <option key={s}>{s}</option>)}
+                </select></div>
+            </div>
+            <div style={{ marginBottom: 24 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Date</label>
+              <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouveauProjet.date} onChange={e => setNouveauProjet({...nouveauProjet, date: e.target.value})} placeholder="Ex: Juillet 2026" /></div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div onClick={() => setShowModalProjet(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid #e5e7eb", textAlign: "center", cursor: "pointer", fontSize: 14 }}>Annuler</div>
+              <div onClick={() => {
+                if (!nouveauProjet.titre) return;
+                const newId = projetsState.length + 1;
+                setProjetsState([...projetsState, { id: newId, titre: nouveauProjet.titre, type: nouveauProjet.type, date: nouveauProjet.date, statut: nouveauProjet.statut, formateurs: [], public: false }]);
+                setNouveauProjet({ titre: "", type: "Social", date: "", statut: "En préparation" });
+                setShowModalProjet(false);
+              }} style={{ flex: 1, padding: "12px", borderRadius: 10, background: C.vert, color: "#fff", textAlign: "center", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>Créer le projet ✓</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL Ajouter un spectacle ── */}
+      {showModalSpectacle && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: 32, width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>Ajouter un spectacle</div>
+              <div onClick={() => setShowModalSpectacle(false)} style={{ cursor: "pointer", fontSize: 22, color: C.gris }}>✕</div>
+            </div>
+            <div style={{ marginBottom: 14 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Titre *</label>
+              <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouveauSpectacle.titre} onChange={e => setNouveauSpectacle({...nouveauSpectacle, titre: e.target.value})} placeholder="Titre du spectacle" /></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Type</label>
+                <select style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouveauSpectacle.type} onChange={e => setNouveauSpectacle({...nouveauSpectacle, type: e.target.value})}>
+                  {["Solo", "Duo", "Création collective", "Jeune public", "Tout public"].map(t => <option key={t}>{t}</option>)}
+                </select></div>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Durée</label>
+                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouveauSpectacle.duree} onChange={e => setNouveauSpectacle({...nouveauSpectacle, duree: e.target.value})} placeholder="Ex: 45 min" /></div>
+            </div>
+            <div style={{ marginBottom: 24 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Description</label>
+              <textarea style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box", resize: "vertical", minHeight: 80 }} value={nouveauSpectacle.description} onChange={e => setNouveauSpectacle({...nouveauSpectacle, description: e.target.value})} placeholder="Description du spectacle..." /></div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div onClick={() => setShowModalSpectacle(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid #e5e7eb", textAlign: "center", cursor: "pointer", fontSize: 14 }}>Annuler</div>
+              <div onClick={() => {
+                if (!nouveauSpectacle.titre) return;
+                const newId = spectaclesState.length + 1;
+                setSpectaclesState([...spectaclesState, { id: newId, titre: nouveauSpectacle.titre, type: nouveauSpectacle.type, duree: nouveauSpectacle.duree || "—", description: nouveauSpectacle.description, phare: false }]);
+                setNouveauSpectacle({ titre: "", type: "Solo", duree: "", description: "" });
+                setShowModalSpectacle(false);
+              }} style={{ flex: 1, padding: "12px", borderRadius: 10, background: C.vert, color: "#fff", textAlign: "center", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>Ajouter le spectacle ✓</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <nav className="nav-mobile" style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
