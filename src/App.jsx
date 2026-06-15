@@ -212,12 +212,18 @@ const PROJETS = [
 ];
 
 const EVENEMENTS = [
-  { id: 1, date: "21 juin 2026", titre: "Spectacle de fin d'année", desc: "Spectacle des enfants de l'école Circo Bénin — familles bienvenues", emoji: "🎪", statut: "À venir", couleur: "#e91e8c" },
-  { id: 2, date: "Juillet – Août 2026", titre: "Ateliers vacances + Stages d'été", desc: "Ateliers hebdomadaires et stages intensifs pendant toutes les vacances", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800" },
-  { id: 3, date: "14 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f" },
-  { id: 4, date: "Toussaint 2026", titre: "Stages de vacances", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed" },
-  { id: 5, date: "25–28 novembre 2026", titre: "Festival Cirque en Fusion", desc: "3ème édition du Festival International des Arts du Cirque — Cotonou", emoji: "🏆", statut: "En préparation", couleur: "#e91e8c" },
-  { id: 6, date: "Décembre 2026", titre: "Stages de vacances de Noël", desc: "Stages de fin d'année — clôture de la saison en beauté", emoji: "🎄", statut: "À venir", couleur: "#2d7a4f" },
+  { id: 1, date: "21 juin 2026", titre: "Spectacle de fin d'année", desc: "Spectacle des enfants de l'école Circo Bénin — familles bienvenues", emoji: "🎪", statut: "À venir", couleur: "#e91e8c", typeInscription: null,
+    details: "Venez assister au grand spectacle de fin d'année presente par les eleves de Circo Benin ! Un moment festif et emouvant pour decouvrir le travail accompli pendant l'annee. Entree libre, ouvert a toutes les familles." },
+  { id: 2, date: "Juillet – Août 2026", titre: "Ateliers vacances + Stages d'été", desc: "Ateliers hebdomadaires et stages intensifs pendant toutes les vacances", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800", typeInscription: "ete",
+    details: "Pendant les grandes vacances, Circo Benin propose des stages intensifs sur 10 jours pour decouvrir ou se perfectionner dans les arts du cirque. Ouvert a tous les ages, encadrement par des formateurs professionnels." },
+  { id: 3, date: "14 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f", typeInscription: "hebdo",
+    details: "La rentree 2026-2027 marque la reprise des ateliers hebdomadaires pour tous les ages : Bebe Cirque, Petits, Enfants, Ados et Adultes. Inscrivez-vous des maintenant pour reserver votre creneau." },
+  { id: 4, date: "Toussaint 2026", titre: "Stages de vacances", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed", typeInscription: "toussaint",
+    details: "Profitez des vacances de Toussaint pour un stage intensif de cirque ! Jonglerie, acrobatie, aerien, equilibre et expression au programme." },
+  { id: 5, date: "25–28 novembre 2026", titre: "Festival Cirque en Fusion", desc: "3ème édition du Festival International des Arts du Cirque — Cotonou", emoji: "🏆", statut: "En préparation", couleur: "#e91e8c", typeInscription: null,
+    details: "La 3eme edition du Festival International des Arts du Cirque \"Cirque en Fusion\" se tiendra du 25 au 28 novembre 2026 a Cotonou, sur le theme \"Rythmes et Corporalites\". Spectacles, ateliers et rencontres avec des artistes internationaux." },
+  { id: 6, date: "Décembre 2026", titre: "Stages de vacances de Noël", desc: "Stages de fin d'année — clôture de la saison en beauté", emoji: "🎄", statut: "À venir", couleur: "#2d7a4f", typeInscription: "noel",
+    details: "Terminez l'annee en beaute avec un stage de cirque pendant les vacances de Noel ! Ambiance festive et programme adapte a tous les niveaux." },
 ];
 
 const ATELIERS_LOISIR = [
@@ -552,9 +558,17 @@ function ContactForm() {
   );
 }
 
-function InscriptionForm({ onPayer, onContact }) {
-  const [step, setStep] = useState(0);
-  const [typeInscription, setTypeInscription] = useState(null);
+function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
+  const [step, setStep] = useState(preselect ? 1 : 0);
+  const [typeInscription, setTypeInscription] = useState(preselect || null);
+
+  useEffect(() => {
+    if (preselect) {
+      setTypeInscription(preselect);
+      setStep(1);
+      if (onClearPreselect) onClearPreselect();
+    }
+  }, [preselect]);
   const [form, setForm] = useState({
     prenom: "", nom: "", dateNaissance: "", email: "", telephone: "",
     discipline: "", navette: false, autoPhoto: null,
@@ -665,6 +679,15 @@ function InscriptionForm({ onPayer, onContact }) {
         {step === 1 && (
           <div>
             <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#2d7a4f", marginBottom: 20 }}>Étape 2 — Informations personnelles</div>
+            {typeInscription && (
+              <div style={{ background: "#e8f5e9", borderRadius: 12, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>{types.find(t => t.id === typeInscription)?.emoji}</span>
+                <div>
+                  <div style={{ fontSize: 13, color: "#2d7a4f", fontWeight: 700 }}>Inscription personnalisée : {types.find(t => t.id === typeInscription)?.titre}</div>
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>{types.find(t => t.id === typeInscription)?.desc}</div>
+                </div>
+              </div>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
               <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} value={form.prenom} onChange={e => setForm({...form, prenom: e.target.value})} placeholder="Prénom" /></div>
               <div><label style={labelStyle}>Nom *</label><input style={inputStyle} value={form.nom} onChange={e => setForm({...form, nom: e.target.value})} placeholder="Nom" /></div>
@@ -804,6 +827,8 @@ export default function App() {
   const [pinError, setPinError] = useState(false);
   const [nomIntervenant, setNomIntervenant] = useState("");
   const [parentCodeInput, setParentCodeInput] = useState("");
+  const [activeEvenement, setActiveEvenement] = useState(null);
+  const [preselectType, setPreselectType] = useState(null);
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
@@ -1834,6 +1859,33 @@ export default function App() {
                 </Card>
               </div>
 
+              {/* Calendrier événements */}
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 4, height: 32, background: C.vert, borderRadius: 2 }} />
+                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>📅 Agenda 2026–2027</h2>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {EVENEMENTS.map((e, i) => (
+                    <div key={i} onClick={() => { setActiveEvenement(e.id); setPage("evenement_detail"); }} style={{ background: "#fff", borderRadius: 14, padding: "16px 20px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", display: "flex", gap: 16, alignItems: "center", borderLeft: `4px solid ${e.couleur}`, cursor: "pointer", transition: "transform 0.15s" }}
+                      onMouseEnter={ev => ev.currentTarget.style.transform = "translateX(4px)"}
+                      onMouseLeave={ev => ev.currentTarget.style.transform = "translateX(0)"}
+                    >
+                      <div style={{ fontSize: 28, flexShrink: 0 }}>{e.emoji}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{e.titre}</div>
+                        <div style={{ fontSize: 13, color: C.gris }}>{e.desc}</div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: e.couleur, marginBottom: 4 }}>{e.date}</div>
+                        <Badge text={e.statut} bg={e.couleur + "18"} color={e.couleur} />
+                      </div>
+                      <div style={{ fontSize: 18, color: C.gris, flexShrink: 0 }}>→</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Ateliers Loisir */}
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
@@ -1888,29 +1940,6 @@ export default function App() {
                         🎯 {f.objectif}
                       </div>
                     </Card>
-                  ))}
-                </div>
-              </div>
-
-              {/* Calendrier événements */}
-              <div style={{ marginBottom: 32 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                  <div style={{ width: 4, height: 32, background: C.vert, borderRadius: 2 }} />
-                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>📅 Agenda 2026–2027</h2>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {EVENEMENTS.map((e, i) => (
-                    <div key={i} style={{ background: "#fff", borderRadius: 14, padding: "16px 20px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", display: "flex", gap: 16, alignItems: "center", borderLeft: `4px solid ${e.couleur}` }}>
-                      <div style={{ fontSize: 28, flexShrink: 0 }}>{e.emoji}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{e.titre}</div>
-                        <div style={{ fontSize: 13, color: C.gris }}>{e.desc}</div>
-                      </div>
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: e.couleur, marginBottom: 4 }}>{e.date}</div>
-                        <Badge text={e.statut} bg={e.couleur + "18"} color={e.couleur} />
-                      </div>
-                    </div>
                   ))}
                 </div>
               </div>
@@ -2170,6 +2199,44 @@ export default function App() {
             </div>
           )}
 
+          {/* ── DÉTAIL ÉVÉNEMENT ── */}
+          {page === "evenement_detail" && (() => {
+            const ev = EVENEMENTS.find(e => e.id === activeEvenement);
+            if (!ev) return <div>Événement introuvable</div>;
+            return (
+              <div style={{ maxWidth: 640, margin: "0 auto" }}>
+                <div onClick={() => setPage("accueil")} style={{ cursor: "pointer", color: C.gris, fontSize: 13, marginBottom: 16 }}>← Retour à l'agenda</div>
+                <div style={{ background: `linear-gradient(135deg, ${ev.couleur}, ${ev.couleur}cc)`, borderRadius: 20, padding: "40px 36px", color: "#fff", marginBottom: 24, position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", right: -10, top: -10, fontSize: 120, opacity: 0.15 }}>{ev.emoji}</div>
+                  <Badge text={ev.statut} bg="rgba(255,255,255,0.2)" color="#fff" />
+                  <h2 style={{ fontFamily: FT, fontSize: 28, margin: "12px 0 8px" }}>{ev.titre}</h2>
+                  <p style={{ fontSize: 15, opacity: 0.9, margin: 0, fontWeight: 600 }}>📅 {ev.date}</p>
+                </div>
+                <Card style={{ marginBottom: 24 }}>
+                  <SectionTitle>À propos de cet événement</SectionTitle>
+                  <p style={{ fontSize: 14, color: C.gris, lineHeight: 1.8 }}>{ev.details}</p>
+                </Card>
+                {ev.typeInscription ? (
+                  <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "28px 32px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                    <div>
+                      <div style={{ fontFamily: FT, fontSize: 18, marginBottom: 4 }}>Intéressé(e) ?</div>
+                      <div style={{ fontSize: 13, opacity: 0.85 }}>Inscrivez-vous directement pour cette activité</div>
+                    </div>
+                    <Btn onClick={() => { setPreselectType(ev.typeInscription); setPage("inscription"); }} color="rgba(255,255,255,0.25)">S'inscrire à cette activité →</Btn>
+                  </div>
+                ) : (
+                  <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "28px 32px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                    <div>
+                      <div style={{ fontFamily: FT, fontSize: 18, marginBottom: 4 }}>Une question ?</div>
+                      <div style={{ fontSize: 13, opacity: 0.85 }}>Contactez-nous pour plus d'informations sur cet événement</div>
+                    </div>
+                    <Btn onClick={() => setPage("contact")} color="rgba(255,255,255,0.25)">Nous contacter →</Btn>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* ── PROGRAMME PUBLIC ── */}
           {page === "programme" && (
             <div>
@@ -2243,7 +2310,7 @@ export default function App() {
 
           {/* ── INSCRIPTION PUBLIC ── */}
           {page === "inscription" && (
-            <InscriptionForm onPayer={() => setPage("payer")} onContact={() => setPage("contact")} />
+            <InscriptionForm onPayer={() => setPage("payer")} onContact={() => setPage("contact")} preselect={preselectType} onClearPreselect={() => setPreselectType(null)} />
           )}
 
         </div>
