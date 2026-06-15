@@ -7,6 +7,12 @@ const mobileCSS = `
   .nav-mobile { display: flex !important; }
 }
 .nav-mobile { display: none; }
+@keyframes festivalPulse {
+  0% { box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 0 0 0 rgba(255,255,255,0.5); }
+  70% { box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 0 0 14px rgba(255,255,255,0); }
+  100% { box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 0 0 0 rgba(255,255,255,0); }
+}
+.festival-pulse { animation: festivalPulse 2.5s infinite; }
 `;
 import { createClient } from "@supabase/supabase-js";
 
@@ -1841,16 +1847,18 @@ export default function App() {
                 </div>
                 {/* Badge Festival - grand, sur le côté, avec logo officiel */}
                 <div onClick={() => { setActiveEvenement(5); setPage("evenement_detail"); }} style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", flexShrink: 0, width: 150,
+                  display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", flexShrink: 0, width: 160,
                 }}>
-                  <div style={{
+                  <div style={{ fontSize: 13, fontWeight: 700, textAlign: "center", marginBottom: 10, letterSpacing: 0.5 }}>🏆 Festival Cirque en Fusion</div>
+                  <div className="festival-pulse" style={{
                     width: 130, height: 130, borderRadius: "50%", background: "#fff",
                     border: "3px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center",
-                    justifyContent: "center", overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.25)", marginBottom: 10,
+                    justifyContent: "center", overflow: "hidden", marginBottom: 10,
                   }}>
                     <img src="/festival-logo.jpg" alt="Cirque en Fusion" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, textAlign: "center", lineHeight: 1.3 }}>Festival International des Arts du Cirque</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, textAlign: "center" }}>Du 25 au 28 novembre 2026</div>
+                  <div style={{ fontSize: 11, opacity: 0.75, textAlign: "center", marginTop: 4 }}>Cliquez pour en savoir plus →</div>
                 </div>
               </div>
 
