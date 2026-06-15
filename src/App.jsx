@@ -1829,22 +1829,28 @@ export default function App() {
           {(page === "public" || page === "accueil") && (
             <div>
               {/* Hero */}
-              <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "48px 40px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", right: -30, top: -30, fontSize: 160, opacity: 0.06 }}>🎪</div>
-                <div style={{ display: "inline-block", background: "rgba(255,255,255,0.15)", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 600, marginBottom: 16, letterSpacing: 1 }}>COTONOU · BÉNIN</div>
-                <h2 style={{ fontFamily: FT, fontSize: 36, margin: "0 0 10px", lineHeight: 1.1 }}>Circo Bénin</h2>
-                <p style={{ fontSize: 16, opacity: 0.9, margin: "0 0 24px", maxWidth: 500 }}>Première école des arts du cirque du Bénin — acrobatie, jonglerie, aérien, équilibre, expression.</p>
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-                  <Btn onClick={() => setPage("inscription")} color="rgba(255,255,255,0.25)">S'inscrire →</Btn>
-                  <Btn onClick={() => setPage("programme")} color="rgba(255,255,255,0.15)">Voir le programme</Btn>
-                  {/* Badge rond cliquable Festival avec logo officiel */}
-                  <div onClick={() => { setActiveEvenement(5); setPage("evenement_detail"); }} style={{
-                    width: 66, height: 66, borderRadius: "50%", background: "#fff",
-                    border: "2px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center",
-                    justifyContent: "center", cursor: "pointer", overflow: "hidden", flexShrink: 0,
+              <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "48px 40px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 280 }}>
+                  <div style={{ display: "inline-block", background: "rgba(255,255,255,0.15)", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 600, marginBottom: 16, letterSpacing: 1 }}>COTONOU · BÉNIN</div>
+                  <h2 style={{ fontFamily: FT, fontSize: 36, margin: "0 0 10px", lineHeight: 1.1 }}>Circo Bénin</h2>
+                  <p style={{ fontSize: 16, opacity: 0.9, margin: "0 0 24px", maxWidth: 500 }}>Première école des arts du cirque du Bénin — acrobatie, jonglerie, aérien, équilibre, expression.</p>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <Btn onClick={() => setPage("inscription")} color="rgba(255,255,255,0.25)">S'inscrire →</Btn>
+                    <Btn onClick={() => setPage("programme")} color="rgba(255,255,255,0.15)">Voir le programme</Btn>
+                  </div>
+                </div>
+                {/* Badge Festival - grand, sur le côté, avec logo officiel */}
+                <div onClick={() => { setActiveEvenement(5); setPage("evenement_detail"); }} style={{
+                  display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", flexShrink: 0, width: 150,
+                }}>
+                  <div style={{
+                    width: 130, height: 130, borderRadius: "50%", background: "#fff",
+                    border: "3px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center",
+                    justifyContent: "center", overflow: "hidden", boxShadow: "0 6px 20px rgba(0,0,0,0.25)", marginBottom: 10,
                   }}>
                     <img src="/festival-logo.jpg" alt="Cirque en Fusion" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, textAlign: "center", lineHeight: 1.3 }}>Festival International des Arts du Cirque</div>
                 </div>
               </div>
 
