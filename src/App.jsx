@@ -2256,36 +2256,52 @@ export default function App() {
           {/* ── PAIEMENTS ── */}
           {page === "paiements" && (
             <div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
-                <StatCard label="Total encaissé" value="513 000 F" icon="✓" color={C.vert} />
-                <StatCard label="En attente" value="30 000 F" icon="⏳" color={C.orange} />
-                <StatCard label="Élèves à jour" value="3 / 5" icon="◈" color={C.bleu} />
-              </div>
-              <Card>
-                <SectionTitle>Historique des paiements</SectionTitle>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: C.fond }}>
-                      {["Élève", "Montant", "Mode", "Date", "Statut"].map(h => (
-                        <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {PAIEMENTS.map((p, i) => (
-                      <tr key={p.id} style={{ borderTop: `1px solid ${C.grisClair}`, background: i % 2 === 0 ? "#fff" : "#FAFFFE" }}>
-                        <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: 14 }}>{p.eleve}</td>
-                        <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 700, color: C.vert }}>{p.montant.toLocaleString()} FCFA</td>
-                        <td style={{ padding: "12px 16px", fontSize: 14, color: C.gris }}>{p.mode}</td>
-                        <td style={{ padding: "12px 16px", fontSize: 14, color: C.gris }}>{p.date}</td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <Badge text={p.statut} bg={p.statut === "payé" ? "#E8F5E9" : "#FFF8E1"} color={p.statut === "payé" ? C.vert : C.orange} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Card>
+              {(() => {
+                const comptes = Object.values(comptesPaiement);
+                const totalEncaisse = versementsEleves.reduce((a, v) => a + v.montant, 0);
+                const totalDu = comptes.reduce((a, c) => a + c.montant_du, 0);
+                const enAttente = Math.max(totalDu - totalEncaisse, 0);
+                const elevesAJour = comptes.filter(c => {
+                  const paye = versementsEleves.filter(v => v.eleve_id === c.eleve_id).reduce((a, v) => a + v.montant, 0);
+                  return paye >= c.montant_du;
+                }).length;
+                const versementsTries = [...versementsEleves].sort((a, b) => new Date(b.date) - new Date(a.date));
+                return (
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
+                      <StatCard label="Total encaissé" value={totalEncaisse.toLocaleString() + " F"} icon="✓" color={C.vert} />
+                      <StatCard label="En attente" value={enAttente.toLocaleString() + " F"} icon="⏳" color={C.orange} />
+                      <StatCard label="Élèves à jour" value={elevesAJour + " / " + comptes.length} icon="◈" color={C.bleu} />
+                    </div>
+                    <Card>
+                      <SectionTitle>Historique des paiements</SectionTitle>
+                      {versementsTries.length === 0 ? (
+                        <p style={{ color: C.gris, fontSize: 13 }}>Aucun versement enregistré encore. Va dans la page Élèves pour en ajouter.</p>
+                      ) : (
+                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                          <thead>
+                            <tr style={{ background: C.fond }}>
+                              {["Élève", "Montant", "Mode", "Date"].map(h => (
+                                <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {versementsTries.map((v, i) => (
+                              <tr key={v.id || i} style={{ borderTop: `1px solid ${C.grisClair}`, background: i % 2 === 0 ? "#fff" : "#FAFFFE" }}>
+                                <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: 14 }}>{v.eleve_nom}</td>
+                                <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 700, color: C.vert }}>{v.montant.toLocaleString()} FCFA</td>
+                                <td style={{ padding: "12px 16px", fontSize: 14, color: C.gris }}>{v.mode}</td>
+                                <td style={{ padding: "12px 16px", fontSize: 14, color: C.gris }}>{new Date(v.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </Card>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
