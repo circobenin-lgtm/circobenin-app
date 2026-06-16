@@ -969,6 +969,58 @@ export default function App() {
     chargerPointagesHeures();
   };
 
+  const [comptesPaiement, setComptesPaiement] = useState({});
+  const [versementsEleves, setVersementsEleves] = useState([]);
+  const [eleveFicheSelect, setEleveFicheSelect] = useState(null);
+  const [showModalVersement, setShowModalVersement] = useState(false);
+  const [versementForm, setVersementForm] = useState({ montant: "", mode: "Espèces", date: "" });
+  const [montantDuForm, setMontantDuForm] = useState("");
+  const [formuleForm, setFormuleForm] = useState("trimestre");
+
+  const chargerComptesPaiement = async () => {
+    try {
+      const { data: comptes } = await supabase.from("comptes_paiement").select("*");
+      const map = {};
+      (comptes || []).forEach(c => { map[c.eleve_id] = c; });
+      setComptesPaiement(map);
+      const { data: vers } = await supabase.from("versements_eleves").select("*").order("date", { ascending: false });
+      setVersementsEleves(vers || []);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role) chargerComptesPaiement();
+  }, [role]);
+
+  const enregistrerMontantDu = async (eleveId, eleveNom) => {
+    const montant = parseFloat(montantDuForm);
+    if (!montant) return;
+    await supabase.from("comptes_paiement").upsert([{
+      eleve_id: eleveId, eleve_nom: eleveNom, montant_du: montant, formule: formuleForm,
+    }], { onConflict: "eleve_id" });
+    chargerComptesPaiement();
+  };
+
+  const ajouterVersement = async (eleveId, eleveNom) => {
+    const f = versementForm;
+    if (!f.montant) return;
+    await supabase.from("versements_eleves").insert([{
+      eleve_id: eleveId, eleve_nom: eleveNom, montant: parseFloat(f.montant),
+      mode: f.mode, date: f.date || new Date().toISOString().slice(0, 10),
+    }]);
+    setShowModalVersement(false);
+    setVersementForm({ montant: "", mode: "Espèces", date: "" });
+    chargerComptesPaiement();
+  };
+
+  const calculerCompteEleve = (eleveId) => {
+    const compte = comptesPaiement[eleveId];
+    const montantDu = compte ? compte.montant_du : 0;
+    const verses = versementsEleves.filter(v => v.eleve_id === eleveId);
+    const totalPaye = verses.reduce((a, v) => a + v.montant, 0);
+    return { montantDu, totalPaye, reste: Math.max(montantDu - totalPaye, 0), formule: compte ? compte.formule : null, verses };
+  };
+
   // ── LOGIN ──
   if (!role) return (
     <div style={{
@@ -1923,8 +1975,12 @@ export default function App() {
                             <span style={{ fontSize: 12, color: C.gris }}>{e.presence}%</span>
                           </div>
                         </td>
-                        <td style={{ padding: "14px 20px" }}>
-                          <Badge text={e.paye ? "Payé" : "En attente"} bg={e.paye ? "#E8F5E9" : "#FFF8E1"} color={e.paye ? C.vert : C.orange} />
+                        <td onClick={() => setEleveFicheSelect(e.id)} style={{ padding: "14px 20px", cursor: "pointer" }}>
+                          {(() => {
+                            const compte = calculerCompteEleve(e.id);
+                            if (!compte.montantDu) return <Badge text={e.paye ? "Payé" : "En attente"} bg={e.paye ? "#E8F5E9" : "#FFF8E1"} color={e.paye ? C.vert : C.orange} />;
+                            return <Badge text={compte.reste > 0 ? compte.reste.toLocaleString() + " FCFA dus" : "Soldé ✓"} bg={compte.reste > 0 ? "#FFF8E1" : "#E8F5E9"} color={compte.reste > 0 ? C.orange : C.vert} />;
+                          })()}
                         </td>
                         <td style={{ padding: "14px 20px" }}>
                           <Badge text={e.statut} bg={e.statut === "actif" ? "#E8F5E9" : "#FFEBEE"} color={e.statut === "actif" ? C.vert : C.rouge} />
@@ -1936,6 +1992,93 @@ export default function App() {
               </Card>
             </div>
           )}
+
+          {eleveFicheSelect && (() => {
+            const eleve = elevesState.find(e => e.id === eleveFicheSelect);
+            if (!eleve) return null;
+            const compte = calculerCompteEleve(eleveFicheSelect);
+            return (
+              <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+                <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 420, maxWidth: "90%", maxHeight: "85vh", overflowY: "auto" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: C.vert, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: 700 }}>{eleve.nom[0]}</div>
+                    <div>
+                      <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>{eleve.nom}</div>
+                      <div style={{ fontSize: 12, color: C.gris }}>{eleve.classe}</div>
+                    </div>
+                    <div onClick={() => setEleveFicheSelect(null)} style={{ marginLeft: "auto", cursor: "pointer", fontSize: 20, color: C.gris }}>✕</div>
+                  </div>
+
+                  <SectionTitle>Montant dû</SectionTitle>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12, marginTop: 8 }}>
+                    <input type="number" placeholder={compte.montantDu ? compte.montantDu.toString() : "Montant en FCFA"} value={montantDuForm} onChange={e => setMontantDuForm(e.target.value)}
+                      style={{ flex: 1, padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                    <select value={formuleForm} onChange={e => setFormuleForm(e.target.value)}
+                      style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                      <option value="trimestre">Trimestre</option>
+                      <option value="annee">Année</option>
+                    </select>
+                    <Btn small onClick={() => enregistrerMontantDu(eleveFicheSelect, eleve.nom)}>OK</Btn>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 12, padding: "16px", background: "#f3f4f6", borderRadius: 12, marginBottom: 16 }}>
+                    <div style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ fontSize: 11, color: C.gris }}>Dû ({compte.formule === "annee" ? "année" : compte.formule === "trimestre" ? "trimestre" : "—"})</div>
+                      <div style={{ fontSize: 18, fontWeight: 700 }}>{compte.montantDu.toLocaleString()} F</div>
+                    </div>
+                    <div style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ fontSize: 11, color: C.gris }}>Payé</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: C.vert }}>{compte.totalPaye.toLocaleString()} F</div>
+                    </div>
+                    <div style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ fontSize: 11, color: C.gris }}>Reste</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: compte.reste > 0 ? "#d32f2f" : C.vert }}>{compte.reste.toLocaleString()} F</div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <SectionTitle>Versements</SectionTitle>
+                    <Btn small onClick={() => setShowModalVersement(true)}>+ Ajouter un versement</Btn>
+                  </div>
+                  {compte.verses.length === 0 ? (
+                    <p style={{ color: C.gris, fontSize: 13 }}>Aucun versement enregistré.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {compte.verses.map((v, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>
+                          <span>{new Date(v.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })} · {v.mode}</span>
+                          <span style={{ fontWeight: 700, color: C.vert }}>{v.montant.toLocaleString()} F</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {showModalVersement && (
+                    <div style={{ marginTop: 16, padding: 16, background: "#f3f4f6", borderRadius: 12 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <input type="number" placeholder="Montant versé (FCFA)" value={versementForm.montant} onChange={e => setVersementForm({ ...versementForm, montant: e.target.value })}
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        <select value={versementForm.mode} onChange={e => setVersementForm({ ...versementForm, mode: e.target.value })}
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                          <option>Espèces</option>
+                          <option>MTN Momo</option>
+                          <option>Moov Money</option>
+                          <option>Carte</option>
+                          <option>Virement</option>
+                        </select>
+                        <input type="date" value={versementForm.date} onChange={e => setVersementForm({ ...versementForm, date: e.target.value })}
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}>
+                        <Btn small onClick={() => setShowModalVersement(false)} style={{ background: C.grisClair, color: C.gris }}>Annuler</Btn>
+                        <Btn small onClick={() => ajouterVersement(eleveFicheSelect, eleve.nom)}>Enregistrer</Btn>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ── PLANNING ── */}
           {page === "planning" && (
