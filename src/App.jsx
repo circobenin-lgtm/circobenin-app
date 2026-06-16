@@ -315,8 +315,8 @@ const Badge = ({ text, bg, color }) => (
   <span style={{ background: bg, color, borderRadius: 20, padding: "3px 12px", fontSize: 12, fontWeight: 600 }}>{text}</span>
 );
 
-const Card = ({ children, style = {} }) => (
-  <div style={{ background: C.blanc, borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", ...style }}>
+const Card = ({ children, style = {}, onClick }) => (
+  <div onClick={onClick} style={{ background: C.blanc, borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", ...style }}>
     {children}
   </div>
 );
