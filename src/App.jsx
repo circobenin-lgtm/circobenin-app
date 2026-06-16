@@ -5,6 +5,13 @@ const mobileCSS = `
   .sidebar-desktop { display: none !important; }
   .main-content { padding: 12px 10px 80px !important; }
   .nav-mobile { display: flex !important; }
+  .grid-stats-4 { grid-template-columns: repeat(2,1fr) !important; gap: 12px !important; }
+  .grid-stats-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .grid-dash-main { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .grid-2col { grid-template-columns: 1fr !important; gap: 12px !important; }
+}
+@media (max-width: 480px) {
+  .grid-stats-4 { grid-template-columns: 1fr !important; }
 }
 .nav-mobile { display: none; }
 @keyframes festivalPulse {
@@ -1375,13 +1382,13 @@ export default function App() {
           {/* ── DASHBOARD (directeur / admin) ── */}
           {page === "dashboard" && (role === "directeur" || role === "admin") && (
             <div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 24 }}>
+              <div className="grid-stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 24 }}>
                 <StatCard label="Élèves inscrits" value={32} icon="◈" color={C.vert} />
                 <StatCard label="Cours / semaine" value={10} icon="◫" color={C.or} />
                 <StatCard label="Paiements en attente" value={2} icon="₦" color={C.rouge} />
                 <StatCard label="Projets actifs" value={5} icon="◉" color={C.violet} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
+              <div className="grid-dash-main" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
                 <Card>
                   <SectionTitle>Cours cette semaine</SectionTitle>
                   {COURS.slice(0, 5).map(c => (
@@ -1422,12 +1429,12 @@ export default function App() {
           {/* ── DASHBOARD CA ── */}
           {page === "dashboard" && role === "ca" && (
             <div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
+              <div className="grid-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
                 <StatCard label="Élèves inscrits" value={32} icon="◈" color={C.vert} />
                 <StatCard label="Recettes ce mois" value="513 000 F" icon="₦" color={C.bleu} />
                 <StatCard label="Projets en cours" value={5} icon="◉" color={C.violet} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 <Card>
                   <SectionTitle>Projets actifs</SectionTitle>
                   {PROJETS.filter(p => p.statut === "En cours" || p.statut === "En préparation").map(p => (
