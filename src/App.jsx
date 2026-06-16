@@ -1105,13 +1105,23 @@ export default function App() {
   const ajouterVersement = async (eleveId, eleveNom) => {
     const f = versementForm;
     if (!f.montant) return;
+    const dateVersement = f.date || new Date().toISOString().slice(0, 10);
+    const montantNum = parseFloat(f.montant);
     await supabase.from("versements_eleves").insert([{
-      eleve_id: eleveId, eleve_nom: eleveNom, montant: parseFloat(f.montant),
-      mode: f.mode, date: f.date || new Date().toISOString().slice(0, 10),
+      eleve_id: eleveId, eleve_nom: eleveNom, montant: montantNum,
+      mode: f.mode, date: dateVersement,
+    }]);
+    await supabase.from("operations_caisse").insert([{
+      date: dateVersement, projet: "Circo Bénin — fonctionnement", sens: "entree",
+      compte_caisse: "571", compte_contrepartie: "706",
+      compte_debit: "571", compte_credit: "706",
+      montant: montantNum, libelle: "Versement cotisation — " + eleveNom + " (" + f.mode + ")",
+      saisi_par: nomIntervenant || role,
     }]);
     setShowModalVersement(false);
     setVersementForm({ montant: "", mode: "Espèces", date: "" });
     chargerComptesPaiement();
+    chargerOperationsCaisse();
   };
 
   const calculerCompteEleve = (eleveId) => {
