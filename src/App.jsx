@@ -1309,7 +1309,7 @@ export default function App() {
 
       {/* Main */}
       <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
-        <header style={{
+        <header className="app-header" style={{
           background: "#fff", borderBottom: `1px solid ${C.grisClair}`,
           padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0,
         }}>
@@ -1319,7 +1319,7 @@ export default function App() {
             </h1>
             <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2026–2027 · Cotonou, Bénin</div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div className="app-header-actions" style={{ display: "flex", gap: 10 }}>
             {(role === "directeur") && (
               <a href="https://mail.ovh.net" target="_blank" rel="noreferrer" style={{
                 background: C.fond, borderRadius: 20, padding: "8px 16px",
@@ -3379,17 +3379,20 @@ export default function App() {
       <nav className="nav-mobile" style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
-        zIndex: 100, height: 64, justifyContent: "space-around", alignItems: "center",
+        zIndex: 100, height: 64,
+        overflowX: "auto", overflowY: "hidden",
+        WebkitOverflowScrolling: "touch",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}>
-        {nav.slice(0, 5).map(item => (
+        {nav.map(item => (
           <div key={item.id} onClick={() => setPage(item.id)} style={{
-            flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 4px",
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 10px",
+            minWidth: 64, flexShrink: 0,
             borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
           }}>
             <span style={{ fontSize: 18 }}>{item.icon}</span>
-            <span style={{ fontSize: 9, color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
+            <span style={{ fontSize: 9, whiteSpace: "nowrap", color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
           </div>
         ))}
       </nav>
