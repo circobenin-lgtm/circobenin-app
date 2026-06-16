@@ -51,6 +51,7 @@ const NAV_PAR_ROLE = {
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "presences", icon: "✓", label: "Présences" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
+    { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "projets", icon: "◉", label: "Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
@@ -70,6 +71,7 @@ const NAV_PAR_ROLE = {
     { id: "eleves", icon: "◈", label: "Élèves" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
+    { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -939,6 +941,34 @@ export default function App() {
     return { parLieu, total, nbSeances: pointagesIntervenant.length, mois: moisRef };
   };
 
+  const [heuresEquipeMoisOffset, setHeuresEquipeMoisOffset] = useState(0);
+  const [heuresEquipeIntervenant, setHeuresEquipeIntervenant] = useState(null);
+  const [showModalCorrection, setShowModalCorrection] = useState(false);
+  const [correctionForm, setCorrectionForm] = useState({ intervenant: "", lieu: "Circo Bénin", date: "", heureDebut: "", dureeH: "" });
+
+  const enregistrerCorrection = async () => {
+    const f = correctionForm;
+    if (!f.intervenant || !f.date || !f.dureeH) return;
+    const debutISO = new Date(f.date + "T" + (f.heureDebut || "09:00") + ":00").toISOString();
+    const dureeNum = parseFloat(f.dureeH);
+    const finISO = new Date(new Date(debutISO).getTime() + dureeNum * 3600000).toISOString();
+    await supabase.from("pointages_heures").insert([{
+      intervenant: f.intervenant,
+      lieu: f.lieu,
+      debut: debutISO,
+      fin: finISO,
+      duree_h: dureeNum,
+    }]);
+    setShowModalCorrection(false);
+    setCorrectionForm({ intervenant: "", lieu: "Circo Bénin", date: "", heureDebut: "", dureeH: "" });
+    chargerPointagesHeures();
+  };
+
+  const supprimerPointage = async (id) => {
+    await supabase.from("pointages_heures").delete().eq("id", id);
+    chargerPointagesHeures();
+  };
+
   // ── LOGIN ──
   if (!role) return (
     <div style={{
@@ -1732,6 +1762,126 @@ export default function App() {
                   })()}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── HEURES ÉQUIPE ── */}
+          {page === "heures_equipe" && (
+            <div>
+              {(() => {
+                const noms = Object.keys(INTERVENANTS);
+                const bilanTous = noms.map(n => ({ nom: n, bilan: calculerHeuresMensuelles(n, heuresEquipeMoisOffset) }));
+                const nomMois = new Date(new Date().getFullYear(), new Date().getMonth() - heuresEquipeMoisOffset, 1)
+                  .toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+                const totalEquipe = bilanTous.reduce((a, b) => a + b.bilan.total, 0);
+                return (
+                  <div>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
+                      <SectionTitle>Heures de l'équipe — pour la paie</SectionTitle>
+                      <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+                        <div onClick={() => setHeuresEquipeMoisOffset(o => o + 1)} style={{ cursor: "pointer", padding: "6px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>←</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, textTransform: "capitalize", minWidth: 130, textAlign: "center" }}>{nomMois}</div>
+                        <div onClick={() => heuresEquipeMoisOffset > 0 && setHeuresEquipeMoisOffset(o => o - 1)} style={{ cursor: heuresEquipeMoisOffset > 0 ? "pointer" : "default", padding: "6px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13, opacity: heuresEquipeMoisOffset > 0 ? 1 : 0.4 }}>→</div>
+                        <Btn small onClick={() => setShowModalCorrection(true)}>+ Ajouter / corriger</Btn>
+                      </div>
+                    </div>
+
+                    {!heuresEquipeIntervenant ? (
+                      <Card>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {bilanTous.map(({ nom, bilan }) => (
+                            <div key={nom} onClick={() => setHeuresEquipeIntervenant(nom)} style={{
+                              display: "flex", alignItems: "center", gap: 12, padding: 12,
+                              borderRadius: 10, cursor: "pointer", background: C.grisClair,
+                            }}>
+                              <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.violet, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{nom[0]}</div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 14, fontWeight: 600 }}>{nom}</div>
+                                <div style={{ fontSize: 11, color: C.gris }}>{bilan.nbSeances} séance(s) pointée(s)</div>
+                              </div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: C.violet }}>{bilan.total.toFixed(2)}h</div>
+                            </div>
+                          ))}
+                          <div style={{ marginTop: 8, padding: "16px", background: "#f3f4f6", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ fontWeight: 700, fontSize: 15 }}>TOTAL ÉQUIPE</div>
+                            <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{totalEquipe.toFixed(2)}h</div>
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div>
+                        <div onClick={() => setHeuresEquipeIntervenant(null)} style={{ cursor: "pointer", color: C.gris, fontSize: 14, marginBottom: 16 }}>← Retour à l'équipe</div>
+                        {(() => {
+                          const bilan = calculerHeuresMensuelles(heuresEquipeIntervenant, heuresEquipeMoisOffset);
+                          const moisRef = bilan.mois;
+                          const finMois = new Date(moisRef.getFullYear(), moisRef.getMonth() + 1, 1);
+                          const detail = pointagesHeures
+                            .filter(p => p.intervenant === heuresEquipeIntervenant && new Date(p.debut) >= moisRef && new Date(p.debut) < finMois)
+                            .sort((a, b) => new Date(b.debut) - new Date(a.debut));
+                          return (
+                            <Card>
+                              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+                                <div style={{ width: 56, height: 56, borderRadius: "50%", background: C.violet, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700 }}>{heuresEquipeIntervenant[0]}</div>
+                                <div>
+                                  <div style={{ fontFamily: FT, fontSize: 20, color: C.violet }}>{heuresEquipeIntervenant}</div>
+                                  <div style={{ fontSize: 13, color: C.gris, textTransform: "capitalize" }}>{nomMois}</div>
+                                </div>
+                                <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                                  <div style={{ fontSize: 28, fontWeight: 700, color: C.violet }}>{bilan.total.toFixed(2)}h</div>
+                                  <div style={{ fontSize: 12, color: C.gris }}>{bilan.nbSeances} séance(s)</div>
+                                </div>
+                              </div>
+                              <SectionTitle>Détail des pointages</SectionTitle>
+                              {detail.length === 0 ? (
+                                <p style={{ color: C.gris, fontSize: 13 }}>Aucun pointage ce mois-ci pour cet intervenant.</p>
+                              ) : (
+                                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                  {detail.map((p, i) => (
+                                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>
+                                      <span>{new Date(p.debut).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} — {p.lieu}</span>
+                                      <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <span style={{ fontWeight: 700, color: C.violet }}>{p.duree_h != null ? p.duree_h.toFixed(2) + "h" : "en cours"}</span>
+                                        <span onClick={() => supprimerPointage(p.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 16 }} title="Supprimer">✕</span>
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </Card>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {showModalCorrection && (
+                      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+                        <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 360, maxWidth: "90%" }}>
+                          <SectionTitle>Ajouter / corriger un pointage</SectionTitle>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+                            <select value={correctionForm.intervenant} onChange={e => setCorrectionForm({ ...correctionForm, intervenant: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                              <option value="">Sélectionner un intervenant</option>
+                              {Object.keys(INTERVENANTS).map(n => <option key={n} value={n}>{n}</option>)}
+                            </select>
+                            <input placeholder="Lieu (ex: Circo Bénin)" value={correctionForm.lieu} onChange={e => setCorrectionForm({ ...correctionForm, lieu: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                            <input type="date" value={correctionForm.date} onChange={e => setCorrectionForm({ ...correctionForm, date: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                            <input type="time" placeholder="Heure de début" value={correctionForm.heureDebut} onChange={e => setCorrectionForm({ ...correctionForm, heureDebut: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                            <input type="number" step="0.25" placeholder="Durée en heures (ex: 2.5)" value={correctionForm.dureeH} onChange={e => setCorrectionForm({ ...correctionForm, dureeH: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                          </div>
+                          <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+                            <Btn small onClick={() => setShowModalCorrection(false)} style={{ background: C.grisClair, color: C.gris }}>Annuler</Btn>
+                            <Btn small onClick={enregistrerCorrection}>Enregistrer</Btn>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
