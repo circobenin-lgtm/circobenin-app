@@ -78,6 +78,7 @@ const NAV_PAR_ROLE = {
     { id: "mon_planning", icon: "◫", label: "Mon Planning" },
     { id: "presences", icon: "✓", label: "Présences" },
     { id: "mon_bilan", icon: "⏱", label: "Mon Bilan" },
+    { id: "pointage", icon: "⏲", label: "Pointage" },
     { id: "mes_projets", icon: "◉", label: "Mes Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -881,6 +882,63 @@ export default function App() {
     return { presentes, total, taux: total > 0 ? Math.round((presentes / total) * 100) : null };
   };
 
+  const [pointagesHeures, setPointagesHeures] = useState([]);
+  const [pointageEnCours, setPointageEnCours] = useState(null);
+  const [pointageLieu, setPointageLieu] = useState("Circo Bénin");
+  const [pointageLieuCustom, setPointageLieuCustom] = useState("");
+
+  const chargerPointagesHeures = async () => {
+    try {
+      const { data, error } = await supabase.from("pointages_heures").select("*").order("debut", { ascending: false });
+      if (!error && data) setPointagesHeures(data);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role) chargerPointagesHeures();
+  }, [role]);
+
+  const demarrerPointage = async (lieu) => {
+    const debut = new Date().toISOString();
+    setPointageEnCours({ lieu, debut });
+    const { data } = await supabase.from("pointages_heures").insert([{
+      intervenant: nomIntervenant || "Jean Luc",
+      lieu: lieu,
+      debut: debut,
+      fin: null,
+      duree_h: null,
+    }]).select();
+    if (data && data[0]) setPointageEnCours({ ...pointageEnCours, lieu, debut, id: data[0].id });
+  };
+
+  const terminerPointage = async () => {
+    if (!pointageEnCours) return;
+    const fin = new Date();
+    const debutDate = new Date(pointageEnCours.debut);
+    const dureeH = Math.round(((fin - debutDate) / 3600000) * 100) / 100;
+    if (pointageEnCours.id) {
+      await supabase.from("pointages_heures").update({ fin: fin.toISOString(), duree_h: dureeH }).eq("id", pointageEnCours.id);
+    }
+    setPointageEnCours(null);
+    chargerPointagesHeures();
+  };
+
+  const calculerHeuresMensuelles = (intervenant, moisOffset = 0) => {
+    const today = new Date();
+    const moisRef = new Date(today.getFullYear(), today.getMonth() - moisOffset, 1);
+    const finMois = new Date(today.getFullYear(), today.getMonth() - moisOffset + 1, 1);
+    const pointagesIntervenant = pointagesHeures.filter(p =>
+      p.intervenant === intervenant && p.duree_h != null &&
+      new Date(p.debut) >= moisRef && new Date(p.debut) < finMois
+    );
+    const parLieu = {};
+    pointagesIntervenant.forEach(p => {
+      parLieu[p.lieu] = (parLieu[p.lieu] || 0) + p.duree_h;
+    });
+    const total = Object.values(parLieu).reduce((a, b) => a + b, 0);
+    return { parLieu, total, nbSeances: pointagesIntervenant.length, mois: moisRef };
+  };
+
   // ── LOGIN ──
   if (!role) return (
     <div style={{
@@ -1292,6 +1350,80 @@ export default function App() {
             </div>
           )}
 
+          {/* ── POINTAGE DES HEURES ── */}
+          {page === "pointage" && (
+            <div>
+              {(() => {
+                const nomInter = nomIntervenant || "Jean Luc";
+                const lieuxConnus = ["Circo Bénin", "École Montaigne", "Manoel Talon"];
+                const enCours = pointageEnCours;
+                return (
+                  <div>
+                    <Card style={{ textAlign: "center", padding: "40px 24px", marginBottom: 24 }}>
+                      {!enCours ? (
+                        <div>
+                          <div style={{ fontSize: 40, marginBottom: 16 }}>⏲</div>
+                          <p style={{ color: C.gris, fontSize: 14, marginBottom: 16 }}>Sélectionnez un lieu d'activité pour commencer le pointage</p>
+                          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+                            {lieuxConnus.map(l => (
+                              <div key={l} onClick={() => setPointageLieu(l)} style={{
+                                padding: "8px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer",
+                                background: pointageLieu === l ? C.violet : C.grisClair,
+                                color: pointageLieu === l ? "#fff" : C.gris,
+                              }}>{l}</div>
+                            ))}
+                            <div onClick={() => setPointageLieu("autre")} style={{
+                              padding: "8px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer",
+                              background: pointageLieu === "autre" ? C.violet : C.grisClair,
+                              color: pointageLieu === "autre" ? "#fff" : C.gris,
+                            }}>Autre projet</div>
+                          </div>
+                          {pointageLieu === "autre" && (
+                            <input value={pointageLieuCustom} onChange={e => setPointageLieuCustom(e.target.value)}
+                              placeholder="Nom du projet ou de l'activité"
+                              style={{ padding: "10px 16px", borderRadius: 10, border: `1px solid ${C.grisClair}`, fontSize: 14, marginBottom: 16, width: 280, textAlign: "center" }} />
+                          )}
+                          <div>
+                            <Btn onClick={() => demarrerPointage(pointageLieu === "autre" ? (pointageLieuCustom || "Autre activité") : pointageLieu)}>
+                              ▶ Je commence
+                            </Btn>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
+                          <div style={{ fontFamily: FT, fontSize: 20, color: C.violet, marginBottom: 4 }}>{enCours.lieu}</div>
+                          <p style={{ color: C.gris, fontSize: 13, marginBottom: 20 }}>
+                            Démarré à {new Date(enCours.debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          <Btn onClick={terminerPointage} style={{ background: "#d32f2f" }}>■ Je termine</Btn>
+                        </div>
+                      )}
+                    </Card>
+                    <Card>
+                      <SectionTitle>Mes pointages récents</SectionTitle>
+                      {pointagesHeures.filter(p => p.intervenant === nomInter && p.fin).slice(0, 10).map((p, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #eee" }}>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 600 }}>{p.lieu}</div>
+                            <div style={{ fontSize: 11, color: C.gris }}>
+                              {new Date(p.debut).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} ·
+                              {" " + new Date(p.debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} → {new Date(p.fin).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                            </div>
+                          </div>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: C.violet }}>{p.duree_h}h</div>
+                        </div>
+                      ))}
+                      {pointagesHeures.filter(p => p.intervenant === nomInter && p.fin).length === 0 && (
+                        <p style={{ color: C.gris, fontSize: 13 }}>Aucun pointage encore enregistré.</p>
+                      )}
+                    </Card>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* ── MON BILAN D'HEURES ── */}
           {page === "mon_bilan" && (
             <div>
@@ -1348,6 +1480,35 @@ export default function App() {
                         <div style={{ fontWeight: 700, fontSize: 15 }}>TOTAL ANNUEL</div>
                         <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{((info.total_semaine || 0) * semaines).toFixed(0)}h</div>
                       </div>
+                    </Card>
+                    <Card style={{ marginTop: 20 }}>
+                      <SectionTitle>Heures réellement pointées — ce mois-ci</SectionTitle>
+                      {(() => {
+                        const bilan = calculerHeuresMensuelles(nomInter, 0);
+                        const nomMois = bilan.mois.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+                        const lignes = Object.entries(bilan.parLieu);
+                        return (
+                          <div>
+                            <p style={{ color: C.gris, fontSize: 12, marginTop: -8, marginBottom: 16, textTransform: "capitalize" }}>{nomMois} · basé sur le pointage "Je commence / Je termine"</p>
+                            {lignes.length === 0 ? (
+                              <p style={{ color: C.gris, fontSize: 13 }}>Aucune heure pointée ce mois-ci. Va dans l'onglet "Pointage" pour commencer.</p>
+                            ) : (
+                              lignes.map(([lieu, h], i) => (
+                                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #eee" }}>
+                                  <div style={{ fontSize: 14, fontWeight: 600 }}>{lieu}</div>
+                                  <div style={{ fontWeight: 700, fontSize: 15, color: C.violet }}>{h.toFixed(2)}h</div>
+                                </div>
+                              ))
+                            )}
+                            {lignes.length > 0 && (
+                              <div style={{ marginTop: 16, padding: "16px", background: "#f3f4f6", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div style={{ fontWeight: 700, fontSize: 15 }}>TOTAL DU MOIS ({bilan.nbSeances} séance(s))</div>
+                                <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{bilan.total.toFixed(2)}h</div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </Card>
                   </div>
                 );
