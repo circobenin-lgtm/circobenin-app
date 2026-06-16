@@ -1334,7 +1334,7 @@ export default function App() {
                 <div>
                   <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>Sélectionnez un cours pour prendre les présences</p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-                    {(role === "formateur" ? COURS_JEAN_LUC : COURS).map(c => (
+                    {(role === "formateur" ? COURS.filter(c => c.formateurs && c.formateurs.includes(nomIntervenant)) : COURS).map(c => (
                       <Card key={c.id} style={{ cursor: "pointer", borderLeft: `4px solid ${C.or}` }}
                         onClick={() => setActiveCours(c.id)}>
                         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -1358,26 +1358,30 @@ export default function App() {
                       elevesState.filter(e => e.classe && !e.classe.includes(cours.heure))
                     ).slice(0, cours.nb);
                     const pres = presencesCours[activeCours] || {};
+                    const isReadOnly = role === "directeur" || role === "admin";
                     return (
                       <div>
-                        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24 }}>
+                        <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
                           <div onClick={() => setActiveCours(null)} style={{ cursor: "pointer", color: C.gris, fontSize: 14 }}>← Retour</div>
                           <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>{cours.classe} — {cours.jour} {cours.heure}</div>
+                          {isReadOnly && <Badge text="👁 Lecture seule" bg="#FFF8E1" color={C.orange} />}
                         </div>
                         <Card>
                           <SectionTitle>Feuille de présence</SectionTitle>
+                          {isReadOnly && <p style={{ fontSize: 12, color: C.gris, marginTop: -8, marginBottom: 16 }}>Seul l'intervenant assigné peut cocher les présences. Vous consultez ici l'état actuel.</p>}
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
                             {elevesClasse.map(e => {
                               const present = pres[e.id];
                               return (
-                                <div key={e.id} onClick={() => setPresencesCours(prev => ({
+                                <div key={e.id} onClick={() => { if (!isReadOnly) setPresencesCours(prev => ({
                                   ...prev,
                                   [activeCours]: { ...pres, [e.id]: !present }
-                                }))} style={{
+                                })); }} style={{
                                   display: "flex", alignItems: "center", gap: 12,
-                                  padding: 14, borderRadius: 12, cursor: "pointer",
+                                  padding: 14, borderRadius: 12, cursor: isReadOnly ? "default" : "pointer",
                                   background: present ? "#E8F5E9" : C.grisClair,
                                   border: `2px solid ${present ? C.vert : "transparent"}`,
+                                  opacity: isReadOnly ? 0.85 : 1,
                                   transition: "all 0.2s",
                                 }}>
                                   <div style={{
@@ -1399,24 +1403,26 @@ export default function App() {
                             <div style={{ fontSize: 14, color: C.gris }}>
                               {Object.values(pres).filter(Boolean).length} présent(s) sur {elevesClasse.length}
                             </div>
-                            <Btn onClick={() => alert("Feuille validée !")}>Valider la feuille ✓</Btn>
+                            {!isReadOnly && <Btn onClick={() => alert("Feuille validée !")}>Valider la feuille ✓</Btn>}
                           </div>
                         </Card>
                         <Card style={{ marginTop: 20 }}>
                           <SectionTitle>Présences intervenants</SectionTitle>
+                          {isReadOnly && <p style={{ fontSize: 12, color: C.gris, marginTop: -8, marginBottom: 16 }}>Pointage géré par les intervenants eux-mêmes.</p>}
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
                             {cours.formateurs.map(f => {
                               const presF = presencesFormateurs[activeCours] || {};
                               const present = presF[f];
                               return (
-                                <div key={f} onClick={() => setPresencesFormateurs(prev => ({
+                                <div key={f} onClick={() => { if (!isReadOnly) setPresencesFormateurs(prev => ({
                                   ...prev,
                                   [activeCours]: { ...(prev[activeCours] || {}), [f]: !present }
-                                }))} style={{
+                                })); }} style={{
                                   display: "flex", alignItems: "center", gap: 10, padding: 14,
-                                  borderRadius: 12, cursor: "pointer",
+                                  borderRadius: 12, cursor: isReadOnly ? "default" : "pointer",
                                   background: present ? "#E8F5E9" : C.grisClair,
                                   border: "2px solid " + (present ? C.vert : "transparent"),
+                                  opacity: isReadOnly ? 0.85 : 1,
                                 }}>
                                   <div style={{ width: 36, height: 36, borderRadius: "50%", background: present ? C.vert : C.gris, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>{f[0]}</div>
                                   <div>
