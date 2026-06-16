@@ -50,6 +50,7 @@ const NAV_PAR_ROLE = {
     { id: "eleves", icon: "◈", label: "Élèves" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "presences", icon: "✓", label: "Présences" },
+    { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "projets", icon: "◉", label: "Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
@@ -68,6 +69,7 @@ const NAV_PAR_ROLE = {
     { id: "dashboard", icon: "⬡", label: "Tableau de bord" },
     { id: "eleves", icon: "◈", label: "Élèves" },
     { id: "planning", icon: "◫", label: "Planning" },
+    { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -844,6 +846,9 @@ export default function App() {
   const [projetsState, setProjetsState] = useState(PROJETS);
   const [spectaclesState, setSpectaclesState] = useState(SPECTACLES);
   const [presencesFormateurs, setPresencesFormateurs] = useState({});
+  const [historiquePresences, setHistoriquePresences] = useState([]);
+  const [statsEleveSelect, setStatsEleveSelect] = useState(null);
+  const [statsPeriode, setStatsPeriode] = useState("septembre");
   const [preselectType, setPreselectType] = useState(null);
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
@@ -852,6 +857,29 @@ export default function App() {
   const [emailStatus, setEmailStatus] = useState(null);
   const [emailsEnvoyes, setEmailsEnvoyes] = useState([]);
   const [composeMode, setComposeMode] = useState(false);
+
+  const chargerHistoriquePresences = async () => {
+    try {
+      const { data, error } = await supabase.from("presences_seances").select("*").order("date", { ascending: false });
+      if (!error && data) setHistoriquePresences(data);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role) chargerHistoriquePresences();
+  }, [role]);
+
+  const calculerTauxPresence = (eleveId, periode) => {
+    const today = new Date();
+    let dateDebut;
+    if (periode === "septembre") dateDebut = new Date(today.getFullYear() - (today.getMonth() < 8 ? 1 : 0), 8, 1);
+    else if (periode === "janvier") dateDebut = new Date(today.getFullYear(), 0, 1);
+    else dateDebut = new Date(today.getFullYear(), today.getMonth(), 1);
+    const seances = historiquePresences.filter(p => p.eleve_id === eleveId && new Date(p.date) >= dateDebut);
+    const presentes = seances.filter(p => p.present).length;
+    const total = seances.length;
+    return { presentes, total, taux: total > 0 ? Math.round((presentes / total) * 100) : null };
+  };
 
   // ── LOGIN ──
   if (!role) return (
@@ -1373,10 +1401,22 @@ export default function App() {
                             {elevesClasse.map(e => {
                               const present = pres[e.id];
                               return (
-                                <div key={e.id} onClick={() => { if (!isReadOnly) setPresencesCours(prev => ({
-                                  ...prev,
-                                  [activeCours]: { ...pres, [e.id]: !present }
-                                })); }} style={{
+                                <div key={e.id} onClick={() => {
+                                  if (isReadOnly) return;
+                                  const nouvelEtat = !present;
+                                  setPresencesCours(prev => ({
+                                    ...prev,
+                                    [activeCours]: { ...pres, [e.id]: nouvelEtat }
+                                  }));
+                                  const todayStr = new Date().toISOString().slice(0, 10);
+                                  supabase.from("presences_seances").upsert([{
+                                    eleve_id: e.id,
+                                    cours_id: activeCours,
+                                    date: todayStr,
+                                    present: nouvelEtat,
+                                    nom_eleve: e.nom,
+                                  }], { onConflict: "eleve_id,cours_id,date" }).then(() => chargerHistoriquePresences());
+                                }} style={{
                                   display: "flex", alignItems: "center", gap: 12,
                                   padding: 14, borderRadius: 12, cursor: isReadOnly ? "default" : "pointer",
                                   background: present ? "#E8F5E9" : C.grisClair,
@@ -1392,7 +1432,10 @@ export default function App() {
                                   }}>{e.nom[0]}</div>
                                   <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: 14, fontWeight: 600 }}>{e.nom}</div>
-                                    <div style={{ fontSize: 11, color: C.gris }}>{e.classe} · Taux: {e.presence}%</div>
+                                    <div style={{ fontSize: 11, color: C.gris }}>{e.classe} · Taux: {(() => {
+                                      const t = calculerTauxPresence(e.id, "septembre");
+                                      return t.taux === null ? "—" : t.taux + "%";
+                                    })()}</div>
                                   </div>
                                   <div style={{ fontSize: 20 }}>{present ? "✅" : "⬜"}</div>
                                 </div>
@@ -1434,6 +1477,94 @@ export default function App() {
                               );
                             })}
                           </div>
+                        </Card>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── STATISTIQUES ── */}
+          {page === "statistiques" && (
+            <div>
+              <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
+                <SectionTitle>Taux de présence par élève</SectionTitle>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                  {["septembre", "janvier", "mois"].map(p => (
+                    <div key={p} onClick={() => setStatsPeriode(p)} style={{
+                      padding: "6px 14px", borderRadius: 20, fontSize: 12, cursor: "pointer",
+                      background: statsPeriode === p ? C.vert : C.grisClair,
+                      color: statsPeriode === p ? "#fff" : C.gris,
+                    }}>
+                      {p === "septembre" ? "Depuis sept." : p === "janvier" ? "Depuis janv." : "Ce mois-ci"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {!statsEleveSelect ? (
+                <Card>
+                  <p style={{ color: C.gris, fontSize: 13, marginBottom: 16 }}>Cliquez sur un élève pour voir le détail de son historique.</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {elevesState.map(e => {
+                      const t = calculerTauxPresence(e.id, statsPeriode);
+                      const couleur = t.taux === null ? C.gris : t.taux >= 80 ? C.vert : t.taux >= 50 ? C.orange : "#d32f2f";
+                      return (
+                        <div key={e.id} onClick={() => setStatsEleveSelect(e.id)} style={{
+                          display: "flex", alignItems: "center", gap: 12, padding: 12,
+                          borderRadius: 10, cursor: "pointer", background: C.grisClair,
+                        }}>
+                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: couleur, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{e.nom[0]}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600 }}>{e.nom}</div>
+                            <div style={{ fontSize: 11, color: C.gris }}>{e.classe}</div>
+                          </div>
+                          <div style={{ flex: 1, maxWidth: 160, height: 8, background: "#fff", borderRadius: 6, overflow: "hidden" }}>
+                            <div style={{ width: (t.taux || 0) + "%", height: "100%", background: couleur }} />
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: couleur, minWidth: 60, textAlign: "right" }}>
+                            {t.taux === null ? "Aucune donnée" : t.taux + "% (" + t.presentes + "/" + t.total + ")"}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              ) : (
+                <div>
+                  {(() => {
+                    const eleve = elevesState.find(e => e.id === statsEleveSelect);
+                    const t = calculerTauxPresence(statsEleveSelect, statsPeriode);
+                    const historiqueEleve = historiquePresences.filter(p => p.eleve_id === statsEleveSelect).sort((a, b) => new Date(b.date) - new Date(a.date));
+                    return (
+                      <div>
+                        <div onClick={() => setStatsEleveSelect(null)} style={{ cursor: "pointer", color: C.gris, fontSize: 14, marginBottom: 16 }}>← Retour à la vue globale</div>
+                        <Card>
+                          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+                            <div style={{ width: 56, height: 56, borderRadius: "50%", background: C.vert, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700 }}>{eleve.nom[0]}</div>
+                            <div>
+                              <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>{eleve.nom}</div>
+                              <div style={{ fontSize: 13, color: C.gris }}>{eleve.classe}</div>
+                            </div>
+                            <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                              <div style={{ fontSize: 28, fontWeight: 700, color: C.vert }}>{t.taux === null ? "—" : t.taux + "%"}</div>
+                              <div style={{ fontSize: 12, color: C.gris }}>{t.presentes} présence(s) sur {t.total} séance(s)</div>
+                            </div>
+                          </div>
+                          <SectionTitle>Historique des séances</SectionTitle>
+                          {historiqueEleve.length === 0 ? (
+                            <p style={{ color: C.gris, fontSize: 13 }}>Aucune séance enregistrée encore pour cet élève.</p>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 400, overflowY: "auto" }}>
+                              {historiqueEleve.map((p, i) => (
+                                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>
+                                  <span>{new Date(p.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+                                  <span style={{ fontWeight: 600, color: p.present ? C.vert : "#d32f2f" }}>{p.present ? "Présent ✅" : "Absent ⬜"}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </Card>
                       </div>
                     );
