@@ -55,6 +55,7 @@ const NAV_PAR_ROLE = {
     { id: "projets", icon: "◉", label: "Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
+    { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
     { id: "public", icon: "◐", label: "Vue publique" },
   ],
@@ -73,6 +74,7 @@ const NAV_PAR_ROLE = {
     { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "paiements", icon: "₦", label: "Paiements" },
+    { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
@@ -213,6 +215,32 @@ const FORMATION_FORMATEURS = {
 };
 
 const COURS_JEAN_LUC = COURS.filter(c => c.formateurs && c.formateurs.includes("Jean Luc"));
+
+const COMPTES_SYCEBNL = [
+  { code: "521", libelle: "Banque", classe: 5 },
+  { code: "571", libelle: "Caisse", classe: 5 },
+  { code: "411", libelle: "Adhérents / Élèves (créances)", classe: 4 },
+  { code: "401", libelle: "Fournisseurs", classe: 4 },
+  { code: "421", libelle: "Personnel — rémunérations dues", classe: 4 },
+  { code: "601", libelle: "Achats de matériel et fournitures", classe: 6 },
+  { code: "605", libelle: "Achats de matériel pédagogique / artistique", classe: 6 },
+  { code: "611", libelle: "Transports", classe: 6 },
+  { code: "622", libelle: "Locations et charges locatives", classe: 6 },
+  { code: "624", libelle: "Entretien, réparations", classe: 6 },
+  { code: "628", libelle: "Frais de communication (internet, téléphone)", classe: 6 },
+  { code: "632", libelle: "Rémunérations d'intervenants / cachets artistes", classe: 6 },
+  { code: "641", libelle: "Charges de personnel — salaires", classe: 6 },
+  { code: "646", libelle: "Charges sociales", classe: 6 },
+  { code: "651", libelle: "Frais de mission et déplacement", classe: 6 },
+  { code: "658", libelle: "Charges diverses de gestion", classe: 6 },
+  { code: "706", libelle: "Cotisations et frais d'inscription des élèves", classe: 7 },
+  { code: "707", libelle: "Ventes de prestations (ateliers, spectacles)", classe: 7 },
+  { code: "754", libelle: "Subventions d'exploitation (partenaires, institutions)", classe: 7 },
+  { code: "757", libelle: "Dons et libéralités", classe: 7 },
+  { code: "758", libelle: "Produits divers de gestion", classe: 7 },
+];
+
+const PROJETS_TRESORERIE = ["Circo Bénin — fonctionnement", "Festival Cirque en Fusion", "Espoir Football Club", "Autre projet"];
 
 const PROJETS = [
   { id: 1, titre: "Cirque en Fusion 2026", type: "Festival", date: "25–28 Nov 2026", statut: "En préparation", public: true, formateurs: ["Jean Luc", "Spéro", "Youssou", "Prime"] },
@@ -967,6 +995,79 @@ export default function App() {
   const supprimerPointage = async (id) => {
     await supabase.from("pointages_heures").delete().eq("id", id);
     chargerPointagesHeures();
+  };
+
+  const [operationsCaisse, setOperationsCaisse] = useState([]);
+  const [showModalOperation, setShowModalOperation] = useState(false);
+  const [operationEnEdition, setOperationEnEdition] = useState(null);
+  const [operationForm, setOperationForm] = useState({
+    date: "", projet: "Circo Bénin — fonctionnement", sens: "sortie",
+    compteCaisse: "571", compteContrepartie: "601", montant: "", libelle: "", piece: null,
+  });
+  const [tresorerieFiltreProjet, setTresorerieFiltreProjet] = useState("tous");
+
+  const chargerOperationsCaisse = async () => {
+    try {
+      const { data, error } = await supabase.from("operations_caisse").select("*").order("date", { ascending: false });
+      if (!error && data) setOperationsCaisse(data);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role) chargerOperationsCaisse();
+  }, [role]);
+
+  const ouvrirNouvelleOperation = () => {
+    setOperationEnEdition(null);
+    setOperationForm({
+      date: new Date().toISOString().slice(0, 10), projet: "Circo Bénin — fonctionnement", sens: "sortie",
+      compteCaisse: "571", compteContrepartie: "601", montant: "", libelle: "", piece: null,
+    });
+    setShowModalOperation(true);
+  };
+
+  const ouvrirEditionOperation = (op) => {
+    setOperationEnEdition(op.id);
+    setOperationForm({
+      date: op.date, projet: op.projet, sens: op.sens,
+      compteCaisse: op.compte_caisse, compteContrepartie: op.compte_contrepartie,
+      montant: op.montant.toString(), libelle: op.libelle, piece: op.piece_url || null,
+    });
+    setShowModalOperation(true);
+  };
+
+  const enregistrerOperation = async () => {
+    const f = operationForm;
+    if (!f.date || !f.montant || !f.libelle) return;
+    const montantNum = parseFloat(f.montant);
+    const debit = f.sens === "entree" ? f.compteCaisse : f.compteContrepartie;
+    const credit = f.sens === "entree" ? f.compteContrepartie : f.compteCaisse;
+    const payload = {
+      date: f.date, projet: f.projet, sens: f.sens,
+      compte_caisse: f.compteCaisse, compte_contrepartie: f.compteContrepartie,
+      compte_debit: debit, compte_credit: credit,
+      montant: montantNum, libelle: f.libelle, piece_url: f.piece,
+      saisi_par: nomIntervenant || role,
+    };
+    if (operationEnEdition) {
+      payload.modifie_par = nomIntervenant || role;
+      payload.modifie_le = new Date().toISOString();
+      await supabase.from("operations_caisse").update(payload).eq("id", operationEnEdition);
+    } else {
+      await supabase.from("operations_caisse").insert([payload]);
+    }
+    setShowModalOperation(false);
+    chargerOperationsCaisse();
+  };
+
+  const supprimerOperation = async (id) => {
+    await supabase.from("operations_caisse").delete().eq("id", id);
+    chargerOperationsCaisse();
+  };
+
+  const compteLibelle = (code) => {
+    const c = COMPTES_SYCEBNL.find(x => x.code === code);
+    return c ? code + " — " + c.libelle : code;
   };
 
   const [comptesPaiement, setComptesPaiement] = useState({});
@@ -2299,6 +2400,168 @@ export default function App() {
                         </table>
                       )}
                     </Card>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* ── TRÉSORERIE ── */}
+          {page === "tresorerie" && (
+            <div>
+              {(() => {
+                const opsFiltrees = tresorerieFiltreProjet === "tous"
+                  ? operationsCaisse
+                  : operationsCaisse.filter(o => o.projet === tresorerieFiltreProjet);
+                const totalEntrees = opsFiltrees.filter(o => o.sens === "entree").reduce((a, o) => a + o.montant, 0);
+                const totalSorties = opsFiltrees.filter(o => o.sens === "sortie").reduce((a, o) => a + o.montant, 0);
+                const soldeCaisse = totalEntrees - totalSorties;
+
+                const chargesParCompte = {};
+                const produitsParCompte = {};
+                opsFiltrees.forEach(o => {
+                  const compteCharge = o.sens === "sortie" ? o.compte_contrepartie : null;
+                  const compteProduit = o.sens === "entree" ? o.compte_contrepartie : null;
+                  if (compteCharge) chargesParCompte[compteCharge] = (chargesParCompte[compteCharge] || 0) + o.montant;
+                  if (compteProduit) produitsParCompte[compteProduit] = (produitsParCompte[compteProduit] || 0) + o.montant;
+                });
+                const totalCharges = Object.values(chargesParCompte).reduce((a, b) => a + b, 0);
+                const totalProduits = Object.values(produitsParCompte).reduce((a, b) => a + b, 0);
+                const resultatNet = totalProduits - totalCharges;
+
+                return (
+                  <div>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
+                      <SectionTitle>Trésorerie — registre des opérations</SectionTitle>
+                      <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        <select value={tresorerieFiltreProjet} onChange={e => setTresorerieFiltreProjet(e.target.value)}
+                          style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}>
+                          <option value="tous">Tous les projets</option>
+                          {PROJETS_TRESORERIE.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                        <Btn small onClick={ouvrirNouvelleOperation}>+ Nouvelle opération</Btn>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
+                      <StatCard label="Total entrées" value={totalEntrees.toLocaleString() + " F"} icon="↑" color={C.vert} />
+                      <StatCard label="Total sorties" value={totalSorties.toLocaleString() + " F"} icon="↓" color={C.rouge} />
+                      <StatCard label="Solde caisse" value={soldeCaisse.toLocaleString() + " F"} icon="=" color={soldeCaisse >= 0 ? C.bleu : C.rouge} />
+                    </div>
+
+                    <Card style={{ marginBottom: 20 }}>
+                      <SectionTitle>Journal des opérations</SectionTitle>
+                      {opsFiltrees.length === 0 ? (
+                        <p style={{ color: C.gris, fontSize: 13 }}>Aucune opération enregistrée pour ce filtre.</p>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {opsFiltrees.map(o => (
+                            <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>
+                              <span style={{ width: 90, color: C.gris }}>{new Date(o.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" })}</span>
+                              <span style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 600 }}>{o.libelle}</div>
+                                <div style={{ fontSize: 11, color: C.gris }}>{o.projet} · Débit {compteLibelle(o.compte_debit)} / Crédit {compteLibelle(o.compte_credit)}</div>
+                              </span>
+                              <span style={{ fontWeight: 700, color: o.sens === "entree" ? C.vert : C.rouge, minWidth: 100, textAlign: "right" }}>
+                                {o.sens === "entree" ? "+" : "−"}{o.montant.toLocaleString()} F
+                              </span>
+                              {o.piece_url && <a href={o.piece_url} target="_blank" rel="noreferrer" style={{ fontSize: 16 }}>📎</a>}
+                              <span onClick={() => ouvrirEditionOperation(o)} style={{ cursor: "pointer", fontSize: 14 }} title="Modifier">✏️</span>
+                              <span onClick={() => supprimerOperation(o.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 16 }} title="Supprimer">✕</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </Card>
+
+                    <Card>
+                      <SectionTitle>Brouillon compte de résultat (indicatif)</SectionTitle>
+                      <p style={{ color: C.gris, fontSize: 12, marginTop: -8, marginBottom: 16 }}>
+                        Estimation automatique basée sur les opérations saisies. Ce document n'est pas un état financier SYCEBNL certifié — à faire valider par un comptable agréé avant toute utilisation officielle.
+                      </p>
+                      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+                        <div style={{ flex: 1, minWidth: 240 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: C.vert }}>PRODUITS (classe 7)</div>
+                          {Object.entries(produitsParCompte).length === 0 ? (
+                            <p style={{ color: C.gris, fontSize: 12 }}>Aucun produit enregistré.</p>
+                          ) : Object.entries(produitsParCompte).map(([code, montant]) => (
+                            <div key={code} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "4px 0" }}>
+                              <span>{compteLibelle(code)}</span><span style={{ fontWeight: 600 }}>{montant.toLocaleString()} F</span>
+                            </div>
+                          ))}
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderTop: "1px solid #ddd", marginTop: 8, fontWeight: 700 }}>
+                            <span>Total produits</span><span>{totalProduits.toLocaleString()} F</span>
+                          </div>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 240 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: C.rouge }}>CHARGES (classe 6)</div>
+                          {Object.entries(chargesParCompte).length === 0 ? (
+                            <p style={{ color: C.gris, fontSize: 12 }}>Aucune charge enregistrée.</p>
+                          ) : Object.entries(chargesParCompte).map(([code, montant]) => (
+                            <div key={code} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "4px 0" }}>
+                              <span>{compteLibelle(code)}</span><span style={{ fontWeight: 600 }}>{montant.toLocaleString()} F</span>
+                            </div>
+                          ))}
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "8px 0", borderTop: "1px solid #ddd", marginTop: 8, fontWeight: 700 }}>
+                            <span>Total charges</span><span>{totalCharges.toLocaleString()} F</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: 16, padding: "16px", background: resultatNet >= 0 ? "#E8F5E9" : "#FFEBEE", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ fontWeight: 700, fontSize: 15 }}>RÉSULTAT NET (estimatif)</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: resultatNet >= 0 ? C.vert : "#d32f2f" }}>{resultatNet.toLocaleString()} F</div>
+                      </div>
+                    </Card>
+
+                    {showModalOperation && (
+                      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+                        <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 420, maxWidth: "90%", maxHeight: "85vh", overflowY: "auto" }}>
+                          <SectionTitle>{operationEnEdition ? "Modifier l'opération" : "Nouvelle opération de caisse"}</SectionTitle>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <div onClick={() => setOperationForm({ ...operationForm, sens: "entree" })} style={{
+                                flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer",
+                                background: operationForm.sens === "entree" ? C.vert : C.grisClair,
+                                color: operationForm.sens === "entree" ? "#fff" : C.gris, fontWeight: 600, fontSize: 13,
+                              }}>↑ Entrée</div>
+                              <div onClick={() => setOperationForm({ ...operationForm, sens: "sortie" })} style={{
+                                flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer",
+                                background: operationForm.sens === "sortie" ? "#d32f2f" : C.grisClair,
+                                color: operationForm.sens === "sortie" ? "#fff" : C.gris, fontWeight: 600, fontSize: 13,
+                              }}>↓ Sortie</div>
+                            </div>
+                            <input type="date" value={operationForm.date} onChange={e => setOperationForm({ ...operationForm, date: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                            <select value={operationForm.projet} onChange={e => setOperationForm({ ...operationForm, projet: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                              {PROJETS_TRESORERIE.map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                            <input placeholder="Libellé (ex: Achat diabolos, Versement cotisation...)" value={operationForm.libelle} onChange={e => setOperationForm({ ...operationForm, libelle: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                            <input type="number" placeholder="Montant (FCFA)" value={operationForm.montant} onChange={e => setOperationForm({ ...operationForm, montant: e.target.value })}
+                              style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                            <div>
+                              <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Compte caisse / banque</div>
+                              <select value={operationForm.compteCaisse} onChange={e => setOperationForm({ ...operationForm, compteCaisse: e.target.value })}
+                                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                                {COMPTES_SYCEBNL.filter(c => c.classe === 5).map(c => <option key={c.code} value={c.code}>{c.code} — {c.libelle}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>{operationForm.sens === "entree" ? "Compte de produit (classe 7)" : "Compte de charge (classe 6)"}</div>
+                              <select value={operationForm.compteContrepartie} onChange={e => setOperationForm({ ...operationForm, compteContrepartie: e.target.value })}
+                                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                                {COMPTES_SYCEBNL.filter(c => operationForm.sens === "entree" ? c.classe === 7 : (c.classe === 6 || c.classe === 4)).map(c => <option key={c.code} value={c.code}>{c.code} — {c.libelle}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+                            <Btn small onClick={() => setShowModalOperation(false)} style={{ background: C.grisClair, color: C.gris }}>Annuler</Btn>
+                            <Btn small onClick={enregistrerOperation}>Enregistrer</Btn>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
