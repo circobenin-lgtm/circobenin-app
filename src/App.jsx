@@ -1133,10 +1133,15 @@ export default function App() {
 
   const enregistrerMontantDu = async (eleveId, eleveNom) => {
     const montant = parseFloat(montantDuForm);
-    if (!montant) return;
-    await supabase.from("comptes_paiement").upsert([{
+    if (!montant) { alert("Merci de saisir un montant valide."); return; }
+    const { error } = await supabase.from("comptes_paiement").upsert([{
       eleve_id: eleveId, eleve_nom: eleveNom, montant_du: montant, formule: formuleForm,
     }], { onConflict: "eleve_id" });
+    if (error) {
+      alert("Erreur lors de l'enregistrement : " + error.message);
+      return;
+    }
+    setMontantDuForm("");
     chargerComptesPaiement();
   };
 
