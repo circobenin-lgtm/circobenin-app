@@ -873,6 +873,11 @@ export default function App() {
   const [pinError, setPinError] = useState(false);
   const [nomIntervenant, setNomIntervenant] = useState("");
   const [parentCodeInput, setParentCodeInput] = useState("");
+  const [eleveActuel, setEleveActuel] = useState(null);
+  const [parentCodeError, setParentCodeError] = useState(false);
+  const [parentCodeLoading, setParentCodeLoading] = useState(false);
+  const [compteEleveActuel, setCompteEleveActuel] = useState(null);
+  const [versementsEleveActuel, setVersementsEleveActuel] = useState([]);
   const [activeEvenement, setActiveEvenement] = useState(null);
   const [showModalEleve, setShowModalEleve] = useState(false);
   const [showModalProjet, setShowModalProjet] = useState(false);
@@ -880,7 +885,7 @@ export default function App() {
   const [nouvelEleve, setNouvelEleve] = useState({ prenom: "", nom: "", age: "", discipline: "Cirque", classe: "" });
   const [nouveauProjet, setNouveauProjet] = useState({ titre: "", type: "Social", date: "", statut: "En préparation" });
   const [nouveauSpectacle, setNouveauSpectacle] = useState({ titre: "", type: "Solo", duree: "", description: "" });
-  const [elevesState, setElevesState] = useState(ELEVES);
+  const [elevesState, setElevesState] = useState([]);
   const [projetsState, setProjetsState] = useState(PROJETS);
   const [spectaclesState, setSpectaclesState] = useState(SPECTACLES);
   const [presencesFormateurs, setPresencesFormateurs] = useState({});
@@ -1085,6 +1090,32 @@ export default function App() {
   const [montantDuForm, setMontantDuForm] = useState("");
   const [formuleForm, setFormuleForm] = useState("trimestre");
 
+  const chargerEleves = async () => {
+    try {
+      const { data, error } = await supabase.from("eleves").select("*").order("prenom");
+      if (!error && data) {
+        const mapped = data.map(e => ({
+          id: e.id,
+          nom: (e.nom + " " + e.prenom).trim(),
+          prenom: e.prenom,
+          nomFamille: e.nom,
+          classe: e.classe,
+          discipline: e.discipline,
+          statut: e.statut,
+          nomParent: e.nom_parent,
+          telephoneParent: e.telephone_parent,
+          paye: false,
+          presence: 0,
+        }));
+        setElevesState(mapped);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role) chargerEleves();
+  }, [role]);
+
   const chargerComptesPaiement = async () => {
     try {
       const { data: comptes } = await supabase.from("comptes_paiement").select("*");
@@ -1233,14 +1264,51 @@ export default function App() {
         <input
           type="password"
           value={parentCodeInput}
-          onChange={e => setParentCodeInput(e.target.value)}
+          onChange={e => { setParentCodeInput(e.target.value); setParentCodeError(false); }}
           placeholder="Code secret"
-          style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `2px solid ${C.grisClair}`, fontSize: 16, marginBottom: 16, boxSizing: "border-box", outline: "none", textAlign: "center", letterSpacing: 6 }}
+          style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `2px solid ${parentCodeError ? C.rouge : C.grisClair}`, fontSize: 16, marginBottom: 16, boxSizing: "border-box", outline: "none", textAlign: "center", letterSpacing: 6 }}
         />
-        {parentCodeInput.length >= 4 && (
-          <Btn onClick={() => { setParentCode(parentCodeInput); setRole("parent"); setPage("mon_enfant"); }}>Accéder à mon espace →</Btn>
+        {parentCodeError && (
+          <p style={{ color: C.rouge, fontSize: 13, marginTop: -10, marginBottom: 16 }}>Code invalide. Vérifiez et réessayez.</p>
         )}
-        <div onClick={() => { setRole(null); setParentCodeInput(""); }} style={{ marginTop: 16, color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
+        {parentCodeInput.length >= 4 && (
+          <Btn onClick={async () => {
+            setParentCodeLoading(true);
+            setParentCodeError(false);
+            try {
+              const codeSaisi = parentCodeInput.trim().toUpperCase();
+              const { data: lien, error } = await supabase
+                .from("codes_parents")
+                .select("eleve_id")
+                .eq("code", codeSaisi)
+                .maybeSingle();
+              if (error || !lien) {
+                setParentCodeError(true);
+                setParentCodeLoading(false);
+                return;
+              }
+              const { data: eleve } = await supabase.from("eleves").select("*").eq("id", lien.eleve_id).maybeSingle();
+              if (!eleve) {
+                setParentCodeError(true);
+                setParentCodeLoading(false);
+                return;
+              }
+              setEleveActuel(eleve);
+              const { data: compte } = await supabase.from("comptes_paiement").select("*").eq("eleve_id", eleve.id).maybeSingle();
+              setCompteEleveActuel(compte || null);
+              const { data: vers } = await supabase.from("versements_eleves").select("*").eq("eleve_id", eleve.id).order("date", { ascending: false });
+              setVersementsEleveActuel(vers || []);
+              setParentCode(codeSaisi);
+              setParentCodeLoading(false);
+              setRole("parent");
+              setPage("mon_enfant");
+            } catch (e) {
+              setParentCodeError(true);
+              setParentCodeLoading(false);
+            }
+          }}>{parentCodeLoading ? "Vérification…" : "Accéder à mon espace →"}</Btn>
+        )}
+        <div onClick={() => { setRole(null); setParentCodeInput(""); setParentCodeError(false); }} style={{ marginTop: 16, color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
       </div>
     </div>
   );
@@ -2957,21 +3025,20 @@ export default function App() {
           )}
 
           {/* ── ESPACE PARENT : MON ENFANT ── */}
-          {page === "mon_enfant" && (
+          {page === "mon_enfant" && eleveActuel && (
             <div>
               <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "36px 32px", color: "#fff", marginBottom: 24 }}>
                 <h2 style={{ fontFamily: FT, fontSize: 26, margin: "0 0 6px" }}>Bonjour 👋</h2>
-                <p style={{ opacity: 0.85, margin: 0 }}>Espace parent — suivi de votre enfant à Circo Bénin</p>
+                <p style={{ opacity: 0.85, margin: 0 }}>Espace parent — suivi de {eleveActuel.prenom} à Circo Bénin</p>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 <Card style={{ borderTop: "4px solid #2d7a4f" }}>
                   <SectionTitle>Fiche élève</SectionTitle>
                   {[
-                    { label: "Nom", val: "Pharell Ezinse" },
-                    { label: "Classe", val: "Juniors (12-14 ans)" },
-                    { label: "Discipline", val: "Diabolo" },
-                    { label: "Statut", val: "Actif" },
-                    { label: "Formateur", val: "Prime" },
+                    { label: "Nom", val: eleveActuel.prenom + " " + eleveActuel.nom },
+                    { label: "Classe", val: eleveActuel.classe || "—" },
+                    { label: "Discipline", val: eleveActuel.discipline || "—" },
+                    { label: "Statut", val: eleveActuel.statut === "actif" ? "Actif" : eleveActuel.statut },
                   ].map(f => (
                     <div key={f.label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #eee", fontSize: 14 }}>
                       <span style={{ color: C.gris }}>{f.label}</span>
@@ -2980,18 +3047,28 @@ export default function App() {
                   ))}
                 </Card>
                 <Card style={{ borderTop: "4px solid #e91e8c" }}>
-                  <SectionTitle>Présences ce mois</SectionTitle>
-                  <div style={{ textAlign: "center", padding: "20px 0" }}>
-                    <div style={{ fontSize: 56, fontWeight: 700, color: C.vert, fontFamily: FT }}>85%</div>
-                    <div style={{ fontSize: 13, color: C.gris, marginBottom: 20 }}>Taux de présence</div>
-                    <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
-                      {Array.from({length: 12}, (_, i) => (
-                        <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: i < 10 ? "#2d7a4f" : "#eee", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: i < 10 ? "#fff" : C.gris }}>
-                          {i < 10 ? "✓" : "·"}
+                  <SectionTitle>Présences</SectionTitle>
+                  {(() => {
+                    const presencesEnfant = historiquePresences.filter(p => p.eleve_id === eleveActuel.id);
+                    if (presencesEnfant.length === 0) {
+                      return <p style={{ fontSize: 13, color: C.gris, textAlign: "center", padding: "30px 0" }}>Aucune donnée de présence enregistrée pour le moment.</p>;
+                    }
+                    const presents = presencesEnfant.filter(p => p.present).length;
+                    const taux = Math.round((presents / presencesEnfant.length) * 100);
+                    return (
+                      <div style={{ textAlign: "center", padding: "20px 0" }}>
+                        <div style={{ fontSize: 56, fontWeight: 700, color: C.vert, fontFamily: FT }}>{taux}%</div>
+                        <div style={{ fontSize: 13, color: C.gris, marginBottom: 20 }}>Taux de présence ({presencesEnfant.length} séance{presencesEnfant.length > 1 ? "s" : ""} enregistrée{presencesEnfant.length > 1 ? "s" : ""})</div>
+                        <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
+                          {presencesEnfant.slice(0, 12).map((p, i) => (
+                            <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: p.present ? "#2d7a4f" : "#eee", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: p.present ? "#fff" : C.gris }}>
+                              {p.present ? "✓" : "·"}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })()}
                 </Card>
               </div>
             </div>
@@ -3030,123 +3107,138 @@ export default function App() {
           )}
 
           {/* ── ESPACE PARENT : PAIEMENTS ── */}
-          {page === "paiements_enfant" && (
-            <div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
-                <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
-                  <div style={{ fontSize: 28, marginBottom: 6 }}>✅</div>
-                  <div style={{ fontWeight: 700, fontSize: 20, color: C.vert }}>15 000</div>
-                  <div style={{ fontSize: 12, color: C.gris }}>FCFA payés</div>
-                </Card>
-                <Card style={{ textAlign: "center", borderTop: "4px solid #e91e8c" }}>
-                  <div style={{ fontSize: 28, marginBottom: 6 }}>⏳</div>
-                  <div style={{ fontWeight: 700, fontSize: 20, color: C.magenta }}>0</div>
-                  <div style={{ fontSize: 12, color: C.gris }}>En attente</div>
-                </Card>
-                <Card style={{ textAlign: "center", borderTop: "4px solid #1a5c38" }}>
-                  <div style={{ fontSize: 28, marginBottom: 6 }}>📅</div>
-                  <div style={{ fontWeight: 700, fontSize: 20, color: C.vertM }}>Jan 2025</div>
-                  <div style={{ fontSize: 12, color: C.gris }}>Dernier paiement</div>
+          {page === "paiements_enfant" && eleveActuel && (() => {
+            const montantDu = compteEleveActuel ? compteEleveActuel.montant_du : 0;
+            const totalPaye = versementsEleveActuel.reduce((a, v) => a + v.montant, 0);
+            const reste = Math.max(montantDu - totalPaye, 0);
+            const dernierPaiement = versementsEleveActuel[0];
+            return (
+              <div>
+                <div className="grid-stats-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+                  <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
+                    <div style={{ fontSize: 28, marginBottom: 6 }}>✅</div>
+                    <div style={{ fontWeight: 700, fontSize: 20, color: C.vert }}>{totalPaye.toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: C.gris }}>FCFA payés</div>
+                  </Card>
+                  <Card style={{ textAlign: "center", borderTop: "4px solid #e91e8c" }}>
+                    <div style={{ fontSize: 28, marginBottom: 6 }}>⏳</div>
+                    <div style={{ fontWeight: 700, fontSize: 20, color: C.magenta }}>{reste.toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: C.gris }}>FCFA en attente</div>
+                  </Card>
+                  <Card style={{ textAlign: "center", borderTop: "4px solid #1a5c38" }}>
+                    <div style={{ fontSize: 28, marginBottom: 6 }}>📅</div>
+                    <div style={{ fontWeight: 700, fontSize: 20, color: C.vertM }}>{dernierPaiement ? dernierPaiement.date : "—"}</div>
+                    <div style={{ fontSize: 12, color: C.gris }}>Dernier paiement</div>
+                  </Card>
+                </div>
+                <Card>
+                  <SectionTitle>Historique des paiements</SectionTitle>
+                  {versementsEleveActuel.length === 0 && (
+                    <p style={{ fontSize: 13, color: C.gris, textAlign: "center", padding: "20px 0" }}>Aucun paiement enregistré pour le moment.</p>
+                  )}
+                  {versementsEleveActuel.map(p => (
+                    <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #eee" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{p.montant.toLocaleString()} FCFA</div>
+                        <div style={{ fontSize: 12, color: C.gris }}>{p.mode} · {p.date}</div>
+                      </div>
+                      <Badge text="Payé" bg="#e8f5e9" color={C.vert} />
+                    </div>
+                  ))}
+                  {reste > 0 ? (
+                    <div style={{ marginTop: 20 }}>
+                      <Btn onClick={() => setPage("payer")}>Effectuer un paiement de {reste.toLocaleString()} FCFA →</Btn>
+                    </div>
+                  ) : montantDu > 0 ? (
+                    <div style={{ marginTop: 20, textAlign: "center", color: C.vert, fontSize: 14, fontWeight: 600 }}>✓ Compte à jour, aucun paiement en attente</div>
+                  ) : (
+                    <div style={{ marginTop: 20, textAlign: "center", color: C.gris, fontSize: 13 }}>Aucun montant n'a encore été enregistré par l'administration pour cet élève.</div>
+                  )}
                 </Card>
               </div>
-              <Card>
-                <SectionTitle>Historique des paiements</SectionTitle>
-                {PAIEMENTS.filter(p => p.eleve === "Adjobi Kossivi").map(p => (
-                  <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{p.montant.toLocaleString()} FCFA</div>
-                      <div style={{ fontSize: 12, color: C.gris }}>{p.mode} · {p.date}</div>
-                    </div>
-                    <Badge text={p.statut} bg={p.statut === "payé" ? "#e8f5e9" : "#fff3e0"} color={p.statut === "payé" ? C.vert : "#e65100"} />
-                  </div>
-                ))}
-                <div style={{ marginTop: 20 }}>
-                  <Btn onClick={() => setPage("payer")}>Effectuer un paiement →</Btn>
-                </div>
-              </Card>
-            </div>
-          )}
+            );
+          })()}
 
-          {/* ── PAIEMENT PUBLIC ── */}
-          {page === "payer" && (
-            <div style={{ maxWidth: 480, margin: "0 auto" }}>
-              <Card>
-                <SectionTitle>Paiement de l'inscription</SectionTitle>
-                {paiementStep === 0 && (
-                  <div>
-                    <p style={{ fontSize: 14, color: C.gris, marginBottom: 20 }}>Choisissez votre mode de paiement</p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {[
-                        { id: "mtn", label: "MTN Mobile Money", icon: "📱", color: "#FFC107" },
-                        { id: "moov", label: "Moov Money", icon: "📲", color: "#1565C0" },
-                        { id: "carte", label: "Carte bancaire", icon: "💳", color: C.gris },
-                      ].map(m => (
-                        <div key={m.id} onClick={() => { setModePaiement(m.id); setPaiementStep(1); }} style={{
-                          display: "flex", alignItems: "center", gap: 14,
-                          padding: "16px 20px", borderRadius: 12,
-                          border: `2px solid ${C.grisClair}`, cursor: "pointer",
-                          transition: "all 0.2s",
-                        }}
-                          onMouseEnter={e => e.currentTarget.style.borderColor = m.color}
-                          onMouseLeave={e => e.currentTarget.style.borderColor = C.grisClair}
-                        >
-                          <span style={{ fontSize: 24 }}>{m.icon}</span>
-                          <span style={{ fontSize: 15, fontWeight: 600 }}>{m.label}</span>
-                          <span style={{ marginLeft: "auto", color: C.gris }}>→</span>
+          {/* ── PAIEMENT PUBLIC (FedaPay) ── */}
+          {page === "payer" && eleveActuel && (() => {
+            const montantDu = compteEleveActuel ? compteEleveActuel.montant_du : 0;
+            const totalPaye = versementsEleveActuel.reduce((a, v) => a + v.montant, 0);
+            const reste = Math.max(montantDu - totalPaye, 0);
+
+            const ouvrirFedaPay = () => {
+              if (!window.FedaPay) {
+                alert("Le module de paiement n'a pas pu se charger. Vérifiez votre connexion et réessayez.");
+                return;
+              }
+              const widget = window.FedaPay.init({
+                public_key: process.env.REACT_APP_FEDAPAY_PUBLIC_KEY,
+                transaction: {
+                  amount: reste,
+                  description: "Cotisation Circo Bénin — " + eleveActuel.prenom + " " + eleveActuel.nom,
+                  custom_metadata: { eleve_id: eleveActuel.id },
+                },
+                customer: {
+                  firstname: eleveActuel.nom_parent || eleveActuel.prenom,
+                  lastname: "",
+                  email: "contact@circobenin.com",
+                  phone_number: {
+                    number: eleveActuel.telephone_parent || "",
+                    country: "bj",
+                  },
+                },
+                onComplete: function (resp) {
+                  if (resp.reason === window.FedaPay.CHECKOUT_COMPLETED) {
+                    setPaiementStep(2);
+                    // Le webhook côté serveur confirme et enregistre le versement.
+                    // On recharge les données après un court délai pour laisser le webhook s'exécuter.
+                    setTimeout(async () => {
+                      const { data: vers } = await supabase.from("versements_eleves").select("*").eq("eleve_id", eleveActuel.id).order("date", { ascending: false });
+                      setVersementsEleveActuel(vers || []);
+                    }, 3000);
+                  } else {
+                    setPaiementStep(0);
+                  }
+                },
+              });
+              widget.open();
+            };
+
+            return (
+              <div style={{ maxWidth: 480, margin: "0 auto" }}>
+                <Card>
+                  <SectionTitle>Paiement de la cotisation</SectionTitle>
+                  {paiementStep !== 2 ? (
+                    <div>
+                      <p style={{ fontSize: 14, color: C.gris, marginBottom: 20 }}>
+                        Paiement pour {eleveActuel.prenom} {eleveActuel.nom}
+                      </p>
+                      <div style={{ background: C.fond, borderRadius: 12, padding: 16, marginBottom: 20 }}>
+                        <div style={{ borderTop: `1px solid ${C.grisClair}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                          <span style={{ fontWeight: 700 }}>Montant à payer</span>
+                          <span style={{ fontWeight: 700, color: C.vert, fontSize: 16 }}>{reste.toLocaleString()} FCFA</span>
                         </div>
-                      ))}
+                      </div>
+                      {reste > 0 ? (
+                        <Btn onClick={ouvrirFedaPay}>Payer {reste.toLocaleString()} FCFA avec FedaPay →</Btn>
+                      ) : (
+                        <p style={{ textAlign: "center", color: C.vert, fontWeight: 600 }}>✓ Aucun montant en attente</p>
+                      )}
+                      <p style={{ fontSize: 12, color: C.gris, marginTop: 16, textAlign: "center" }}>
+                        Mobile Money (MTN, Moov) et carte bancaire acceptés via FedaPay.
+                      </p>
                     </div>
-                  </div>
-                )}
-                {paiementStep === 1 && (
-                  <div>
-                    <div onClick={() => setPaiementStep(0)} style={{ cursor: "pointer", color: C.gris, fontSize: 13, marginBottom: 20 }}>← Retour</div>
-                    {(modePaiement === "mtn" || modePaiement === "moov") && (
-                      <div>
-                        <p style={{ fontSize: 14, color: C.gris, marginBottom: 16 }}>
-                          {modePaiement === "mtn" ? "MTN Mobile Money" : "Moov Money"}
-                        </p>
-                        <div style={{ marginBottom: 14 }}>
-                          <label style={{ fontSize: 12, fontWeight: 600, color: C.gris, display: "block", marginBottom: 6 }}>Numéro de téléphone</label>
-                          <div style={{ background: C.fond, borderRadius: 8, padding: "12px 14px", border: `1px solid ${C.grisClair}`, fontSize: 14, color: C.gris }}>+229 · · · · · · · · ·</div>
-                        </div>
-                        <div style={{ background: C.fond, borderRadius: 12, padding: 16, marginBottom: 20 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 8 }}>
-                            <span style={{ color: C.gris }}>Inscription annuelle</span>
-                            <span style={{ fontWeight: 700 }}>15 000 FCFA</span>
-                          </div>
-                          <div style={{ borderTop: `1px solid ${C.grisClair}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
-                            <span style={{ fontWeight: 700 }}>Total</span>
-                            <span style={{ fontWeight: 700, color: C.vert, fontSize: 16 }}>15 000 FCFA</span>
-                          </div>
-                        </div>
-                        <Btn onClick={() => setPaiementStep(2)}>Confirmer le paiement</Btn>
-                      </div>
-                    )}
-                    {modePaiement === "carte" && (
-                      <div>
-                        {["Numéro de carte", "Date d'expiration", "CVV", "Nom sur la carte"].map(l => (
-                          <div key={l} style={{ marginBottom: 14 }}>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.gris, display: "block", marginBottom: 6 }}>{l}</label>
-                            <div style={{ background: C.fond, borderRadius: 8, padding: "12px 14px", border: `1px solid ${C.grisClair}`, fontSize: 14, color: C.gris }}>—</div>
-                          </div>
-                        ))}
-                        <Btn onClick={() => setPaiementStep(2)}>Payer 15 000 FCFA</Btn>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {paiementStep === 2 && (
-                  <div style={{ textAlign: "center", padding: "20px 0" }}>
-                    <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-                    <div style={{ fontFamily: FT, fontSize: 22, color: C.vert, marginBottom: 8 }}>Paiement confirmé !</div>
-                    <p style={{ fontSize: 14, color: C.gris, marginBottom: 24 }}>Votre inscription à Circo Bénin est validée. Un reçu vous sera envoyé.</p>
-                    <Btn onClick={() => { setPaiementStep(0); setModePaiement(null); }}>Retour à l'accueil</Btn>
-                  </div>
-                )}
-              </Card>
-            </div>
-          )}
+                  ) : (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+                      <div style={{ fontFamily: FT, fontSize: 22, color: C.vert, marginBottom: 8 }}>Paiement effectué !</div>
+                      <p style={{ fontSize: 14, color: C.gris, marginBottom: 24 }}>Votre paiement est en cours de confirmation. Il sera reflété dans votre historique dans quelques instants.</p>
+                      <Btn onClick={() => { setPaiementStep(0); setPage("paiements_enfant"); }}>Retour à mes paiements</Btn>
+                    </div>
+                  )}
+                </Card>
+              </div>
+            );
+          })()}
 
           {/* ── DÉTAIL ÉVÉNEMENT ── */}
           {page === "evenement_detail" && (() => {
@@ -3294,10 +3386,29 @@ export default function App() {
               </select></div>
             <div style={{ display: "flex", gap: 12 }}>
               <div onClick={() => setShowModalEleve(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid #e5e7eb", textAlign: "center", cursor: "pointer", fontSize: 14 }}>Annuler</div>
-              <div onClick={() => {
+              <div onClick={async () => {
                 if (!nouvelEleve.prenom || !nouvelEleve.nom) return;
-                const newId = elevesState.length + 1;
-                setElevesState([...elevesState, { id: newId, nom: nouvelEleve.prenom + " " + nouvelEleve.nom, age: parseInt(nouvelEleve.age) || 0, classe: nouvelEleve.classe, discipline: nouvelEleve.discipline, statut: "actif", paye: false, presence: 0 }]);
+                try {
+                  const { data: inserted, error } = await supabase.from("eleves").insert([{
+                    nom: nouvelEleve.nom, prenom: nouvelEleve.prenom,
+                    classe: nouvelEleve.classe, discipline: nouvelEleve.discipline,
+                    statut: "actif",
+                  }]).select().single();
+                  if (!error && inserted) {
+                    const p = nouvelEleve.prenom.toUpperCase().replace(/[^A-Z]/g, "");
+                    const base = (p.length >= 4 ? p.slice(0, 4) : p.padEnd(4, "X")) + "531";
+                    let code = base;
+                    let suffixe = 2;
+                    while (true) {
+                      const { data: existant } = await supabase.from("codes_parents").select("code").eq("code", code).maybeSingle();
+                      if (!existant) break;
+                      code = base.slice(0, 3) + suffixe;
+                      suffixe++;
+                    }
+                    await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
+                    chargerEleves();
+                  }
+                } catch (e) {}
                 setNouvelEleve({ prenom: "", nom: "", age: "", discipline: "Cirque", classe: "" });
                 setShowModalEleve(false);
               }} style={{ flex: 1, padding: "12px", borderRadius: 10, background: C.vert, color: "#fff", textAlign: "center", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>Inscrire l'élève ✓</div>
