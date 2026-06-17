@@ -857,6 +857,8 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
 }
 
 export default function App() {
+  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'formateur': 'Profcirc@531'};
+  const CODES_INTERVENANTS = {'Jean Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
   const [role, setRole] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [sidebar, setSidebar] = useState(true);
@@ -1090,6 +1092,92 @@ export default function App() {
   const [versementForm, setVersementForm] = useState({ montant: "", mode: "Espèces", date: "" });
   const [montantDuForm, setMontantDuForm] = useState("");
   const [formuleForm, setFormuleForm] = useState("trimestre");
+  const [sessionRestauree, setSessionRestauree] = useState(false);
+
+  const SESSION_DUREE_MS = 24 * 60 * 60 * 1000; // 24h
+  const SESSION_KEY = "circobenin_session";
+
+  const sauvegarderSession = (data) => {
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ ...data, timestamp: Date.now() }));
+    } catch (e) {}
+  };
+
+  const effacerSession = () => {
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+  };
+
+  const connecterParentAvecCode = async (codeSaisi) => {
+    try {
+      const { data: lien, error } = await supabase
+        .from("codes_parents")
+        .select("eleve_id")
+        .eq("code", codeSaisi)
+        .maybeSingle();
+      if (error || !lien) return false;
+      const { data: eleve } = await supabase.from("eleves").select("*").eq("id", lien.eleve_id).maybeSingle();
+      if (!eleve) return false;
+      setEleveActuel(eleve);
+      const { data: compte } = await supabase.from("comptes_paiement").select("*").eq("eleve_id", eleve.id).maybeSingle();
+      setCompteEleveActuel(compte || null);
+      const { data: vers } = await supabase.from("versements_eleves").select("*").eq("eleve_id", eleve.id).order("date", { ascending: false });
+      setVersementsEleveActuel(vers || []);
+      setParentCode(codeSaisi);
+      setRole("parent");
+      sauvegarderSession({ role: "parent", parentCode: codeSaisi });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Restauration de session au chargement de la page (rafraîchissement navigateur)
+  useEffect(() => {
+    const restaurer = async () => {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) { setSessionRestauree(true); return; }
+        const session = JSON.parse(raw);
+        if (!session.timestamp || Date.now() - session.timestamp > SESSION_DUREE_MS) {
+          effacerSession();
+          setSessionRestauree(true);
+          return;
+        }
+        if (session.role === "parent" && session.parentCode) {
+          const ok = await connecterParentAvecCode(session.parentCode);
+          if (ok) setPage("mon_enfant"); else effacerSession();
+        } else if (session.role && CODES_ROLES[session.role]) {
+          setNomIntervenant(session.nomIntervenant || "");
+          setRole(session.role);
+          setPage(NAV_PAR_ROLE[session.role][0].id);
+        }
+      } catch (e) {
+        effacerSession();
+      }
+      setSessionRestauree(true);
+    };
+    restaurer();
+  }, []);
+
+  // Synchronise la navigation interne (changement de "page") avec l'historique du navigateur,
+  // pour que le bouton précédent/suivant fonctionne au lieu de quitter l'application.
+  useEffect(() => {
+    if (!role || role.startsWith("__")) return;
+    const current = window.history.state;
+    if (current && current.page === page) return;
+    window.history.pushState({ page, role }, "", window.location.pathname);
+  }, [page, role]);
+
+  useEffect(() => {
+    const onPopState = (e) => {
+      if (e.state && e.state.page) {
+        setPage(e.state.page);
+        if (e.state.role) setRole(e.state.role);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const chargerEleves = async () => {
     try {
@@ -1176,6 +1264,16 @@ export default function App() {
     return { montantDu, totalPaye, reste: Math.max(montantDu - totalPaye, 0), formule: compte ? compte.formule : null, verses };
   };
 
+  // ── ÉCRAN DE CHARGEMENT pendant la restauration de session ──
+  if (!sessionRestauree) return (
+    <div style={{
+      minHeight: "100vh", background: `linear-gradient(135deg, ${C.vert} 0%, ${C.vertM} 60%, ${C.vertClair} 100%)`,
+      display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FB,
+    }}>
+      <div style={{ color: "#fff", fontSize: 14, opacity: 0.8 }}>Chargement…</div>
+    </div>
+  );
+
   // ── LOGIN ──
   if (!role) return (
     <div style={{
@@ -1218,8 +1316,6 @@ export default function App() {
   );
 
   // ── ECRAN PIN ROLES INTERNES ──
-  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'formateur': 'Profcirc@531'};
-  const CODES_INTERVENANTS = {'Jean Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
   if (role === "__pin_pending__") return (
     <div style={{
       minHeight: "100vh", background: "linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%)",
@@ -1246,6 +1342,7 @@ export default function App() {
             setRole(pendingRole);
             setPage(NAV_PAR_ROLE[pendingRole][0].id);
             setPinInput("");
+            sauvegarderSession({ role: pendingRole, nomIntervenant: nom });
           } else {
             setPinError(true);
           }
@@ -1281,37 +1378,10 @@ export default function App() {
           <Btn onClick={async () => {
             setParentCodeLoading(true);
             setParentCodeError(false);
-            try {
-              const codeSaisi = parentCodeInput.trim().toUpperCase();
-              const { data: lien, error } = await supabase
-                .from("codes_parents")
-                .select("eleve_id")
-                .eq("code", codeSaisi)
-                .maybeSingle();
-              if (error || !lien) {
-                setParentCodeError(true);
-                setParentCodeLoading(false);
-                return;
-              }
-              const { data: eleve } = await supabase.from("eleves").select("*").eq("id", lien.eleve_id).maybeSingle();
-              if (!eleve) {
-                setParentCodeError(true);
-                setParentCodeLoading(false);
-                return;
-              }
-              setEleveActuel(eleve);
-              const { data: compte } = await supabase.from("comptes_paiement").select("*").eq("eleve_id", eleve.id).maybeSingle();
-              setCompteEleveActuel(compte || null);
-              const { data: vers } = await supabase.from("versements_eleves").select("*").eq("eleve_id", eleve.id).order("date", { ascending: false });
-              setVersementsEleveActuel(vers || []);
-              setParentCode(codeSaisi);
-              setParentCodeLoading(false);
-              setRole("parent");
-              setPage("mon_enfant");
-            } catch (e) {
-              setParentCodeError(true);
-              setParentCodeLoading(false);
-            }
+            const ok = await connecterParentAvecCode(parentCodeInput.trim().toUpperCase());
+            setParentCodeLoading(false);
+            if (!ok) { setParentCodeError(true); return; }
+            setPage("mon_enfant");
           }}>{parentCodeLoading ? "Vérification…" : "Accéder à mon espace →"}</Btn>
         )}
         <div onClick={() => { setRole(null); setParentCodeInput(""); setParentCodeError(false); }} style={{ marginTop: 16, color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
@@ -1375,7 +1445,7 @@ export default function App() {
           {sidebar && (
             <div style={{ flex: 1 }}>
               <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{r.nom}</div>
-              <div onClick={() => { setRole(null); }} style={{ color: C.or, fontSize: 11, cursor: "pointer" }}>Déconnexion</div>
+              <div onClick={() => { setRole(null); effacerSession(); }} style={{ color: C.or, fontSize: 11, cursor: "pointer" }}>Déconnexion</div>
             </div>
           )}
         </div>
