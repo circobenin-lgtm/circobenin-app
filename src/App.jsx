@@ -373,12 +373,12 @@ const SectionTitle = ({ children }) => (
   <h3 style={{ fontFamily: FT, color: C.vert, margin: "0 0 20px", fontSize: 17 }}>{children}</h3>
 );
 
-const Btn = ({ children, onClick, color = C.vert, small = false }) => (
-  <div onClick={onClick} style={{
-    background: color, color: "#fff", borderRadius: small ? 8 : 12,
+const Btn = ({ children, onClick, color = C.vert, small = false, disabled = false }) => (
+  <div onClick={disabled ? undefined : onClick} style={{
+    background: disabled ? C.grisClair : color, color: disabled ? C.gris : "#fff", borderRadius: small ? 8 : 12,
     padding: small ? "6px 14px" : "12px 20px",
-    cursor: "pointer", fontWeight: 600, fontSize: small ? 12 : 14,
-    display: "inline-block",
+    cursor: disabled ? "not-allowed" : "pointer", fontWeight: 600, fontSize: small ? 12 : 14,
+    display: "inline-block", opacity: disabled ? 0.7 : 1,
   }}>{children}</div>
 );
 
@@ -878,6 +878,7 @@ export default function App() {
   const [parentCodeLoading, setParentCodeLoading] = useState(false);
   const [compteEleveActuel, setCompteEleveActuel] = useState(null);
   const [versementsEleveActuel, setVersementsEleveActuel] = useState([]);
+  const [montantPaiementChoisi, setMontantPaiementChoisi] = useState("");
   const [activeEvenement, setActiveEvenement] = useState(null);
   const [showModalEleve, setShowModalEleve] = useState(false);
   const [showModalProjet, setShowModalProjet] = useState(false);
@@ -3169,8 +3170,11 @@ export default function App() {
             const montantDu = compteEleveActuel ? compteEleveActuel.montant_du : 0;
             const totalPaye = versementsEleveActuel.reduce((a, v) => a + v.montant, 0);
             const reste = Math.max(montantDu - totalPaye, 0);
+            const montantSaisi = montantPaiementChoisi === "" ? reste : parseInt(montantPaiementChoisi, 10) || 0;
+            const montantValide = montantSaisi > 0 && montantSaisi <= reste;
 
             const ouvrirFedaPay = () => {
+              if (!montantValide) return;
               if (!window.FedaPay) {
                 alert("Le module de paiement n'a pas pu se charger. Vérifiez votre connexion et réessayez.");
                 return;
@@ -3178,7 +3182,7 @@ export default function App() {
               const widget = window.FedaPay.init({
                 public_key: process.env.REACT_APP_FEDAPAY_PUBLIC_KEY,
                 transaction: {
-                  amount: reste,
+                  amount: montantSaisi,
                   description: "Cotisation Circo Bénin — " + eleveActuel.prenom + " " + eleveActuel.nom,
                   custom_metadata: { eleve_id: eleveActuel.id },
                 },
@@ -3218,13 +3222,26 @@ export default function App() {
                         Paiement pour {eleveActuel.prenom} {eleveActuel.nom}
                       </p>
                       <div style={{ background: C.fond, borderRadius: 12, padding: 16, marginBottom: 20 }}>
-                        <div style={{ borderTop: `1px solid ${C.grisClair}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
-                          <span style={{ fontWeight: 700 }}>Montant à payer</span>
-                          <span style={{ fontWeight: 700, color: C.vert, fontSize: 16 }}>{reste.toLocaleString()} FCFA</span>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: C.gris, marginBottom: 10 }}>
+                          <span>Reste dû</span>
+                          <span style={{ fontWeight: 600 }}>{reste.toLocaleString()} FCFA</span>
                         </div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: C.gris, display: "block", marginBottom: 6 }}>Montant à payer (FCFA)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={reste}
+                          value={montantPaiementChoisi}
+                          onChange={e => setMontantPaiementChoisi(e.target.value)}
+                          placeholder={reste.toString()}
+                          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${montantValide ? C.grisClair : C.rouge}`, fontSize: 16, boxSizing: "border-box", outline: "none" }}
+                        />
+                        {!montantValide && (
+                          <p style={{ fontSize: 12, color: C.rouge, marginTop: 6, marginBottom: 0 }}>Le montant doit être compris entre 1 et {reste.toLocaleString()} FCFA.</p>
+                        )}
                       </div>
                       {reste > 0 ? (
-                        <Btn onClick={ouvrirFedaPay}>Payer {reste.toLocaleString()} FCFA avec FedaPay →</Btn>
+                        <Btn onClick={ouvrirFedaPay} disabled={!montantValide}>Payer {montantSaisi.toLocaleString()} FCFA avec FedaPay →</Btn>
                       ) : (
                         <p style={{ textAlign: "center", color: C.vert, fontWeight: 600 }}>✓ Aucun montant en attente</p>
                       )}
@@ -3237,7 +3254,7 @@ export default function App() {
                       <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
                       <div style={{ fontFamily: FT, fontSize: 22, color: C.vert, marginBottom: 8 }}>Paiement effectué !</div>
                       <p style={{ fontSize: 14, color: C.gris, marginBottom: 24 }}>Votre paiement est en cours de confirmation. Il sera reflété dans votre historique dans quelques instants.</p>
-                      <Btn onClick={() => { setPaiementStep(0); setPage("paiements_enfant"); }}>Retour à mes paiements</Btn>
+                      <Btn onClick={() => { setPaiementStep(0); setMontantPaiementChoisi(""); setPage("paiements_enfant"); }}>Retour à mes paiements</Btn>
                     </div>
                   )}
                 </Card>
