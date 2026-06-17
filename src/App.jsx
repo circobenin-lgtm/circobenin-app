@@ -2660,28 +2660,41 @@ export default function App() {
           )}
 
           {/* ── FINANCES CA ── */}
-          {page === "finances" && (
-            <div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
-                <StatCard label="Recettes totales" value="513 000 F" icon="↑" color={C.vert} />
-                <StatCard label="Charges" value="280 000 F" icon="↓" color={C.rouge} />
-                <StatCard label="Solde net" value="233 000 F" icon="=" color={C.bleu} />
+          {page === "finances" && (() => {
+            const totalEntrees = operationsCaisse.filter(o => o.sens === "entree").reduce((a, o) => a + o.montant, 0);
+            const totalSorties = operationsCaisse.filter(o => o.sens === "sortie").reduce((a, o) => a + o.montant, 0);
+            const soldeNet = totalEntrees - totalSorties;
+            return (
+              <div>
+                <div className="grid-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
+                  <StatCard label="Recettes totales" value={totalEntrees.toLocaleString() + " F"} icon="↑" color={C.vert} />
+                  <StatCard label="Charges" value={totalSorties.toLocaleString() + " F"} icon="↓" color={C.rouge} />
+                  <StatCard label="Solde net" value={soldeNet.toLocaleString() + " F"} icon="=" color={C.bleu} />
+                </div>
+                <Card>
+                  <SectionTitle>Détail des recettes — Inscriptions</SectionTitle>
+                  {elevesState.length === 0 && (
+                    <p style={{ fontSize: 13, color: C.gris, textAlign: "center", padding: "20px 0" }}>Chargement des élèves…</p>
+                  )}
+                  {elevesState.map(e => {
+                    const compte = calculerCompteEleve(e.id);
+                    const dernierVersement = compte.verses[0];
+                    const statutPaye = compte.montantDu > 0 && compte.reste <= 0;
+                    return (
+                      <div key={e.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
+                        <span style={{ fontSize: 14 }}>{e.nom}</span>
+                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                          <span style={{ fontSize: 13, color: C.gris }}>{dernierVersement ? dernierVersement.mode : "—"}</span>
+                          <span style={{ fontWeight: 700, color: C.vert }}>{compte.totalPaye.toLocaleString()} FCFA</span>
+                          <Badge text={statutPaye ? "payé" : compte.totalPaye > 0 ? "partiel" : "en attente"} bg={statutPaye ? "#E8F5E9" : compte.totalPaye > 0 ? "#E3F2FD" : "#FFF8E1"} color={statutPaye ? C.vert : compte.totalPaye > 0 ? C.bleu : C.orange} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Card>
               </div>
-              <Card>
-                <SectionTitle>Détail des recettes — Inscriptions</SectionTitle>
-                {PAIEMENTS.map((p, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
-                    <span style={{ fontSize: 14 }}>{p.eleve}</span>
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <span style={{ fontSize: 13, color: C.gris }}>{p.mode}</span>
-                      <span style={{ fontWeight: 700, color: C.vert }}>{p.montant.toLocaleString()} FCFA</span>
-                      <Badge text={p.statut} bg={p.statut === "payé" ? "#E8F5E9" : "#FFF8E1"} color={p.statut === "payé" ? C.vert : C.orange} />
-                    </div>
-                  </div>
-                ))}
-              </Card>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ── RAPPORTS CA ── */}
           {page === "rapports" && (
