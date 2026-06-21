@@ -158,8 +158,8 @@ const COURS = [
   { id: 10, jour: "Ven", heure: "18h45", fin: "19h45", duree: 1, classe: "Perfectionnement individualisé", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Sur évaluation" },
   { id: 11, jour: "Sam", heure: "10h00", fin: "10h45", duree: 0.75, classe: "Atelier Samedi 10h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
   { id: 12, jour: "Sam", heure: "11h00", fin: "12h00", duree: 1, classe: "Atelier Samedi 11h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
-  { id: 13, jour: "Sam", heure: "12h15", fin: "13h15", duree: 1, classe: "Atelier Samedi 12h15", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
-  { id: 14, jour: "Sam", heure: "13h30", fin: "14h30", duree: 1, classe: "Atelier Samedi 13h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
+  { id: 13, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
+  { id: 14, jour: "Mar", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mardi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
   { id: 15, jour: "Sam", heure: "14h45", fin: "15h45", duree: 1, classe: "Atelier Samedi 14h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "10 – 13 ans" },
   { id: 16, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
 ];
