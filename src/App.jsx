@@ -2358,9 +2358,10 @@ export default function App() {
                     <div key={j} style={{ background: cj.length ? "#fff" : C.fond, borderRadius: 12, padding: 14, minHeight: 110, border: `1px solid ${C.grisClair}` }}>
                       <div style={{ fontFamily: FT, fontSize: 13, fontWeight: 700, color: cj.length ? C.vert : C.gris, marginBottom: 8 }}>{j}</div>
                       {cj.map(c => (
-                        <div key={c.id} style={{ background: C.fond, borderRadius: 6, padding: "5px 8px", marginBottom: 5, borderLeft: `3px solid ${C.or}` }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: C.vert }}>{c.heure}</div>
-                          <div style={{ fontSize: 11, color: C.noir }}>{c.classe}</div>
+                        <div key={c.id} style={{ background: C.fond, borderRadius: 8, padding: "8px 10px", marginBottom: 6, borderLeft: `3px solid ${C.or}`, textAlign: "center" }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.vert }}>{c.heure}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.noir, margin: "3px 0" }}>{c.age}</div>
+                          <div style={{ fontSize: 11, color: C.gris }}>{c.fin}</div>
                         </div>
                       ))}
                     </div>
