@@ -146,28 +146,34 @@ const ELEVES = [
 ];
 
 const COURS = [
-  { id: 1, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "3 – 5 ans" },
-  { id: 2, jour: "Lun", heure: "18h00", fin: "19h00", duree: 1, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
-  { id: 3, jour: "Mer", heure: "15h45", fin: "16h30", duree: 0.75, classe: "Atelier Mercredi 15h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "18 – 35 mois" },
-  { id: 4, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 7, presences: [], age: "6 – 8 ans" },
-  { id: 5, jour: "Mer", heure: "17h45", fin: "18h45", duree: 1, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 3, presences: [], age: "9 – 12 ans" },
-  { id: 6, jour: "Mer", heure: "19h00", fin: "20h00", duree: 1, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
-  { id: 7, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 4, presences: [], age: "9 – 12 ans et plus" },
-  { id: 8, jour: "Ven", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Vendredi 16h30", formateurs: ["Prime"], salle: "Piste B", nb: 3, presences: [], age: "3 – 8 ans" },
-  { id: 9, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Prime"], salle: "Piste A", nb: 5, presences: [], age: "Avancés" },
-  { id: 10, jour: "Sam", heure: "10h45", fin: "11h45", duree: 1, classe: "Atelier Samedi 10h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 2, presences: [], age: "3 – 5 ans" },
+  { id: 1, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
+  { id: 2, jour: "Lun", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
+  { id: 3, jour: "Mar", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Mardi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
+  { id: 4, jour: "Mer", heure: "15h30", fin: "16h15", duree: 0.75, classe: "Atelier Mercredi 15h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 5, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 6, jour: "Mer", heure: "17h45", fin: "19h00", duree: 1.25, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 7, jour: "Mer", heure: "19h00", fin: "20h30", duree: 1.5, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
+  { id: 8, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
+  { id: 9, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 10, jour: "Ven", heure: "18h45", fin: "19h45", duree: 1, classe: "Perfectionnement individualisé", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Sur évaluation" },
+  { id: 11, jour: "Sam", heure: "10h00", fin: "10h45", duree: 0.75, classe: "Atelier Samedi 10h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 12, jour: "Sam", heure: "11h00", fin: "12h00", duree: 1, classe: "Atelier Samedi 11h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 13, jour: "Sam", heure: "12h15", fin: "13h15", duree: 1, classe: "Atelier Samedi 12h15", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
+  { id: 14, jour: "Sam", heure: "13h30", fin: "14h30", duree: 1, classe: "Atelier Samedi 13h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
+  { id: 15, jour: "Sam", heure: "14h45", fin: "15h45", duree: 1, classe: "Atelier Samedi 14h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 16, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
 ];
 
 const INTERVENANTS = {
   "Jean Luc": {
     code: "JEAN531",
     couleur: "#7c3aed",
-    heures_circo: 8,
+    heures_circo: 16.5,
     heures_montaigne: 6,
     heures_talon: 0,
     heures_prepa: 3,
-    total_semaine: 17,
-    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
+    total_semaine: 25.5,
+    cours_ids: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
     extra: [
       { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
     ]
@@ -175,12 +181,12 @@ const INTERVENANTS = {
   "Spéro": {
     code: "SPER531",
     couleur: "#7c3aed",
-    heures_circo: 8,
+    heures_circo: 16.5,
     heures_montaigne: 6,
     heures_talon: 2,
     heures_prepa: 3,
-    total_semaine: 19,
-    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
+    total_semaine: 27.5,
+    cours_ids: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
     extra: [
       { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
       { lieu: "Manoel Talon", type: "Ateliers", heures: 2, note: "Mardi 15h30-17h30" },
@@ -189,12 +195,12 @@ const INTERVENANTS = {
   "Youssou": {
     code: "YOUS531",
     couleur: "#7c3aed",
-    heures_circo: 5.75,
+    heures_circo: 3.5,
     heures_montaigne: 0,
     heures_talon: 0,
     heures_prepa: 0,
-    total_semaine: 5.75,
-    cours_ids: [1, 2, 3, 4, 5, 6],
+    total_semaine: 3.5,
+    cours_ids: [4,5,11,12],
     extra: []
   },
 };
