@@ -101,7 +101,6 @@ const NAV_PAR_ROLE = {
     { id: "inscription", icon: "◈", label: "Inscrire" },
     { id: "adhesion", icon: "🤝", label: "Adhésion" },
     { id: "contact", icon: "✉", label: "Contact" },
-    { id: "payer", icon: "₦", label: "Payer" },
   ],
   parent: [
     { id: "mon_enfant", icon: "◈", label: "Mon enfant" },
