@@ -3304,33 +3304,55 @@ export default function App() {
           )}
 
           {/* ── ESPACE PARENT : PLANNING ── */}
-          {page === "planning_enfant" && (
+          {page === "planning_enfant" && eleveActuel && (
             <div>
+              {/* Créneau actuel de l'enfant */}
               <Card style={{ marginBottom: 20 }}>
-                <SectionTitle>Planning — Semaine en cours</SectionTitle>
-                {COURS.filter(c => c.formateur === "Prime").map(c => (
-                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: "1px solid #eee" }}>
-                    <Badge text={c.jour} bg={C.vert} color="#fff" />
-                    <Badge text={c.heure} bg={C.fond} color={C.vert} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{c.classe}</div>
-                      <div style={{ fontSize: 12, color: C.gris }}>{c.salle} · {c.formateur}</div>
+                <SectionTitle>Planning 2025–2026 — Créneau de {eleveActuel.prenom}</SectionTitle>
+                {(() => {
+                  const coursEnfant = COURS.find(c => c.classe === eleveActuel.classe || eleveActuel.classe?.includes(c.heure));
+                  if (!coursEnfant) return (
+                    <p style={{ fontSize: 13, color: C.gris, padding: "16px 0" }}>Aucun créneau enregistré pour le moment. Contactez Circo Bénin pour plus d'informations.</p>
+                  );
+                  return (
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0" }}>
+                      <Badge text={coursEnfant.jour} bg={C.vert} color="#fff" />
+                      <Badge text={coursEnfant.heure} bg={C.fond} color={C.vert} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700 }}>{coursEnfant.age}</div>
+                        <div style={{ fontSize: 12, color: C.gris }}>{coursEnfant.heure} – {coursEnfant.fin} · {coursEnfant.formateurs?.join(", ")}</div>
+                      </div>
+                      <Badge text="Inscrit ✓" bg="#e8f5e9" color={C.vert} />
                     </div>
-                    <Badge text="Inscrit" bg="#e8f5e9" color={C.vert} />
-                  </div>
-                ))}
+                  );
+                })()}
               </Card>
-              <Card>
-                <SectionTitle>Prochains événements</SectionTitle>
-                {PROJETS.filter(p => p.public).slice(0, 3).map(p => (
-                  <div key={p.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ fontWeight: 600, fontSize: 14 }}>{p.titre}</span>
-                      <span style={{ fontSize: 12, color: C.gris }}>{p.date}</span>
+
+              {/* Planning rentrée prochaine */}
+              <Card style={{ marginBottom: 20 }}>
+                <SectionTitle>Planning rentrée 2026–2027</SectionTitle>
+                <p style={{ fontSize: 13, color: C.gris, marginBottom: 14 }}>Découvrez les nouveaux créneaux disponibles pour la prochaine rentrée.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {COURS_RENTREE.map(c => (
+                    <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: C.fond, borderRadius: 8 }}>
+                      <div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.vert }}>{{ Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" }[c.jour]} {c.heure}–{c.fin}</span>
+                      </div>
+                      <Badge text={c.age} bg="#fff3e0" color="#e65100" />
                     </div>
-                    <div style={{ fontSize: 12, color: C.vert, marginTop: 4 }}>{p.statut}</div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </Card>
+
+              {/* Réinscription */}
+              <Card style={{ borderTop: `4px solid ${C.magenta}` }}>
+                <SectionTitle>Réinscrire {eleveActuel.prenom} pour 2026–2027</SectionTitle>
+                <p style={{ fontSize: 13, color: C.gris, marginBottom: 16 }}>
+                  La rentrée prochaine commence le <strong>14 septembre 2026</strong>. Réservez dès maintenant la place de {eleveActuel.prenom} en choisissant un créneau.
+                </p>
+                <Btn onClick={() => setPage("inscription")} color={C.magenta}>
+                  Réinscrire {eleveActuel.prenom} →
+                </Btn>
               </Card>
             </div>
           )}
