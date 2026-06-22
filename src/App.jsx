@@ -777,25 +777,16 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
               <div style={{ marginBottom: 14 }}>
                 <label style={labelStyle}>Créneau souhaité</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {[
-                    { id: 1, label: "Lundi 16h30 – 17h30", age: "3 – 5 ans" },
-                    { id: 2, label: "Lundi 18h00 – 19h00", age: "Adultes" },
-                    { id: 3, label: "Mercredi 15h45 – 16h30", age: "18 – 35 mois" },
-                    { id: 4, label: "Mercredi 16h30 – 17h30", age: "6 – 8 ans" },
-                    { id: 5, label: "Mercredi 17h45 – 18h45", age: "9 – 12 ans" },
-                    { id: 6, label: "Mercredi 19h00 – 20h00", age: "Adultes" },
-                    { id: 7, label: "Jeudi 17h00 – 18h00", age: "9 – 12 ans et plus" },
-                    { id: 8, label: "Vendredi 16h30 – 17h30", age: "3 – 8 ans" },
-                    { id: 9, label: "Vendredi 17h30 – 18h30", age: "Avancés" },
-                    { id: 10, label: "Samedi 10h45 – 11h45", age: "3 – 5 ans" },
-                  ].map(c => (
-                    <div key={c.id} onClick={() => setForm({...form, creneau: c.label})} style={{
+                  {COURS_RENTREE.map(c => (
+                    <div key={c.id} onClick={() => setForm({...form, creneau: c.jour + " " + c.heure + " – " + c.fin})} style={{
                       padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                      border: `2px solid ${form.creneau === c.label ? "#2d7a4f" : "#e5e7eb"}`,
-                      background: form.creneau === c.label ? "#e8f5e9" : "#fff",
+                      border: `2px solid ${form.creneau === c.jour + " " + c.heure + " – " + c.fin ? "#2d7a4f" : "#e5e7eb"}`,
+                      background: form.creneau === c.jour + " " + c.heure + " – " + c.fin ? "#e8f5e9" : "#fff",
                       display: "flex", justifyContent: "space-between", alignItems: "center",
                     }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: form.creneau === c.label ? "#2d7a4f" : "#111" }}>{c.label}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: form.creneau === c.jour + " " + c.heure + " – " + c.fin ? "#2d7a4f" : "#111" }}>
+                        {{ Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" }[c.jour]} {c.heure} – {c.fin}
+                      </span>
                       <span style={{ background: "#fff3e0", color: "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>👤 {c.age}</span>
                     </div>
                   ))}
