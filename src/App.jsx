@@ -646,6 +646,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
   const [formulePaiement, setFormulePaiement] = useState("trimestre");
+  const [modePaiement, setModePaiement] = useState(null); // "enligne" ou "surplace"
   const FRAIS_INSCRIPTION = 10000;
   const COTIS_TRIMESTRE = 45000;
   const COTIS_ANNEE = 135000;
@@ -669,22 +670,25 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   };
   const isBebe = typeInscription === "bebe";
 
-  const handleSend = async () => {
+  const handleSend = async (mode) => {
     setSending(true);
     setError(false);
     const type = types.find(t => t.id === typeInscription);
-    const bodyAccueil = "<h2>Nouvelle inscription - " + type.titre + "</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Naissance :</b> " + form.dateNaissance + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Tel :</b> " + form.telephone + "</p><p><b>Discipline :</b> " + form.discipline + "</p><p><b>Navette :</b> " + (form.navette ? "Oui" : "Non") + "</p><p><b>Photo :</b> " + (form.autoPhoto === true ? "Oui" : "Non") + "</p>" + (isMineur() || isBebe ? "<p><b>Parent :</b> " + form.prenomParent + " " + form.nomParent + " - " + form.emailParent + "</p>" : "");
-    const bodyConfirm = "<h2>Bienvenue a Circo Benin !</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien recu votre demande d inscription pour : " + type.titre + ".</p><p>Notre equipe vous contactera tres prochainement.</p><p>Circo Benin - Cotonou, Benin</p>";
+    const montant = FRAIS_INSCRIPTION + (formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE);
+    const formuleLabel = formulePaiement === "annee" ? "Année complète" : "1er trimestre";
+    const bodyAccueil = "<h2>Nouvelle inscription - " + type.titre + "</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Naissance :</b> " + form.dateNaissance + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Tel :</b> " + form.telephone + "</p><p><b>Discipline :</b> " + form.discipline + "</p><p><b>Créneau :</b> " + (form.creneau || "Non renseigné") + "</p><p><b>Formule :</b> " + formuleLabel + " — " + montant.toLocaleString() + " FCFA</p><p><b>Mode de paiement :</b> " + (mode === "enligne" ? "En ligne (FedaPay)" : "Sur place") + "</p>";
+    const bodyConfirmEnLigne = "<h2>Merci pour votre inscription à Circo Bénin !</h2><p>Bonjour " + form.prenom + ",</p><p>Votre inscription pour <b>" + type.titre + "</b> a bien été enregistrée et votre paiement de <b>" + montant.toLocaleString() + " FCFA</b> (" + formuleLabel + ") a été reçu.</p><p>Nous vous souhaitons la bienvenue à Circo Bénin !</p><p>Circo Bénin · Cotonou, Bénin · app.circobenin.com</p>";
+    const bodyConfirmSurPlace = "<h2>Inscription Circo Bénin — Finalisez votre inscription</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'inscription pour <b>" + type.titre + "</b>.</p><p>Il vous reste à finaliser votre inscription en venant payer <b>" + montant.toLocaleString() + " FCFA</b> (" + formuleLabel + ") directement à Circo Bénin.</p><p><b>Adresse :</b> Circo Bénin, Cotonou, Bénin<br/><b>Téléphone :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60<br/><b>Email :</b> circobenin@gmail.com</p><p>Nous vous attendons ! 🎪</p><p>Circo Bénin · app.circobenin.com</p>";
     try {
       await fetch("/api/send-email", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: "accueil@circobenin.com", subject: "Nouvelle inscription — " + type.titre + " — " + form.prenom + " " + form.nom, html: bodyAccueil }),
+        body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: "accueil@circobenin.com", subject: "Nouvelle inscription — " + type.titre + " — " + form.prenom + " " + form.nom + " (" + (mode === "enligne" ? "payé en ligne" : "à payer sur place") + ")", html: bodyAccueil }),
       });
       const destEmail = isMineur() || isBebe ? form.emailParent : form.email;
       if (destEmail) {
         await fetch("/api/send-email", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: destEmail, subject: "Confirmation inscription Circo Bénin — " + type.titre, html: bodyConfirm }),
+          body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: destEmail, subject: mode === "enligne" ? "Bienvenue à Circo Bénin ! Inscription confirmée" : "Circo Bénin — Finalisez votre inscription sur place", html: mode === "enligne" ? bodyConfirmEnLigne : bodyConfirmSurPlace }),
         });
       }
       setSent(true);
@@ -889,36 +893,66 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
               Mobile Money (MTN, Moov) et carte bancaire acceptés via FedaPay.
             </p>
 
+            {/* Choix du mode de paiement */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 10 }}>Comment souhaitez-vous payer ?</div>
+              {[
+                { id: "enligne", label: "💳 Payer en ligne maintenant", detail: "Mobile Money (MTN, Moov) ou carte bancaire via FedaPay" },
+                { id: "surplace", label: "🏫 Payer sur place à Circo Bénin", detail: "Vous recevrez un email pour finaliser votre inscription en venant nous rendre visite" },
+              ].map(m => (
+                <div key={m.id} onClick={() => setModePaiement(m.id)} style={{
+                  padding: "14px 16px", borderRadius: 12, cursor: "pointer", marginBottom: 10,
+                  border: `2px solid ${modePaiement === m.id ? "#2d7a4f" : "#e5e7eb"}`,
+                  background: modePaiement === m.id ? "#e8f5e9" : "#fff",
+                }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: modePaiement === m.id ? "#2d7a4f" : "#111" }}>{m.label}</div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{m.detail}</div>
+                </div>
+              ))}
+            </div>
+
             {error && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>❌ Erreur lors du traitement. Réessayez.</div>}
 
             <div style={{ display: "flex", gap: 12 }}>
               <div onClick={() => setStep(1)} style={{ background: "#f3f4f6", color: "#374151", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>← Retour</div>
-              <div onClick={() => {
-                if (!window.FedaPay) { setError(true); return; }
-                const widget = window.FedaPay.init({
-                  public_key: process.env.REACT_APP_FEDAPAY_PUBLIC_KEY,
-                  transaction: {
-                    amount: montantTotal,
-                    description: "Inscription Circo Bénin — " + (types.find(t => t.id === typeInscription)?.titre || "") + " — " + form.prenom + " " + form.nom,
-                  },
-                  customer: {
-                    firstname: isMineur() || isBebe ? form.prenomParent : form.prenom,
-                    lastname: isMineur() || isBebe ? form.nomParent : form.nom,
-                    email: isMineur() || isBebe ? form.emailParent : form.email,
-                    phone_number: { number: form.telephone || "", country: "bj" },
-                  },
-                  onComplete: function(resp) {
-                    if (resp.reason === window.FedaPay.CHECKOUT_COMPLETED) {
-                      handleSend();
-                    } else {
-                      setError(true);
-                    }
-                  },
-                });
-                widget.open();
-              }} style={{ flex: 1, background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 700, fontSize: 14, textAlign: "center" }}>
-                💳 Payer {montantTotal.toLocaleString()} FCFA
-              </div>
+              {modePaiement === "enligne" && (
+                <div onClick={() => {
+                  if (!window.FedaPay) { setError(true); return; }
+                  const widget = window.FedaPay.init({
+                    public_key: process.env.REACT_APP_FEDAPAY_PUBLIC_KEY,
+                    transaction: {
+                      amount: montantTotal,
+                      description: "Inscription Circo Bénin — " + (types.find(t => t.id === typeInscription)?.titre || "") + " — " + form.prenom + " " + form.nom,
+                    },
+                    customer: {
+                      firstname: isMineur() || isBebe ? form.prenomParent : form.prenom,
+                      lastname: isMineur() || isBebe ? form.nomParent : form.nom,
+                      email: isMineur() || isBebe ? form.emailParent : form.email,
+                      phone_number: { number: form.telephone || "", country: "bj" },
+                    },
+                    onComplete: function(resp) {
+                      if (resp.reason === window.FedaPay.CHECKOUT_COMPLETED) {
+                        handleSend("enligne");
+                      } else {
+                        setError(true);
+                      }
+                    },
+                  });
+                  widget.open();
+                }} style={{ flex: 1, background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 700, fontSize: 14, textAlign: "center" }}>
+                  💳 Payer {montantTotal.toLocaleString()} FCFA
+                </div>
+              )}
+              {modePaiement === "surplace" && (
+                <div onClick={() => handleSend("surplace")} style={{ flex: 1, background: sending ? "#9ca3af" : "#1565C0", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: sending ? "wait" : "pointer", fontWeight: 700, fontSize: 14, textAlign: "center" }}>
+                  {sending ? "Envoi en cours..." : "✅ Confirmer — Je viendrai payer sur place"}
+                </div>
+              )}
+              {!modePaiement && (
+                <div style={{ flex: 1, background: "#e5e7eb", color: "#9ca3af", borderRadius: 12, padding: "12px 24px", fontWeight: 700, fontSize: 14, textAlign: "center", cursor: "not-allowed" }}>
+                  Choisissez un mode de paiement
+                </div>
+              )}
             </div>
           </div>
         )}
