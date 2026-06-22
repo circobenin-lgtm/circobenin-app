@@ -145,35 +145,51 @@ const ELEVES = [
   { id: 32, nom: "SEWA Medegan Fagla", classe: "Sam 10h45", discipline: "Cirque", statut: "actif", paye: true, presence: 90 },
 ];
 
+// Planning de l'année scolaire EN COURS (2025-2026)
 const COURS = [
-  { id: 1, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
-  { id: 2, jour: "Lun", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
-  { id: 3, jour: "Mar", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Mardi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
-  { id: 4, jour: "Mer", heure: "15h30", fin: "16h15", duree: 0.75, classe: "Atelier Mercredi 15h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
-  { id: 5, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
-  { id: 6, jour: "Mer", heure: "17h45", fin: "19h00", duree: 1.25, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 7, jour: "Mer", heure: "19h00", fin: "20h30", duree: 1.5, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
-  { id: 8, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
-  { id: 9, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 10, jour: "Ven", heure: "18h45", fin: "19h45", duree: 1, classe: "Perfectionnement individualisé", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Sur évaluation" },
-  { id: 11, jour: "Sam", heure: "10h00", fin: "10h45", duree: 0.75, classe: "Atelier Samedi 10h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
-  { id: 12, jour: "Sam", heure: "11h00", fin: "12h00", duree: 1, classe: "Atelier Samedi 11h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
-  { id: 13, jour: "Sam", heure: "12h15", fin: "13h15", duree: 1, classe: "Atelier Samedi 12h15", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
-  { id: 14, jour: "Sam", heure: "13h30", fin: "14h30", duree: 1, classe: "Atelier Samedi 13h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
-  { id: 15, jour: "Sam", heure: "14h45", fin: "15h45", duree: 1, classe: "Atelier Samedi 14h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 16, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
+  { id: 1, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "3 – 5 ans" },
+  { id: 2, jour: "Lun", heure: "18h00", fin: "19h00", duree: 1, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
+  { id: 3, jour: "Mer", heure: "15h45", fin: "16h30", duree: 0.75, classe: "Atelier Mercredi 15h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "18 – 35 mois" },
+  { id: 4, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 7, presences: [], age: "6 – 8 ans" },
+  { id: 5, jour: "Mer", heure: "17h45", fin: "18h45", duree: 1, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 3, presences: [], age: "9 – 12 ans" },
+  { id: 6, jour: "Mer", heure: "19h00", fin: "20h00", duree: 1, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
+  { id: 7, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 4, presences: [], age: "9 – 12 ans et plus" },
+  { id: 8, jour: "Ven", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Vendredi 16h30", formateurs: ["Prime"], salle: "Piste B", nb: 3, presences: [], age: "3 – 8 ans" },
+  { id: 9, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Prime"], salle: "Piste A", nb: 5, presences: [], age: "Avancés" },
+  { id: 10, jour: "Sam", heure: "10h45", fin: "11h45", duree: 1, classe: "Atelier Samedi 10h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 2, presences: [], age: "3 – 5 ans" },
+];
+
+// Planning de la PROCHAINE rentrée (2026-2027) — annoncé sur la page Programme public
+// et dans le détail de l'événement "Rentrée Circo Bénin" du 14 septembre 2026.
+const COURS_RENTREE = [
+  { id: 101, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
+  { id: 102, jour: "Lun", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
+  { id: 103, jour: "Mar", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Mardi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
+  { id: 104, jour: "Mer", heure: "15h30", fin: "16h15", duree: 0.75, classe: "Atelier Mercredi 15h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 105, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 106, jour: "Mer", heure: "17h45", fin: "19h00", duree: 1.25, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 107, jour: "Mer", heure: "19h00", fin: "20h30", duree: 1.5, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
+  { id: 108, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
+  { id: 109, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 110, jour: "Ven", heure: "18h45", fin: "19h45", duree: 1, classe: "Perfectionnement individualisé", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Sur évaluation" },
+  { id: 111, jour: "Sam", heure: "10h00", fin: "10h45", duree: 0.75, classe: "Atelier Samedi 10h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 112, jour: "Sam", heure: "11h00", fin: "12h00", duree: 1, classe: "Atelier Samedi 11h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 113, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
+  { id: 114, jour: "Mar", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mardi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
+  { id: 115, jour: "Sam", heure: "14h45", fin: "15h45", duree: 1, classe: "Atelier Samedi 14h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 116, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
 ];
 
 const INTERVENANTS = {
   "Jean Luc": {
     code: "JEAN531",
     couleur: "#7c3aed",
-    heures_circo: 16.5,
+    heures_circo: 8,
     heures_montaigne: 6,
     heures_talon: 0,
     heures_prepa: 3,
-    total_semaine: 25.5,
-    cours_ids: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+    total_semaine: 17,
+    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
     extra: [
       { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
     ]
@@ -181,12 +197,12 @@ const INTERVENANTS = {
   "Spéro": {
     code: "SPER531",
     couleur: "#7c3aed",
-    heures_circo: 16.5,
+    heures_circo: 8,
     heures_montaigne: 6,
     heures_talon: 2,
     heures_prepa: 3,
-    total_semaine: 27.5,
-    cours_ids: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+    total_semaine: 19,
+    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
     extra: [
       { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
       { lieu: "Manoel Talon", type: "Ateliers", heures: 2, note: "Mardi 15h30-17h30" },
@@ -195,12 +211,12 @@ const INTERVENANTS = {
   "Youssou": {
     code: "YOUS531",
     couleur: "#7c3aed",
-    heures_circo: 3.5,
+    heures_circo: 5.75,
     heures_montaigne: 0,
     heures_talon: 0,
     heures_prepa: 0,
-    total_semaine: 3.5,
-    cours_ids: [4,5,11,12],
+    total_semaine: 5.75,
+    cours_ids: [1, 2, 3, 4, 5, 6],
     extra: []
   },
 };
@@ -2358,9 +2374,10 @@ export default function App() {
                     <div key={j} style={{ background: cj.length ? "#fff" : C.fond, borderRadius: 12, padding: 14, minHeight: 110, border: `1px solid ${C.grisClair}` }}>
                       <div style={{ fontFamily: FT, fontSize: 13, fontWeight: 700, color: cj.length ? C.vert : C.gris, marginBottom: 8 }}>{j}</div>
                       {cj.map(c => (
-                        <div key={c.id} style={{ background: C.fond, borderRadius: 6, padding: "5px 8px", marginBottom: 5, borderLeft: `3px solid ${C.or}` }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: C.vert }}>{c.heure}</div>
-                          <div style={{ fontSize: 11, color: C.noir }}>{c.classe}</div>
+                        <div key={c.id} style={{ background: C.fond, borderRadius: 8, padding: "8px 10px", marginBottom: 6, borderLeft: `3px solid ${C.or}`, textAlign: "center" }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.vert }}>{c.heure}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.noir, margin: "3px 0" }}>{c.age}</div>
+                          <div style={{ fontSize: 11, color: C.gris }}>{c.fin}</div>
                         </div>
                       ))}
                     </div>
@@ -3368,6 +3385,22 @@ export default function App() {
                   <SectionTitle>À propos de cet événement</SectionTitle>
                   <p style={{ fontSize: 14, color: C.gris, lineHeight: 1.8 }}>{ev.details}</p>
                 </Card>
+                {ev.id === 3 && (
+                  <Card style={{ marginBottom: 24 }}>
+                    <SectionTitle>Planning des ateliers — rentrée 2026–2027</SectionTitle>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {COURS_RENTREE.map(c => (
+                        <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: C.fond, borderRadius: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.vert }}>{c.jour} {c.heure}–{c.fin}</div>
+                          <div style={{ fontSize: 13, color: C.noir }}>{c.age}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ fontSize: 12, color: C.gris, marginTop: 14, textAlign: "center" }}>
+                      Le détail complet est disponible sur la page Programme.
+                    </p>
+                  </Card>
+                )}
                 {ev.typeInscription ? (
                   <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "28px 32px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
                     <div>
@@ -3389,20 +3422,20 @@ export default function App() {
             );
           })()}
 
-          {/* ── PROGRAMME PUBLIC ── */}
+          {/* ── PROGRAMME PUBLIC (rentrée prochaine) ── */}
           {page === "programme" && (
             <div>
               <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "36px 40px", color: "#fff", marginBottom: 28, position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", right: -20, top: -20, fontSize: 120, opacity: 0.07 }}>◫</div>
-                <h2 style={{ fontFamily: FT, fontSize: 28, margin: "0 0 8px" }}>Programme des cours</h2>
-                <p style={{ opacity: 0.85, margin: 0, fontSize: 14 }}>Saison 2025–2026 · Circo Bénin · Cotonou, Bénin</p>
+                <h2 style={{ fontFamily: FT, fontSize: 28, margin: "0 0 8px" }}>Programme de la rentrée prochaine</h2>
+                <p style={{ opacity: 0.85, margin: 0, fontSize: 14 }}>Saison 2026–2027 · Circo Bénin · Cotonou, Bénin</p>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {["Lun", "Mer", "Jeu", "Ven", "Sam"].map(jour => {
-                  const coursJour = COURS.filter(c => c.jour === jour);
+                {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"].map(jour => {
+                  const coursJour = COURS_RENTREE.filter(c => c.jour === jour);
                   if (coursJour.length === 0) return null;
                   const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
-                  const couleurs = { Lun: "#2d7a4f", Mer: "#e91e8c", Jeu: "#7c3aed", Ven: "#1565C0", Sam: "#ff9800" };
+                  const couleurs = { Lun: "#2d7a4f", Mar: "#009688", Mer: "#e91e8c", Jeu: "#7c3aed", Ven: "#1565C0", Sam: "#ff9800" };
                   const couleur = couleurs[jour] || "#2d7a4f";
                   return (
                     <div key={jour} style={{ background: "#fff", borderRadius: 20, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
