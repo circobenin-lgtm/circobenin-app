@@ -645,6 +645,11 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
+  const [formulePaiement, setFormulePaiement] = useState("trimestre");
+  const FRAIS_INSCRIPTION = 10000;
+  const COTIS_TRIMESTRE = 45000;
+  const COTIS_ANNEE = 135000;
+  const montantTotal = FRAIS_INSCRIPTION + (formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE);
 
   const types = [
     { id: "hebdo", emoji: "🎪", titre: "Atelier hebdomadaire", desc: "Rentrée septembre 2026", couleur: "#2d7a4f" },
@@ -832,34 +837,87 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
           </div>
         )}
 
-        {/* Étape 3 — Confirmation */}
+        {/* Étape 3 — Paiement */}
         {step === 2 && (
           <div>
-            <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#2d7a4f", marginBottom: 20 }}>Étape 3 — Confirmation</div>
-            <div style={{ background: "#f9fafb", borderRadius: 14, padding: 20, marginBottom: 20 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: "#111" }}>Récapitulatif</div>
+            <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#2d7a4f", marginBottom: 20 }}>Étape 3 — Paiement de l'inscription</div>
+
+            {/* Récapitulatif infos */}
+            <div style={{ background: "#f0f9f4", borderRadius: 12, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#374151" }}>
+              <strong>{form.prenom} {form.nom}</strong> · {types.find(t => t.id === typeInscription)?.titre} · {form.creneau || "Créneau non sélectionné"}
+            </div>
+
+            {/* Choix de formule */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 10 }}>Choisissez votre formule</div>
               {[
-                { l: "Type", v: types.find(t => t.id === typeInscription)?.titre },
-                { l: "Nom", v: form.prenom + " " + form.nom },
-                { l: "Date de naissance", v: form.dateNaissance },
-                { l: "Email", v: form.email },
-                { l: "Téléphone", v: form.telephone },
-                { l: "Discipline", v: form.discipline || "Non renseigné" },
-                { l: "Navette", v: form.navette ? "Oui" : "Non" },
-                { l: "Autorisation photo", v: form.autoPhoto === true ? "Oui" : form.autoPhoto === false ? "Non" : "Non renseigné" },
-                ...(isMineur() || isBebe ? [{ l: "Parent", v: form.prenomParent + " " + form.nomParent + " — " + form.emailParent }] : []),
-              ].map((r, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e5e7eb", fontSize: 13 }}>
-                  <span style={{ color: "#6b7280" }}>{r.l}</span>
-                  <span style={{ fontWeight: 600 }}>{r.v}</span>
+                { id: "trimestre", label: "1er trimestre", detail: "Frais d'inscription + cotisation 1 trimestre", montant: FRAIS_INSCRIPTION + COTIS_TRIMESTRE },
+                { id: "annee", label: "Année complète", detail: "Frais d'inscription + cotisation annuelle (économisez 15 000 FCFA)", montant: FRAIS_INSCRIPTION + COTIS_ANNEE },
+              ].map(f => (
+                <div key={f.id} onClick={() => setFormulePaiement(f.id)} style={{
+                  padding: "14px 16px", borderRadius: 12, cursor: "pointer", marginBottom: 10,
+                  border: `2px solid ${formulePaiement === f.id ? "#2d7a4f" : "#e5e7eb"}`,
+                  background: formulePaiement === f.id ? "#e8f5e9" : "#fff",
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: formulePaiement === f.id ? "#2d7a4f" : "#111" }}>{f.label}</div>
+                    <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{f.detail}</div>
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: formulePaiement === f.id ? "#2d7a4f" : "#374151" }}>{f.montant.toLocaleString()} FCFA</div>
                 </div>
               ))}
             </div>
-            {error && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>❌ Erreur lors de l'envoi. Réessayez.</div>}
+
+            {/* Détail du montant */}
+            <div style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ color: "#6b7280" }}>Frais d'inscription</span>
+                <span>{FRAIS_INSCRIPTION.toLocaleString()} FCFA</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                <span style={{ color: "#6b7280" }}>Cotisation {formulePaiement === "annee" ? "annuelle" : "1er trimestre"}</span>
+                <span>{(formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE).toLocaleString()} FCFA</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid #e5e7eb", fontWeight: 800, fontSize: 15 }}>
+                <span>Total à payer</span>
+                <span style={{ color: "#2d7a4f" }}>{montantTotal.toLocaleString()} FCFA</span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 12, color: "#6b7280", textAlign: "center", marginBottom: 16 }}>
+              Mobile Money (MTN, Moov) et carte bancaire acceptés via FedaPay.
+            </p>
+
+            {error && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>❌ Erreur lors du traitement. Réessayez.</div>}
+
             <div style={{ display: "flex", gap: 12 }}>
               <div onClick={() => setStep(1)} style={{ background: "#f3f4f6", color: "#374151", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>← Retour</div>
-              <div onClick={handleSend} style={{ background: sending ? "#9ca3af" : "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: sending ? "wait" : "pointer", fontWeight: 600, fontSize: 14 }}>
-                {sending ? "Envoi en cours..." : "✅ Confirmer l'inscription"}
+              <div onClick={() => {
+                if (!window.FedaPay) { setError(true); return; }
+                const widget = window.FedaPay.init({
+                  public_key: process.env.REACT_APP_FEDAPAY_PUBLIC_KEY,
+                  transaction: {
+                    amount: montantTotal,
+                    description: "Inscription Circo Bénin — " + (types.find(t => t.id === typeInscription)?.titre || "") + " — " + form.prenom + " " + form.nom,
+                  },
+                  customer: {
+                    firstname: isMineur() || isBebe ? form.prenomParent : form.prenom,
+                    lastname: isMineur() || isBebe ? form.nomParent : form.nom,
+                    email: isMineur() || isBebe ? form.emailParent : form.email,
+                    phone_number: { number: form.telephone || "", country: "bj" },
+                  },
+                  onComplete: function(resp) {
+                    if (resp.reason === window.FedaPay.CHECKOUT_COMPLETED) {
+                      handleSend();
+                    } else {
+                      setError(true);
+                    }
+                  },
+                });
+                widget.open();
+              }} style={{ flex: 1, background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 700, fontSize: 14, textAlign: "center" }}>
+                💳 Payer {montantTotal.toLocaleString()} FCFA
               </div>
             </div>
           </div>
