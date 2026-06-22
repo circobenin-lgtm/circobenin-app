@@ -55,6 +55,7 @@ const NAV_PAR_ROLE = {
   directeur: [
     { id: "dashboard", icon: "⬡", label: "Tableau de bord" },
     { id: "eleves", icon: "◈", label: "Élèves" },
+    { id: "preinscriptions", icon: "📋", label: "Inscriptions 26-27" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "presences", icon: "✓", label: "Présences" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
@@ -77,6 +78,7 @@ const NAV_PAR_ROLE = {
   admin: [
     { id: "dashboard", icon: "⬡", label: "Tableau de bord" },
     { id: "eleves", icon: "◈", label: "Élèves" },
+    { id: "preinscriptions", icon: "📋", label: "Inscriptions 26-27" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
@@ -714,6 +716,20 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
     const bodyConfirmEnLigne = "<h2>Merci pour votre inscription à Circo Bénin !</h2><p>Bonjour " + form.prenom + ",</p><p>Votre inscription pour <b>" + type.titre + "</b> a bien été enregistrée et votre paiement de <b>" + montant.toLocaleString() + " FCFA</b> (" + formuleLabel + ") a été reçu.</p><p>Nous vous souhaitons la bienvenue à Circo Bénin !</p><p>Circo Bénin · Cotonou, Bénin · app.circobenin.com</p>";
     const bodyConfirmSurPlace = "<h2>Inscription Circo Bénin — Finalisez votre inscription</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'inscription pour <b>" + type.titre + "</b>.</p><p>Il vous reste à finaliser votre inscription en venant payer <b>" + montant.toLocaleString() + " FCFA</b> (" + formuleLabel + ") directement à Circo Bénin.</p><p><b>Adresse :</b> Circo Bénin, Cotonou, Bénin<br/><b>Téléphone :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60<br/><b>Email :</b> circobenin@gmail.com</p><p>Nous vous attendons ! 🎪</p><p>Circo Bénin · app.circobenin.com</p>";
     try {
+      // Enregistrement dans Supabase pour suivi admin (page Inscriptions 2026-2027)
+      try {
+        const { supabase: sb } = await import("./supabase");
+        await sb.from("preinscriptions").insert([{
+          prenom: form.prenom, nom: form.nom, date_naissance: form.dateNaissance,
+          email: form.email, telephone: form.telephone, discipline: form.discipline,
+          creneau: form.creneau, formule: formulePaiement, mode_paiement: mode,
+          montant, type_inscription: typeInscription, navette: form.navette,
+          auto_photo: form.autoPhoto,
+          prenom_parent: form.prenomParent || null, nom_parent: form.nomParent || null,
+          email_parent: form.emailParent || null, tel_parent: form.telParent || null,
+          statut: mode === "enligne" ? "confirme" : "en_attente",
+        }]);
+      } catch (_e) {}
       await fetch("/api/send-email", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: "accueil@circobenin.com", subject: "Nouvelle inscription — " + type.titre + " — " + form.prenom + " " + form.nom + " (" + (mode === "enligne" ? "payé en ligne" : "à payer sur place") + ")", html: bodyAccueil }),
@@ -1230,6 +1246,8 @@ export default function App() {
   const [showModalVersement, setShowModalVersement] = useState(false);
   const [versementForm, setVersementForm] = useState({ montant: "", mode: "Espèces", date: "" });
   const [montantDuForm, setMontantDuForm] = useState("");
+  const [planningAffiche, setPlanningAffiche] = useState("actuel"); // "actuel" ou "rentree"
+  const [preinscriptions, setPreinscriptions] = useState([]);
   const [formuleForm, setFormuleForm] = useState("trimestre");
   const [sessionRestauree, setSessionRestauree] = useState(false);
 
@@ -1317,6 +1335,17 @@ export default function App() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  const chargerPreinscriptions = async () => {
+    try {
+      const { data, error } = await supabase.from("preinscriptions").select("*").order("created_at", { ascending: false });
+      if (!error && data) setPreinscriptions(data);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role === "directeur" || role === "admin") chargerPreinscriptions();
+  }, [role]);
 
   const chargerEleves = async () => {
     try {
@@ -2484,14 +2513,26 @@ export default function App() {
           {/* ── PLANNING ── */}
           {page === "planning" && (
             <div>
+              {/* Toggle planning */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                {[{ id: "actuel", label: "Saison 2025–2026" }, { id: "rentree", label: "Rentrée 2026–2027" }].map(p => (
+                  <div key={p.id} onClick={() => setPlanningAffiche(p.id)} style={{
+                    padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
+                    background: planningAffiche === p.id ? C.vert : C.fond,
+                    color: planningAffiche === p.id ? "#fff" : C.gris,
+                    border: `2px solid ${planningAffiche === p.id ? C.vert : C.grisClair}`,
+                  }}>{p.label}</div>
+                ))}
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 10, marginBottom: 20 }}>
-                {jours.map(j => {
-                  const cj = COURS.filter(c => c.jour === j);
+                {(planningAffiche === "actuel" ? ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"] : ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]).map(j => {
+                  const liste = planningAffiche === "actuel" ? COURS : COURS_RENTREE;
+                  const cj = liste.filter(c => c.jour === j);
                   return (
                     <div key={j} style={{ background: cj.length ? "#fff" : C.fond, borderRadius: 12, padding: 14, minHeight: 110, border: `1px solid ${C.grisClair}` }}>
                       <div style={{ fontFamily: FT, fontSize: 13, fontWeight: 700, color: cj.length ? C.vert : C.gris, marginBottom: 8 }}>{j}</div>
                       {cj.map(c => (
-                        <div key={c.id} style={{ background: C.fond, borderRadius: 8, padding: "8px 10px", marginBottom: 6, borderLeft: `3px solid ${C.or}`, textAlign: "center" }}>
+                        <div key={c.id} style={{ background: C.fond, borderRadius: 8, padding: "8px 10px", marginBottom: 6, borderLeft: `3px solid ${planningAffiche === "actuel" ? C.or : C.magenta}`, textAlign: "center" }}>
                           <div style={{ fontSize: 12, fontWeight: 700, color: C.vert }}>{c.heure}</div>
                           <div style={{ fontSize: 12, fontWeight: 700, color: C.noir, margin: "3px 0" }}>{c.age}</div>
                           <div style={{ fontSize: 11, color: C.gris }}>{c.fin}</div>
@@ -2501,6 +2542,44 @@ export default function App() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* ── INSCRIPTIONS 2026-2027 ── */}
+          {page === "preinscriptions" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>Pré-inscriptions rentrée 2026–2027</div>
+                  <div style={{ fontSize: 13, color: C.gris, marginTop: 2 }}>{preinscriptions.length} demande{preinscriptions.length !== 1 ? "s" : ""} reçue{preinscriptions.length !== 1 ? "s" : ""}</div>
+                </div>
+                <Btn small onClick={chargerPreinscriptions}>↻ Actualiser</Btn>
+              </div>
+              {preinscriptions.length === 0 ? (
+                <Card>
+                  <p style={{ textAlign: "center", color: C.gris, fontSize: 14, padding: "40px 0" }}>Aucune pré-inscription reçue pour le moment.<br/>Les demandes soumises via le formulaire en ligne apparaîtront ici.</p>
+                </Card>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {preinscriptions.map(p => (
+                    <Card key={p.id}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>{p.prenom} {p.nom}</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>{p.type_inscription} · {p.creneau || "Créneau non précisé"}</div>
+                          <div style={{ fontSize: 12, color: C.gris }}>{p.email} · {p.telephone}</div>
+                          {p.prenom_parent && <div style={{ fontSize: 12, color: C.gris }}>Parent : {p.prenom_parent} {p.nom_parent}</div>}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                          <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
+                          <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 145000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 55000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
+                          <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
