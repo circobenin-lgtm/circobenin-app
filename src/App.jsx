@@ -410,31 +410,21 @@ function AdhesionForm() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
+  const [etapePaiement, setEtapePaiement] = useState(false);
+  const [modePaiementAdhesion, setModePaiementAdhesion] = useState(null);
+  const MONTANT_ADHESION = 15000;
 
   const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, background: "#f9fafb", outline: "none", fontFamily: "Inter,sans-serif", boxSizing: "border-box" };
   const labelStyle = { fontSize: 12, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 6 };
 
-  const handleSend = async () => {
+  const handleSend = async (mode) => {
     setSending(true); setError(false);
+    const bodyAccueil = "<h2>Nouvelle demande d'adhésion</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Téléphone :</b> " + form.telephone + "</p><p><b>Profession :</b> " + form.profession + "</p><p><b>Motivation :</b> " + form.motivation + "</p><p><b>Mode paiement :</b> " + (mode === "enligne" ? "En ligne (FedaPay)" : "Sur place") + "</p>";
+    const bodyEnLigne = "<h2>Bienvenue dans l'association Circo Bénin !</h2><p>Bonjour " + form.prenom + ",</p><p>Votre adhésion est confirmée et votre cotisation de <b>15 000 FCFA</b> a bien été reçue. Bienvenue dans la famille Circo Bénin ! 🎪</p><br/><p>📞 +229 01 96 14 63 60 | circobenin@gmail.com | app.circobenin.com</p>";
+    const bodySurPlace = "<h2>Adhésion Circo Bénin — Finalisez votre adhésion</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'adhésion. Venez régler votre cotisation de <b>15 000 FCFA</b> directement à Circo Bénin.</p><p><b>Tél :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60 | circobenin@gmail.com</p><p>Nous vous attendons ! 🤝</p>";
     try {
-      await fetch("/api/send-email", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: "Circo Benin <accueil@circobenin.com>",
-          to: "accueil@circobenin.com",
-          subject: "Nouvelle demande d'adhésion — " + form.prenom + " " + form.nom,
-          html: "<h2>Nouvelle demande d'adhésion</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Date de naissance :</b> " + form.dateNaissance + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Téléphone :</b> " + form.telephone + "</p><p><b>Adresse :</b> " + form.adresse + "</p><p><b>Profession :</b> " + form.profession + "</p><p><b>Motivation :</b> " + form.motivation + "</p><p><b>Autorisation photo :</b> " + (form.autoPhoto ? "Oui" : "Non") + "</p>",
-        }),
-      });
-      await fetch("/api/send-email", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: "Circo Benin <accueil@circobenin.com>",
-          to: form.email,
-          subject: "Bienvenue dans l'association Circo Bénin !",
-          html: "<h2>Merci pour votre demande d'adhésion !</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'adhésion à l'association Circo Bénin.</p><p>La cotisation annuelle est de <b>15 000 FCFA</b>. Notre équipe vous contactera très prochainement pour finaliser votre adhésion.</p><br/><p>📍 Cadjehoun I Lot 1066, Cotonou, Bénin</p><p>📞 +229 01 96 14 63 60</p><p>Circo Bénin — Première école des arts du cirque du Bénin</p>",
-        }),
-      });
+      await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: "accueil@circobenin.com", subject: "Nouvelle adhésion — " + form.prenom + " " + form.nom + " (" + (mode === "enligne" ? "payé en ligne" : "sur place") + ")", html: bodyAccueil }) });
+      await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: form.email, subject: mode === "enligne" ? "Bienvenue dans l'association Circo Bénin !" : "Circo Bénin — Finalisez votre adhésion sur place", html: mode === "enligne" ? bodyEnLigne : bodySurPlace }) });
       setSent(true);
     } catch { setError(true); }
     setSending(false);
@@ -511,9 +501,54 @@ function AdhesionForm() {
           </div>
         </div>
         {error && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>❌ Erreur lors de l'envoi. Réessayez.</div>}
-        <div onClick={handleSend} style={{ background: sending ? "#9ca3af" : "#1565C0", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: sending ? "wait" : "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>
-          {sending ? "Envoi en cours..." : "🤝 Envoyer ma demande d'adhésion"}
-        </div>
+
+        {!etapePaiement ? (
+          <div onClick={() => { if (form.prenom && form.nom && form.email) setEtapePaiement(true); }} style={{ background: !form.prenom || !form.nom || !form.email ? "#e5e7eb" : "#1565C0", color: !form.prenom || !form.nom || !form.email ? "#9ca3af" : "#fff", borderRadius: 12, padding: "12px 24px", cursor: !form.prenom || !form.nom || !form.email ? "not-allowed" : "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>
+            🤝 Continuer vers le paiement →
+          </div>
+        ) : (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontFamily: "Playfair Display,serif", fontSize: 16, color: "#1565C0", marginBottom: 14 }}>Choisissez votre mode de paiement</div>
+            <div style={{ background: "#e3f2fd", borderRadius: 10, padding: "12px 16px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 14, color: "#374151" }}>Cotisation annuelle</span>
+              <span style={{ fontWeight: 800, fontSize: 16, color: "#1565C0" }}>{MONTANT_ADHESION.toLocaleString()} FCFA</span>
+            </div>
+            {[
+              { id: "enligne", label: "💳 Payer en ligne maintenant", detail: "Mobile Money (MTN, Moov) ou carte bancaire via FedaPay" },
+              { id: "surplace", label: "🏫 Payer sur place à Circo Bénin", detail: "Vous recevrez un email pour venir finaliser votre adhésion" },
+            ].map(m => (
+              <div key={m.id} onClick={() => setModePaiementAdhesion(m.id)} style={{ padding: "14px 16px", borderRadius: 12, cursor: "pointer", marginBottom: 10, border: `2px solid ${modePaiementAdhesion === m.id ? "#1565C0" : "#e5e7eb"}`, background: modePaiementAdhesion === m.id ? "#e3f2fd" : "#fff" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: modePaiementAdhesion === m.id ? "#1565C0" : "#111" }}>{m.label}</div>
+                <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{m.detail}</div>
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+              <div onClick={() => { setEtapePaiement(false); setModePaiementAdhesion(null); }} style={{ background: "#f3f4f6", color: "#374151", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14 }}>← Retour</div>
+              {modePaiementAdhesion === "enligne" && (
+                <div onClick={() => {
+                  if (!window.FedaPay) { setError(true); return; }
+                  const widget = window.FedaPay.init({
+                    public_key: process.env.REACT_APP_FEDAPAY_PUBLIC_KEY,
+                    transaction: { amount: MONTANT_ADHESION, description: "Adhésion association Circo Bénin — " + form.prenom + " " + form.nom },
+                    customer: { firstname: form.prenom, lastname: form.nom, email: form.email, phone_number: { number: form.telephone || "", country: "bj" } },
+                    onComplete: function(resp) { if (resp.reason === window.FedaPay.CHECKOUT_COMPLETED) handleSend("enligne"); else setError(true); },
+                  });
+                  widget.open();
+                }} style={{ flex: 1, background: "#1565C0", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 700, fontSize: 14, textAlign: "center" }}>
+                  💳 Payer {MONTANT_ADHESION.toLocaleString()} FCFA
+                </div>
+              )}
+              {modePaiementAdhesion === "surplace" && (
+                <div onClick={() => handleSend("surplace")} style={{ flex: 1, background: sending ? "#9ca3af" : "#1565C0", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: sending ? "wait" : "pointer", fontWeight: 700, fontSize: 14, textAlign: "center" }}>
+                  {sending ? "Envoi en cours..." : "✅ Confirmer — Je viendrai payer sur place"}
+                </div>
+              )}
+              {!modePaiementAdhesion && (
+                <div style={{ flex: 1, background: "#e5e7eb", color: "#9ca3af", borderRadius: 12, padding: "12px 24px", fontWeight: 700, fontSize: 14, textAlign: "center", cursor: "not-allowed" }}>Choisissez un mode de paiement</div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
