@@ -1316,6 +1316,29 @@ export default function App() {
     restaurer();
   }, []);
 
+  // Met à jour le timestamp de session à chaque changement de page (inactivité remise à zéro)
+  useEffect(() => {
+    if (!role || role.startsWith("__")) return;
+    sauvegarderSession({ role, parentCode: role === "parent" ? parentCode : undefined, nomIntervenant });
+  }, [page]);
+
+  // Vérifie toutes les 30 secondes si la session a expiré (5 min sans activité)
+  useEffect(() => {
+    if (!role || role.startsWith("__")) return;
+    const interval = setInterval(() => {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) { setRole(null); effacerSession(); return; }
+        const session = JSON.parse(raw);
+        if (!session.timestamp || Date.now() - session.timestamp > SESSION_DUREE_MS) {
+          setRole(null);
+          effacerSession();
+        }
+      } catch { setRole(null); effacerSession(); }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [role]);
+
   // Synchronise la navigation interne (changement de "page") avec l'historique du navigateur,
   // pour que le bouton précédent/suivant fonctionne au lieu de quitter l'application.
   useEffect(() => {
