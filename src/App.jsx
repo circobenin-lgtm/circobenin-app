@@ -3876,28 +3876,31 @@ export default function App() {
         position: "fixed", bottom: 0, left: 0, right: 0,
         background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
         zIndex: 100, height: 64,
-        overflowX: "auto", overflowY: "hidden",
-        WebkitOverflowScrolling: "touch",
+        display: "flex",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}>
-        {nav.map(item => (
-          <div key={item.id} onClick={() => setPage(item.id)} style={{
-            display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 10px",
-            minWidth: 64, flexShrink: 0,
-            borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
-          }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
-            <span style={{ fontSize: 9, whiteSpace: "nowrap", color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
-          </div>
-        ))}
-        {/* Bouton déconnexion — toujours visible sur mobile */}
+        {/* Items scrollables */}
+        <div style={{ flex: 1, display: "flex", overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch" }}>
+          {nav.map(item => (
+            <div key={item.id} onClick={() => setPage(item.id)} style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 10px",
+              minWidth: 64, flexShrink: 0,
+              borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
+            }}>
+              <span style={{ fontSize: 18 }}>{item.icon}</span>
+              <span style={{ fontSize: 9, whiteSpace: "nowrap", color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+        {/* Bouton Sortir — toujours visible, fixé à droite */}
         <div onClick={() => { setRole(null); effacerSession(); }} style={{
           display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 10px",
-          minWidth: 64, flexShrink: 0,
+          justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 14px",
+          flexShrink: 0,
           borderTop: "2px solid transparent",
-          borderLeft: "1px solid rgba(255,255,255,0.15)",
+          borderLeft: "1px solid rgba(255,255,255,0.2)",
+          background: "rgba(233,30,140,0.12)",
         }}>
           <span style={{ fontSize: 18 }}>⏻</span>
           <span style={{ fontSize: 9, whiteSpace: "nowrap", color: "#e91e8c", fontWeight: 700 }}>Sortir</span>
