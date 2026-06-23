@@ -1251,7 +1251,7 @@ export default function App() {
   const [formuleForm, setFormuleForm] = useState("trimestre");
   const [sessionRestauree, setSessionRestauree] = useState(false);
 
-  const SESSION_DUREE_MS = 24 * 60 * 60 * 1000; // 24h
+  const SESSION_DUREE_MS = 5 * 60 * 1000; // 5 minutes
   const SESSION_KEY = "circobenin_session";
 
   const sauvegarderSession = (data) => {
@@ -3868,6 +3868,17 @@ export default function App() {
             <span style={{ fontSize: 9, whiteSpace: "nowrap", color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
           </div>
         ))}
+        {/* Bouton déconnexion — toujours visible sur mobile */}
+        <div onClick={() => { setRole(null); effacerSession(); }} style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 10px",
+          minWidth: 64, flexShrink: 0,
+          borderTop: "2px solid transparent",
+          borderLeft: "1px solid rgba(255,255,255,0.15)",
+        }}>
+          <span style={{ fontSize: 18 }}>⏻</span>
+          <span style={{ fontSize: 9, whiteSpace: "nowrap", color: "#e91e8c", fontWeight: 700 }}>Sortir</span>
+        </div>
       </nav>
     </div>
   );
