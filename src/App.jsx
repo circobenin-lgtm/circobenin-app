@@ -56,6 +56,8 @@ const NAV_PAR_ROLE = {
     { id: "dashboard", icon: "⬡", label: "Tableau de bord" },
     { id: "eleves", icon: "◈", label: "Élèves" },
     { id: "preinscriptions", icon: "📋", label: "Inscriptions 26-27" },
+    { id: "suivi_stages", icon: "🏕", label: "Stages" },
+    { id: "suivi_adhesions", icon: "🤝", label: "Adhésions" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "presences", icon: "✓", label: "Présences" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
@@ -79,6 +81,8 @@ const NAV_PAR_ROLE = {
     { id: "dashboard", icon: "⬡", label: "Tableau de bord" },
     { id: "eleves", icon: "◈", label: "Élèves" },
     { id: "preinscriptions", icon: "📋", label: "Inscriptions 26-27" },
+    { id: "suivi_stages", icon: "🏕", label: "Stages" },
+    { id: "suivi_adhesions", icon: "🤝", label: "Adhésions" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
@@ -424,6 +428,17 @@ function AdhesionForm() {
     const bodyEnLigne = "<h2>Bienvenue dans l'association Circo Bénin !</h2><p>Bonjour " + form.prenom + ",</p><p>Votre adhésion est confirmée et votre cotisation de <b>15 000 FCFA</b> a bien été reçue. Bienvenue dans la famille Circo Bénin ! 🎪</p><br/><p>📞 +229 01 96 14 63 60 | circobenin@gmail.com | app.circobenin.com</p>";
     const bodySurPlace = "<h2>Adhésion Circo Bénin — Finalisez votre adhésion</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'adhésion. Venez régler votre cotisation de <b>15 000 FCFA</b> directement à Circo Bénin.</p><p><b>Tél :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60 | circobenin@gmail.com</p><p>Nous vous attendons ! 🤝</p>";
     try {
+      // Enregistrement en base Supabase
+      try {
+        const { supabase: sb } = await import("./supabase");
+        await sb.from("adhesions").insert([{
+          prenom: form.prenom, nom: form.nom, date_naissance: form.dateNaissance,
+          email: form.email, telephone: form.telephone, adresse: form.adresse,
+          profession: form.profession, motivation: form.motivation,
+          auto_photo: form.autoPhoto, mode_paiement: mode, montant: MONTANT_ADHESION,
+          statut: mode === "enligne" ? "confirme" : "en_attente",
+        }]);
+      } catch (_e) {}
       await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: "accueil@circobenin.com", subject: "Nouvelle adhésion — " + form.prenom + " " + form.nom + " (" + (mode === "enligne" ? "payé en ligne" : "sur place") + ")", html: bodyAccueil }) });
       await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: form.email, subject: mode === "enligne" ? "Bienvenue dans l'association Circo Bénin !" : "Circo Bénin — Finalisez votre adhésion sur place", html: mode === "enligne" ? bodyEnLigne : bodySurPlace }) });
       setSent(true);
@@ -1248,6 +1263,8 @@ export default function App() {
   const [montantDuForm, setMontantDuForm] = useState("");
   const [planningAffiche, setPlanningAffiche] = useState("actuel"); // "actuel" ou "rentree"
   const [preinscriptions, setPreinscriptions] = useState([]);
+  const [suiviStages, setSuiviStages] = useState([]);
+  const [suiviAdhesions, setSuiviAdhesions] = useState([]);
   const [formuleForm, setFormuleForm] = useState("trimestre");
   const [sessionRestauree, setSessionRestauree] = useState(false);
 
@@ -1366,8 +1383,26 @@ export default function App() {
     } catch (e) {}
   };
 
+  const chargerSuiviStages = async () => {
+    try {
+      const { data, error } = await supabase.from("preinscriptions_stages").select("*").order("created_at", { ascending: false });
+      if (!error && data) setSuiviStages(data);
+    } catch (e) {}
+  };
+
+  const chargerSuiviAdhesions = async () => {
+    try {
+      const { data, error } = await supabase.from("adhesions").select("*").order("created_at", { ascending: false });
+      if (!error && data) setSuiviAdhesions(data);
+    } catch (e) {}
+  };
+
   useEffect(() => {
-    if (role === "directeur" || role === "admin") chargerPreinscriptions();
+    if (role === "directeur" || role === "admin") {
+      chargerPreinscriptions();
+      chargerSuiviStages();
+      chargerSuiviAdhesions();
+    }
   }, [role]);
 
   const chargerEleves = async () => {
@@ -2596,6 +2631,77 @@ export default function App() {
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                           <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
                           <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 145000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 55000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
+                          <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── STAGES ── */}
+          {page === "suivi_stages" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>Inscriptions aux stages</div>
+                  <div style={{ fontSize: 13, color: C.gris, marginTop: 2 }}>{suiviStages.length} inscription{suiviStages.length !== 1 ? "s" : ""}</div>
+                </div>
+                <Btn small onClick={chargerSuiviStages}>↻ Actualiser</Btn>
+              </div>
+              {suiviStages.length === 0 ? (
+                <Card><p style={{ textAlign: "center", color: C.gris, fontSize: 14, padding: "40px 0" }}>Aucune inscription aux stages pour le moment.</p></Card>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {suiviStages.map(p => (
+                    <Card key={p.id}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>{p.prenom} {p.nom}</div>
+                          <div style={{ fontSize: 12, color: C.gris }}>{p.type_stage} {p.dates_stage ? "· " + p.dates_stage : ""}</div>
+                          <div style={{ fontSize: 12, color: C.gris }}>{p.email} · {p.telephone}</div>
+                          {p.prenom_parent && <div style={{ fontSize: 12, color: C.gris }}>Parent : {p.prenom_parent} {p.nom_parent}</div>}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                          <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
+                          {p.montant && <Badge text={p.montant.toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />}
+                          <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── ADHÉSIONS ── */}
+          {page === "suivi_adhesions" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>Adhésions à l'association</div>
+                  <div style={{ fontSize: 13, color: C.gris, marginTop: 2 }}>{suiviAdhesions.length} adhésion{suiviAdhesions.length !== 1 ? "s" : ""}</div>
+                </div>
+                <Btn small onClick={chargerSuiviAdhesions}>↻ Actualiser</Btn>
+              </div>
+              {suiviAdhesions.length === 0 ? (
+                <Card><p style={{ textAlign: "center", color: C.gris, fontSize: 14, padding: "40px 0" }}>Aucune adhésion reçue pour le moment.</p></Card>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {suiviAdhesions.map(p => (
+                    <Card key={p.id}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 15 }}>{p.prenom} {p.nom}</div>
+                          <div style={{ fontSize: 12, color: C.gris }}>{p.profession || "—"} · {p.email} · {p.telephone}</div>
+                          {p.motivation && <div style={{ fontSize: 12, color: C.gris, fontStyle: "italic", marginTop: 4 }}>"{p.motivation.slice(0, 80)}{p.motivation.length > 80 ? "…" : ""}"</div>}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                          <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
+                          <Badge text={(p.montant || 15000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
                           <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
                         </div>
                       </div>
