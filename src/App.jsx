@@ -186,13 +186,9 @@ const COURS_RENTREE = [
 ];
 
 const CRENEAUX_STAGE_ETE = [
-  { id: "ete1", label: "Semaine 1 — Lun 21 juil. → Ven 25 juil.", age: "6 – 10 ans", horaire: "09h00 – 12h00" },
-  { id: "ete2", label: "Semaine 1 — Lun 21 juil. → Ven 25 juil.", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
-  { id: "ete3", label: "Semaine 2 — Lun 28 juil. → Ven 1 août", age: "6 – 10 ans", horaire: "09h00 – 12h00" },
-  { id: "ete4", label: "Semaine 2 — Lun 28 juil. → Ven 1 août", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
-  { id: "ete5", label: "Semaine 3 — Lun 4 août → Ven 8 août", age: "6 – 10 ans", horaire: "09h00 – 12h00" },
-  { id: "ete6", label: "Semaine 3 — Lun 4 août → Ven 8 août", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
-  { id: "ete7", label: "Stage intensif — Lun 11 août → Ven 15 août", age: "Adultes", horaire: "09h00 – 17h00" },
+  { id: "ete1", label: "Lun 20 juil. → Ven 31 juil. 2026 (10 jours)", age: "6 – 10 ans", horaire: "09h00 – 17h00" },
+  { id: "ete2", label: "Lun 20 juil. → Ven 31 juil. 2026 (10 jours)", age: "11 – 17 ans", horaire: "09h00 – 17h00" },
+  { id: "ete3", label: "Lun 20 juil. → Ven 31 juil. 2026 (10 jours)", age: "Adultes", horaire: "09h00 – 17h00" },
 ];
 
 const INTERVENANTS = {
