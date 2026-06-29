@@ -284,19 +284,53 @@ const PROJETS = [
   { id: 5, titre: "Résidence Quilombisme", type: "Résidence", date: "Jan 2027", statut: "En préparation", public: false, formateurs: ["Prime"] },
 ];
 
+const today = new Date();
+const parseDate = (dateStr) => {
+  // Gère les formats : "21 juin 2026", "25–28 novembre 2026", "Juillet – Août 2026", etc.
+  const mois = { janvier:0, février:1, fevrier:1, mars:2, avril:3, mai:4, juin:5, juillet:6, "août":7, aout:7, septembre:8, octobre:9, novembre:10, décembre:11, decembre:11 };
+  if (!dateStr) return null;
+  const str = dateStr.toLowerCase();
+  // Format "JJ mois AAAA"
+  const m1 = str.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+  if (m1) return new Date(parseInt(m1[3]), mois[m1[2]] ?? 0, parseInt(m1[1]));
+  // Format "JJ–JJ mois AAAA" → prend la dernière date
+  const m2 = str.match(/\d{1,2}[–-]\s*(\d{1,2})\s+(\w+)\s+(\d{4})/);
+  if (m2) return new Date(parseInt(m2[3]), mois[m2[2]] ?? 0, parseInt(m2[1]));
+  // Format "mois AAAA"
+  const m3 = str.match(/(\w+)\s+(\d{4})/);
+  if (m3 && mois[m3[1]] !== undefined) return new Date(parseInt(m3[2]), mois[m3[1]], 28);
+  return null;
+};
+
+const statutAuto = (ev) => {
+  if (ev.statut === "En préparation") return "En préparation";
+  if (ev.statut === "Inscriptions ouvertes") {
+    const d = parseDate(ev.date);
+    if (d && d < today) return "Passé";
+    return "Inscriptions ouvertes";
+  }
+  const d = parseDate(ev.date);
+  if (!d) return ev.statut;
+  if (d < today) return "Passé";
+  const diffJours = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+  if (diffJours <= 7) return "Cette semaine";
+  if (diffJours <= 30) return "Ce mois-ci";
+  return "À venir";
+};
+
 const EVENEMENTS = [
   { id: 1, date: "21 juin 2026", titre: "Spectacle de fin d'année", desc: "Spectacle des enfants de l'école Circo Bénin — familles bienvenues", emoji: "🎪", statut: "À venir", couleur: "#e91e8c", typeInscription: null,
-    details: "Venez assister au grand spectacle de fin d'année presente par les eleves de Circo Benin ! Un moment festif et emouvant pour decouvrir le travail accompli pendant l'annee. Entree libre, ouvert a toutes les familles." },
-  { id: 2, date: "Juillet – Août 2026", titre: "Ateliers vacances + Stages d'été", desc: "Ateliers hebdomadaires et stages intensifs pendant toutes les vacances", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800", typeInscription: "ete",
-    details: "Pendant les grandes vacances, Circo Benin propose des stages intensifs sur 10 jours pour decouvrir ou se perfectionner dans les arts du cirque. Ouvert a tous les ages, encadrement par des formateurs professionnels." },
+    details: "Venez assister au grand spectacle de fin d'année présenté par les élèves de Circo Bénin ! Un moment festif et émouvant pour découvrir le travail accompli pendant l'année. Entrée libre, ouvert à toutes les familles." },
+  { id: 2, date: "20 juillet 2026", titre: "Stage d'été — 10 jours", desc: "Stage intensif multidisciplinaire : Cirque, Arts plastiques, Danse et Percussion", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800", typeInscription: "ete",
+    details: "Du lundi 20 au vendredi 31 juillet 2026 (sans les week-ends = 10 jours), Circo Bénin propose un stage intensif multidisciplinaire : Cirque, Arts plastiques, Danse et Percussion. Ouvert à tous les âges, encadrement par des formateurs professionnels. Inscriptions ouvertes !" },
   { id: 3, date: "14 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f", typeInscription: "hebdo",
-    details: "La rentree 2026-2027 marque la reprise des ateliers hebdomadaires pour tous les ages : Bebe Cirque, Petits, Enfants, Ados et Adultes. Inscrivez-vous des maintenant pour reserver votre creneau." },
+    details: "La rentrée 2026-2027 marque la reprise des ateliers hebdomadaires pour tous les âges : Bébé Cirque, Petits, Enfants, Ados et Adultes. Inscrivez-vous dès maintenant pour réserver votre créneau." },
   { id: 4, date: "Toussaint 2026", titre: "Stage de Toussaint", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed", typeInscription: "toussaint",
-    details: "Profitez des vacances de Toussaint pour un stage intensif de cirque ! Jonglerie, acrobatie, aerien, equilibre et expression au programme." },
+    details: "Profitez des vacances de Toussaint pour un stage intensif de cirque ! Jonglerie, acrobatie, aérien, équilibre et expression au programme." },
   { id: 5, date: "25–28 novembre 2026", titre: "Festival Cirque en Fusion", desc: "3ème édition du Festival International des Arts du Cirque — Cotonou", emoji: "🏆", statut: "En préparation", couleur: "#e91e8c", typeInscription: null,
-    details: "La 3eme edition du Festival International des Arts du Cirque \"Cirque en Fusion\" se tiendra du 25 au 28 novembre 2026 a Cotonou, sur le theme \"Rythmes et Corporalites\". Spectacles, ateliers et rencontres avec des artistes internationaux." },
+    details: "La 3ème édition du Festival International des Arts du Cirque \"Cirque en Fusion\" se tiendra du 25 au 28 novembre 2026 à Cotonou. Spectacles, ateliers et rencontres avec des artistes internationaux." },
   { id: 6, date: "Décembre 2026", titre: "Stages de vacances de Noël", desc: "Stages de fin d'année — clôture de la saison en beauté", emoji: "🎄", statut: "À venir", couleur: "#2d7a4f", typeInscription: "noel",
-    details: "Terminez l'annee en beaute avec un stage de cirque pendant les vacances de Noel ! Ambiance festive et programme adapte a tous les niveaux." },
+    details: "Terminez l'année en beauté avec un stage de cirque pendant les vacances de Noël ! Ambiance festive et programme adapté à tous les niveaux." },
 ];
 
 const ATELIERS_LOISIR = [
@@ -3331,7 +3365,7 @@ export default function App() {
                       </div>
                       <div style={{ textAlign: "right", flexShrink: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: e.couleur, marginBottom: 4 }}>{e.date}</div>
-                        <Badge text={e.statut} bg={e.couleur + "18"} color={e.couleur} />
+                        <Badge text={statutAuto(e)} bg={e.couleur + "18"} color={e.couleur} />
                       </div>
                       <div style={{ fontSize: 18, color: C.gris, flexShrink: 0 }}>→</div>
                     </div>
@@ -3724,7 +3758,7 @@ export default function App() {
                 <div onClick={() => setPage("accueil")} style={{ cursor: "pointer", color: C.gris, fontSize: 13, marginBottom: 16 }}>← Retour à l'agenda</div>
                 <div style={{ background: `linear-gradient(135deg, ${ev.couleur}, ${ev.couleur}cc)`, borderRadius: 20, padding: "40px 36px", color: "#fff", marginBottom: 24, position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", right: -10, top: -10, fontSize: 120, opacity: 0.15 }}>{ev.emoji}</div>
-                  <Badge text={ev.statut} bg="rgba(255,255,255,0.2)" color="#fff" />
+                  <Badge text={statutAuto(ev)} bg="rgba(255,255,255,0.2)" color="#fff" />
                   <h2 style={{ fontFamily: FT, fontSize: 28, margin: "12px 0 8px" }}>{ev.titre}</h2>
                   <p style={{ fontSize: 15, opacity: 0.9, margin: 0, fontWeight: 600 }}>📅 {ev.date}</p>
                 </div>
