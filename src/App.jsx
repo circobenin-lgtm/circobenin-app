@@ -322,7 +322,7 @@ const EVENEMENTS = [
   { id: 1, date: "21 juin 2026", titre: "Spectacle de fin d'année", desc: "Spectacle des enfants de l'école Circo Bénin — familles bienvenues", emoji: "🎪", statut: "À venir", couleur: "#e91e8c", typeInscription: null,
     details: "Venez assister au grand spectacle de fin d'année présenté par les élèves de Circo Bénin ! Un moment festif et émouvant pour découvrir le travail accompli pendant l'année. Entrée libre, ouvert à toutes les familles." },
   { id: 2, date: "20 juillet 2026", titre: "Stage d'été — 10 jours", desc: "Stage intensif multidisciplinaire : Cirque, Arts plastiques, Danse et Percussion", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800", typeInscription: "ete",
-    details: "Du lundi 20 au vendredi 31 juillet 2026 (sans les week-ends = 10 jours), Circo Bénin propose un stage intensif multidisciplinaire : Cirque, Arts plastiques, Danse et Percussion. Ouvert à tous les âges, encadrement par des formateurs professionnels. Inscriptions ouvertes !" },
+    details: "Du lundi 20 au vendredi 31 juillet 2026 (sans les week-ends = 10 jours), Circo Bénin propose un stage intensif multidisciplinaire.\n\n🕘 Horaires : 9h00 – 17h00\n\n🎪 Disciplines : Cirque · Arts plastiques · Danse · Percussion\n\n💰 Tarifs :\n• Non-adhérent : 45 000 FCFA\n• Adhérent Circo Bénin : 40 000 FCFA\n\nInscriptions ouvertes — places limitées !" },
   { id: 3, date: "14 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f", typeInscription: "hebdo",
     details: "La rentrée 2026-2027 marque la reprise des ateliers hebdomadaires pour tous les âges : Bébé Cirque, Petits, Enfants, Ados et Adultes. Inscrivez-vous dès maintenant pour réserver votre créneau." },
   { id: 4, date: "Toussaint 2026", titre: "Stage de Toussaint", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed", typeInscription: "toussaint",
@@ -732,10 +732,15 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   const [error, setError] = useState(false);
   const [formulePaiement, setFormulePaiement] = useState("trimestre");
   const [modePaiement, setModePaiement] = useState(null); // "enligne" ou "surplace"
+  const [estAdherent, setEstAdherent] = useState(false);
   const FRAIS_INSCRIPTION = 10000;
   const COTIS_TRIMESTRE = 45000;
   const COTIS_ANNEE = 135000;
-  const montantTotal = FRAIS_INSCRIPTION + (formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE);
+  const TARIF_STAGE_ETE_NON_ADH = 45000;
+  const TARIF_STAGE_ETE_ADH = 40000;
+  const montantTotal = typeInscription === "ete"
+    ? (estAdherent ? TARIF_STAGE_ETE_ADH : TARIF_STAGE_ETE_NON_ADH)
+    : FRAIS_INSCRIPTION + (formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE);
 
   const types = [
     { id: "hebdo", emoji: "🎪", titre: "Atelier hebdomadaire", desc: "Rentrée septembre 2026", couleur: "#2d7a4f" },
@@ -950,41 +955,75 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
               <strong>{form.prenom} {form.nom}</strong> · {types.find(t => t.id === typeInscription)?.titre} · {form.creneau || "Créneau non sélectionné"}
             </div>
 
-            {/* Choix de formule */}
+            {/* Choix de formule — différent selon le type */}
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 10 }}>Choisissez votre formule</div>
-              {[
-                { id: "trimestre", label: "1er trimestre", detail: "Frais d'inscription + cotisation 1 trimestre", montant: FRAIS_INSCRIPTION + COTIS_TRIMESTRE },
-                { id: "annee", label: "Année complète", detail: "Frais d'inscription + cotisation annuelle (économisez 15 000 FCFA)", montant: FRAIS_INSCRIPTION + COTIS_ANNEE },
-              ].map(f => (
-                <div key={f.id} onClick={() => setFormulePaiement(f.id)} style={{
-                  padding: "14px 16px", borderRadius: 12, cursor: "pointer", marginBottom: 10,
-                  border: `2px solid ${formulePaiement === f.id ? "#2d7a4f" : "#e5e7eb"}`,
-                  background: formulePaiement === f.id ? "#e8f5e9" : "#fff",
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: formulePaiement === f.id ? "#2d7a4f" : "#111" }}>{f.label}</div>
-                    <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{f.detail}</div>
+              {typeInscription === "ete" ? (
+                <>
+                  <div style={{ background: "#fff3e0", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#e65100", marginBottom: 4 }}>☀️ Stage d'été — 20 au 31 juillet 2026 (10 jours)</div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>Lundi au vendredi · 9h00 – 17h00</div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>Cirque · Arts plastiques · Danse · Percussion</div>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: formulePaiement === f.id ? "#2d7a4f" : "#374151" }}>{f.montant.toLocaleString()} FCFA</div>
-                </div>
-              ))}
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 10 }}>Êtes-vous adhérent de l'association Circo Bénin ?</div>
+                  {[
+                    { val: false, label: "Non-adhérent", detail: "Tarif standard", montant: TARIF_STAGE_ETE_NON_ADH },
+                    { val: true, label: "Adhérent Circo Bénin", detail: "Tarif préférentiel — économisez 5 000 FCFA", montant: TARIF_STAGE_ETE_ADH },
+                  ].map(f => (
+                    <div key={String(f.val)} onClick={() => setEstAdherent(f.val)} style={{
+                      padding: "14px 16px", borderRadius: 12, cursor: "pointer", marginBottom: 10,
+                      border: `2px solid ${estAdherent === f.val ? "#ff9800" : "#e5e7eb"}`,
+                      background: estAdherent === f.val ? "#fff8e1" : "#fff",
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: estAdherent === f.val ? "#e65100" : "#111" }}>{f.label}</div>
+                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{f.detail}</div>
+                      </div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: estAdherent === f.val ? "#e65100" : "#374151" }}>{f.montant.toLocaleString()} FCFA</div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 10 }}>Choisissez votre formule</div>
+                  {[
+                    { id: "trimestre", label: "1er trimestre", detail: "Frais d'inscription + cotisation 1 trimestre", montant: FRAIS_INSCRIPTION + COTIS_TRIMESTRE },
+                    { id: "annee", label: "Année complète", detail: "Frais d'inscription + cotisation annuelle (économisez 15 000 FCFA)", montant: FRAIS_INSCRIPTION + COTIS_ANNEE },
+                  ].map(f => (
+                    <div key={f.id} onClick={() => setFormulePaiement(f.id)} style={{
+                      padding: "14px 16px", borderRadius: 12, cursor: "pointer", marginBottom: 10,
+                      border: `2px solid ${formulePaiement === f.id ? "#2d7a4f" : "#e5e7eb"}`,
+                      background: formulePaiement === f.id ? "#e8f5e9" : "#fff",
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                    }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: formulePaiement === f.id ? "#2d7a4f" : "#111" }}>{f.label}</div>
+                        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{f.detail}</div>
+                      </div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: formulePaiement === f.id ? "#2d7a4f" : "#374151" }}>{f.montant.toLocaleString()} FCFA</div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
 
             {/* Détail du montant */}
             <div style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ color: "#6b7280" }}>Frais d'inscription</span>
-                <span>{FRAIS_INSCRIPTION.toLocaleString()} FCFA</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={{ color: "#6b7280" }}>Cotisation {formulePaiement === "annee" ? "annuelle" : "1er trimestre"}</span>
-                <span>{(formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE).toLocaleString()} FCFA</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, borderTop: "1px solid #e5e7eb", fontWeight: 800, fontSize: 15 }}>
+              {typeInscription !== "ete" && (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ color: "#6b7280" }}>Frais d'inscription</span>
+                    <span>{FRAIS_INSCRIPTION.toLocaleString()} FCFA</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ color: "#6b7280" }}>Cotisation {formulePaiement === "annee" ? "annuelle" : "1er trimestre"}</span>
+                    <span>{(formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE).toLocaleString()} FCFA</span>
+                  </div>
+                </>
+              )}
+              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: typeInscription !== "ete" ? 10 : 0, borderTop: typeInscription !== "ete" ? "1px solid #e5e7eb" : "none", fontWeight: 800, fontSize: 15 }}>
                 <span>Total à payer</span>
-                <span style={{ color: "#2d7a4f" }}>{montantTotal.toLocaleString()} FCFA</span>
+                <span style={{ color: typeInscription === "ete" ? "#e65100" : "#2d7a4f" }}>{montantTotal.toLocaleString()} FCFA</span>
               </div>
             </div>
 
