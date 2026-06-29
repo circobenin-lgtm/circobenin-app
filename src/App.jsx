@@ -185,6 +185,16 @@ const COURS_RENTREE = [
   { id: 116, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
 ];
 
+const CRENEAUX_STAGE_ETE = [
+  { id: "ete1", label: "Semaine 1 — Lun 21 juil. → Ven 25 juil.", age: "6 – 10 ans", horaire: "09h00 – 12h00" },
+  { id: "ete2", label: "Semaine 1 — Lun 21 juil. → Ven 25 juil.", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
+  { id: "ete3", label: "Semaine 2 — Lun 28 juil. → Ven 1 août", age: "6 – 10 ans", horaire: "09h00 – 12h00" },
+  { id: "ete4", label: "Semaine 2 — Lun 28 juil. → Ven 1 août", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
+  { id: "ete5", label: "Semaine 3 — Lun 4 août → Ven 8 août", age: "6 – 10 ans", horaire: "09h00 – 12h00" },
+  { id: "ete6", label: "Semaine 3 — Lun 4 août → Ven 8 août", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
+  { id: "ete7", label: "Stage intensif — Lun 11 août → Ven 15 août", age: "Adultes", horaire: "09h00 – 17h00" },
+];
+
 const INTERVENANTS = {
   "Jean Luc": {
     code: "JEAN531",
@@ -890,7 +900,19 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
               <div style={{ marginBottom: 14 }}>
                 <label style={labelStyle}>Créneau souhaité</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {COURS_RENTREE.map(c => (
+                  {typeInscription === "ete" ? CRENEAUX_STAGE_ETE.map(c => (
+                    <div key={c.id} onClick={() => setForm({...form, creneau: c.label + " – " + c.horaire + " (" + c.age + ")"})} style={{
+                      padding: "10px 14px", borderRadius: 10, cursor: "pointer",
+                      border: `2px solid ${form.creneau === c.label + " – " + c.horaire + " (" + c.age + ")" ? "#ff9800" : "#e5e7eb"}`,
+                      background: form.creneau === c.label + " – " + c.horaire + " (" + c.age + ")" ? "#fff3e0" : "#fff",
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                    }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: form.creneau === c.label + " – " + c.horaire + " (" + c.age + ")" ? "#ff9800" : "#111" }}>
+                        {c.label}
+                      </span>
+                      <span style={{ fontSize: 12, background: "#fff3e0", color: "#ff9800", borderRadius: 20, padding: "2px 10px", fontWeight: 700 }}>{c.age}</span>
+                    </div>
+                  )) : COURS_RENTREE.map(c => (
                     <div key={c.id} onClick={() => setForm({...form, creneau: c.jour + " " + c.heure + " – " + c.fin})} style={{
                       padding: "10px 14px", borderRadius: 10, cursor: "pointer",
                       border: `2px solid ${form.creneau === c.jour + " " + c.heure + " – " + c.fin ? "#2d7a4f" : "#e5e7eb"}`,
