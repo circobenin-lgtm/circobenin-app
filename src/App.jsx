@@ -186,9 +186,9 @@ const COURS_RENTREE = [
 ];
 
 const CRENEAUX_STAGE_ETE = [
-  { id: "ete1", label: "Lun 20 juil. → Ven 31 juil. 2026 (10 jours)", age: "6 – 10 ans", horaire: "09h00 – 17h00" },
-  { id: "ete2", label: "Lun 20 juil. → Ven 31 juil. 2026 (10 jours)", age: "11 – 17 ans", horaire: "09h00 – 17h00" },
-  { id: "ete3", label: "Lun 20 juil. → Ven 31 juil. 2026 (10 jours)", age: "Adultes", horaire: "09h00 – 17h00" },
+  { id: "ete1", label: "Lun 20 juil. → Ven 31 juil. 2026 — Matin", age: "6 – 10 ans", horaire: "09h00 – 12h30" },
+  { id: "ete2", label: "Lun 20 juil. → Ven 31 juil. 2026 — Après-midi", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
+  { id: "ete3", label: "Lun 20 juil. → Ven 31 juil. 2026 — Journée complète", age: "Adultes", horaire: "09h00 – 17h00" },
 ];
 
 const INTERVENANTS = {
