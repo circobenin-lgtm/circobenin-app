@@ -952,7 +952,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
                       </span>
                       <span style={{ background: "#fff3e0", color: "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>👤 {c.age}</span>
                     </div>
-                  ))}
+                  })}
                 </div>
               </div>
             )}
