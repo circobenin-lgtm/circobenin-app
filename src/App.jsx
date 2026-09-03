@@ -1487,6 +1487,19 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  const [messagesRecus, setMessagesRecus] = useState([]);
+
+  const chargerMessages = async () => {
+    try {
+      const { data, error } = await supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(50);
+      if (!error && data) setMessagesRecus(data);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role === "directeur" || role === "admin") chargerMessages();
+  }, [role]);
+
   const chargerPreinscriptions = async () => {
     try {
       const { data, error } = await supabase.from("preinscriptions").select("*").order("created_at", { ascending: false });
@@ -3393,17 +3406,18 @@ export default function App() {
                 <div style={{ padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
                   <div style={{ padding: "6px 16px", fontSize: 11, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em" }}>Contacts rapides</div>
                   {[
-                    { nom: "Jean-Luc", email: "intervenants@circobenin.com", init: "JL" },
-                    { nom: "Spéro", email: "intervenants@circobenin.com", init: "SP" },
-                    { nom: "CA", email: "ca@circobenin.com", init: "CA" },
-                    { nom: "Administration", email: "admin@circobenin.com", init: "AD" },
-                    { nom: "Direction", email: "prime.ezinse@circobenin.com", init: "DI" },
+                    { nom: "Jean-Luc", email: "intervenants@circobenin.com", init: "JL", couleur: "#2d7a4f" },
+                    { nom: "Spéro", email: "intervenants@circobenin.com", init: "SP", couleur: "#e91e8c" },
+                    { nom: "Youssou", email: "intervenants@circobenin.com", init: "YO", couleur: "#ff9800" },
+                    { nom: "CA", email: "ca@circobenin.com", init: "CA", couleur: C.bleu },
+                    { nom: "Administration", email: "admin@circobenin.com", init: "AD", couleur: C.orange },
+                    { nom: "Direction", email: "prime.ezinse@circobenin.com", init: "DI", couleur: C.vert },
                   ].map((c, i) => (
                     <div key={i} onClick={() => { setComposeMode(true); setEmailTo(c.email); setEmailSubject(""); setEmailBody(""); setEmailStatus(null); }} style={{
                       padding: "10px 16px", display: "flex", gap: 10, alignItems: "center", cursor: "pointer",
                       background: "transparent", borderBottom: `1px solid ${C.grisClair}`,
                     }}>
-                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: C.vert, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{c.init}</div>
+                      <div style={{ width: 34, height: 34, borderRadius: "50%", background: c.couleur || C.vert, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{c.init}</div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{c.nom}</div>
                         <div style={{ fontSize: 10, color: C.gris }}>{c.email}</div>
@@ -3468,8 +3482,10 @@ export default function App() {
                             });
                             if (res.ok) {
                               setEmailStatus("success");
-                              setEmailsEnvoyes(prev => [{ to: emailTo, subject: emailSubject, time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) }, ...prev.slice(0, 9)]);
+                              const newEmail = { to: emailTo, subject: emailSubject, time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) };
+                              setEmailsEnvoyes(prev => [newEmail, ...prev.slice(0, 9)]);
                               await supabase.from("messages").insert([{ from_email: fromEmail, to_email: emailTo, subject: emailSubject, body: emailBody, role: role, lu: false }]);
+                              chargerMessages();
                               setEmailTo(""); setEmailSubject(""); setEmailBody("");
                             } else { setEmailStatus("error"); }
                           } catch { setEmailStatus("error"); }
