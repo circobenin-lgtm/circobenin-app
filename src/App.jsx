@@ -2364,6 +2364,52 @@ export default function App() {
           {/* ── STATISTIQUES ── */}
           {page === "statistiques" && (
             <div>
+              {/* Tableau de bord global */}
+              {(() => {
+                const totalEleves = elevesState.length;
+                const elevesActifs = elevesState.filter(e => e.statut === "actif").length;
+                const totalVersements = versementsEleves.reduce((a, v) => a + v.montant, 0);
+                const totalDu = Object.values(comptesPaiement).reduce((a, c) => a + (c.montant_du || 0), 0);
+                const tauxGlobal = historiquePresences.length > 0
+                  ? Math.round((historiquePresences.filter(p => p.present).length / historiquePresences.length) * 100)
+                  : null;
+                const inscriptionsMois = preinscriptions.filter(p => {
+                  const d = new Date(p.created_at);
+                  const now = new Date();
+                  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                }).length;
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 24 }}>
+                    <StatCard label="Élèves actifs" value={elevesActifs + " / " + totalEleves} icon="◈" color={C.vert} />
+                    <StatCard label="Taux présence global" value={tauxGlobal !== null ? tauxGlobal + "%" : "—"} icon="✓" color={tauxGlobal >= 75 ? C.vert : C.orange} />
+                    <StatCard label="Encaissé total" value={totalVersements.toLocaleString() + " F"} icon="₦" color={C.bleu} />
+                    <StatCard label="Inscriptions ce mois" value={inscriptionsMois} icon="📋" color={C.magenta} />
+                  </div>
+                );
+              })()}
+
+              {/* Répartition par créneau */}
+              <Card style={{ marginBottom: 20 }}>
+                <SectionTitle>Élèves par créneau</SectionTitle>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {COURS_RENTREE.map(c => {
+                    const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+                    const nb = elevesState.filter(e => e.classe && e.classe.includes(c.heure)).length;
+                    const pct = elevesState.length > 0 ? Math.round((nb / elevesState.length) * 100) : 0;
+                    return (
+                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
+                        <div style={{ width: 120, fontSize: 13, fontWeight: 600 }}>{joursComplets[c.jour]} {c.heure}</div>
+                        <div style={{ fontSize: 12, color: C.gris, width: 80 }}>{c.age}</div>
+                        <div style={{ flex: 1, height: 8, background: C.grisClair, borderRadius: 4, overflow: "hidden" }}>
+                          <div style={{ width: pct + "%", height: "100%", background: C.vert, borderRadius: 4 }} />
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.vert, minWidth: 40, textAlign: "right" }}>{nb} élève{nb > 1 ? "s" : ""}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
               <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
                 <SectionTitle>Taux de présence par élève</SectionTitle>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
