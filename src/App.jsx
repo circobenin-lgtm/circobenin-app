@@ -1457,9 +1457,11 @@ export default function App() {
     sauvegarderSession({ role, parentCode: role === "parent" ? parentCode : undefined, nomIntervenant });
   }, [page]);
 
-  // Vérifie toutes les 30 secondes si la session a expiré (5 min sans activité)
+  // Vérifie toutes les 30 secondes si la session a expiré (30 min sans activité)
+  // Ne s'applique PAS aux visiteurs/public (inscription libre)
   useEffect(() => {
     if (!role || role.startsWith("__")) return;
+    if (role === "visiteurs" || role === "public") return;
     const interval = setInterval(() => {
       try {
         const raw = localStorage.getItem(SESSION_KEY);
