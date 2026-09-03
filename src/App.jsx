@@ -1572,6 +1572,9 @@ export default function App() {
     if (role) chargerComptesPaiement();
   }, [role]);
 
+  const GRILLE_TRIM = { 1: 50000, 2: 95000, 3: 140000 };
+  const GRILLE_AN = { 1: 150000, 2: 285000, 3: 420000 };
+
   const enregistrerMontantDu = async (eleveId, eleveNom) => {
     const montant = parseFloat(montantDuForm);
     if (!montant) { alert("Merci de saisir un montant valide."); return; }
@@ -1584,6 +1587,11 @@ export default function App() {
     }
     setMontantDuForm("");
     chargerComptesPaiement();
+  };
+
+  const montantSuggere = (nbCreneaux, formule) => {
+    const n = Math.min(Math.max(nbCreneaux, 1), 3);
+    return formule === "annee" ? (GRILLE_AN[n] || 420000) : (GRILLE_TRIM[n] || 140000);
   };
 
   const ajouterVersement = async (eleveId, eleveNom) => {
@@ -2642,15 +2650,29 @@ export default function App() {
                   </div>
 
                   <SectionTitle>Montant dû</SectionTitle>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 12, marginTop: 8 }}>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8, marginTop: 8 }}>
+                    <select value={formuleForm} onChange={e => {
+                      setFormuleForm(e.target.value);
+                      setMontantDuForm(montantSuggere(1, e.target.value).toString());
+                    }} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                      <option value="trimestre">Trimestre</option>
+                      <option value="annee">Année complète</option>
+                    </select>
                     <input type="number" placeholder={compte.montantDu ? compte.montantDu.toString() : "Montant en FCFA"} value={montantDuForm} onChange={e => setMontantDuForm(e.target.value)}
                       style={{ flex: 1, padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
-                    <select value={formuleForm} onChange={e => setFormuleForm(e.target.value)}
-                      style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
-                      <option value="trimestre">Trimestre</option>
-                      <option value="annee">Année</option>
-                    </select>
                     <Btn small onClick={() => enregistrerMontantDu(eleveFicheSelect, eleve.nom)}>OK</Btn>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                    {[1, 2, 3].map(n => (
+                      <div key={n} onClick={() => setMontantDuForm(montantSuggere(n, formuleForm).toString())} style={{
+                        padding: "6px 12px", borderRadius: 8, fontSize: 12, cursor: "pointer",
+                        background: montantDuForm === montantSuggere(n, formuleForm).toString() ? C.vert : C.fond,
+                        color: montantDuForm === montantSuggere(n, formuleForm).toString() ? "#fff" : C.gris,
+                        border: "1px solid " + (montantDuForm === montantSuggere(n, formuleForm).toString() ? C.vert : C.grisClair),
+                      }}>
+                        {n} créneau{n > 1 ? "x" : ""} — {montantSuggere(n, formuleForm).toLocaleString()} F
+                      </div>
+                    ))}
                   </div>
 
                   <div style={{ display: "flex", gap: 12, padding: "16px", background: "#f3f4f6", borderRadius: 12, marginBottom: 16 }}>
@@ -4151,7 +4173,15 @@ export default function App() {
                       suffixe++;
                     }
                     await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
+                    // Créer compte paiement automatiquement (1 créneau par défaut)
+                    await supabase.from("comptes_paiement").upsert([{
+                      eleve_id: inserted.id,
+                      eleve_nom: nouvelEleve.prenom + " " + nouvelEleve.nom,
+                      montant_du: 50000,
+                      formule: "trimestre",
+                    }], { onConflict: "eleve_id" });
                     chargerEleves();
+                    chargerComptesPaiement();
                   }
                 } catch (e) {}
                 setNouvelEleve({ prenom: "", nom: "", dateNaissance: "", email: "", discipline: "Cirque", classe: "", nomParent: "", telephoneParent: "" });
