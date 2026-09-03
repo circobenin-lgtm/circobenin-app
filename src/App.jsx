@@ -798,8 +798,10 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
         const { supabase: sb } = await import("./supabase");
         await sb.from("preinscriptions").insert([{
           prenom: form.prenom, nom: form.nom, date_naissance: form.dateNaissance,
-          email: form.email, telephone: form.telephone, discipline: form.discipline,
-          creneau: form.creneau, formule: formulePaiement, mode_paiement: mode,
+          email: form.email, telephone: form.telephone,
+          discipline: Array.isArray(form.disciplines) ? form.disciplines.join(", ") : (form.discipline || ""),
+          creneau: Array.isArray(form.creneaux) ? form.creneaux.join(" | ") : (form.creneau || ""),
+          formule: formulePaiement, mode_paiement: mode,
           montant, type_inscription: typeInscription, navette: form.navette,
           auto_photo: form.autoPhoto,
           prenom_parent: form.prenomParent || null, nom_parent: form.nomParent || null,
