@@ -2243,38 +2243,41 @@ export default function App() {
             <div>
               {!activeCours ? (
                 <div>
-                  <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>Sélectionnez un cours pour prendre les présences</p>
+                  <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>Sélectionnez un créneau pour prendre les présences</p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-                    {(role === "formateur" ? COURS.filter(c => c.formateurs && c.formateurs.includes(nomIntervenant)) : COURS).map(c => (
-                      <Card key={c.id} style={{ cursor: "pointer", borderLeft: `4px solid ${C.or}` }}
-                        onClick={() => setActiveCours(c.id)}>
-                        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                          <Badge text={c.jour} bg={C.vert} color="#fff" />
-                          <Badge text={c.heure} bg={C.fond} color={C.vert} />
-                        </div>
-                        <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700 }}>{c.classe}</div>
-                        <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>{c.formateurs ? c.formateurs.join(", ") : ""} · {c.nb} élèves</div>
-                        <div style={{ marginTop: 12 }}>
-                          <Btn small>Ouvrir →</Btn>
-                        </div>
-                      </Card>
-                    ))}
+                    {COURS_RENTREE.map(c => {
+                      const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+                      const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                      return (
+                        <Card key={c.id} style={{ cursor: "pointer", borderLeft: `4px solid ${C.or}` }}
+                          onClick={() => setActiveCours(c.id)}>
+                          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                            <Badge text={joursComplets[c.jour]} bg={C.vert} color="#fff" />
+                            <Badge text={c.heure} bg={C.fond} color={C.vert} />
+                          </div>
+                          <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700 }}>{c.age}</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>{c.heure} – {c.fin} · {elevesduCours.length} élève(s)</div>
+                          <div style={{ marginTop: 12 }}>
+                            <Btn small>Ouvrir →</Btn>
+                          </div>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
                 <div>
                   {(() => {
-                    const cours = COURS.find(c => c.id === activeCours);
-                    const elevesClasse = elevesState.filter(e => e.classe && e.classe.includes(cours.heure)).concat(
-                      elevesState.filter(e => e.classe && !e.classe.includes(cours.heure))
-                    ).slice(0, cours.nb);
+                    const cours = COURS_RENTREE.find(c => c.id === activeCours) || COURS.find(c => c.id === activeCours);
+                    const elevesClasse = cours ? elevesState.filter(e => e.classe && (e.classe.includes(cours.heure) || e.classe.includes(cours.jour + " " + cours.heure))) : [];
+                    const nbEleves = elevesClasse.length || (cours ? cours.nb : 0);
                     const pres = presencesCours[activeCours] || {};
                     const isReadOnly = role === "directeur" || role === "admin";
                     return (
                       <div>
                         <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
                           <div onClick={() => setActiveCours(null)} style={{ cursor: "pointer", color: C.gris, fontSize: 14 }}>← Retour</div>
-                          <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>{cours.classe} — {cours.jour} {cours.heure}</div>
+                          <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>{cours.age || cours.classe} — {{ Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" }[cours.jour]} {cours.heure} – {cours.fin}</div>
                           {isReadOnly && <Badge text="👁 Lecture seule" bg="#FFF8E1" color={C.orange} />}
                         </div>
                         <Card>
@@ -2327,7 +2330,7 @@ export default function App() {
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div style={{ fontSize: 14, color: C.gris }}>
-                              {Object.values(pres).filter(Boolean).length} présent(s) sur {elevesClasse.length}
+                              {Object.values(pres).filter(Boolean).length} présent(s) sur {elevesClasse.length} élève(s) inscrit(s)
                             </div>
                             {!isReadOnly && <Btn onClick={() => alert("Feuille validée !")}>Valider la feuille ✓</Btn>}
                           </div>
