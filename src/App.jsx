@@ -1804,7 +1804,7 @@ export default function App() {
             <h1 style={{ fontFamily: FT, fontSize: 20, color: C.vert, margin: 0, fontWeight: 700 }}>
               {nav.find(n => n.id === page)?.label}
             </h1>
-            <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2025–2026 · Cotonou, Bénin</div>
+            <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Rentrée 2026–2027 · Cotonou, Bénin</div>
           </div>
           <div className="app-header-actions" style={{ display: "flex", gap: 10 }}>
             {(role === "directeur") && (
@@ -2122,7 +2122,7 @@ export default function App() {
                   <div>
                     <div style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", borderRadius: 20, padding: "36px 32px", color: "#fff", marginBottom: 24 }}>
                       <h2 style={{ fontFamily: FT, fontSize: 26, margin: "0 0 6px" }}>Bilan d'heures — {nomInter}</h2>
-                      <p style={{ opacity: 0.85, margin: 0 }}>Rentrée 2025-2026 · {semaines} semaines</p>
+                      <p style={{ opacity: 0.85, margin: 0 }}>Rentrée 2026-2027 · {semaines} semaines</p>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
                       <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
@@ -2690,7 +2690,7 @@ export default function App() {
             <div>
               {/* Toggle planning */}
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                {[{ id: "actuel", label: "Saison 2025–2026" }, { id: "rentree", label: "Rentrée 2026–2027" }].map(p => (
+                {[{ id: "actuel", label: "Saison 2026–2027" }, { id: "rentree", label: "Rentrée 2026–2027" }].map(p => (
                   <div key={p.id} onClick={() => setPlanningAffiche(p.id)} style={{
                     padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
                     background: planningAffiche === p.id ? C.vert : C.fond,
@@ -3433,7 +3433,7 @@ export default function App() {
               <div style={{ marginBottom: 32 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
                   <div style={{ width: 4, height: 32, background: C.vert, borderRadius: 2 }} />
-                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>📅 Agenda 2025–2026</h2>
+                  <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>📅 Agenda 2026–2027</h2>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {EVENEMENTS.map((e, i) => (
@@ -3633,7 +3633,7 @@ export default function App() {
             <div>
               {/* Créneau actuel de l'enfant */}
               <Card style={{ marginBottom: 20 }}>
-                <SectionTitle>Planning 2025–2026 — Créneau de {eleveActuel.prenom}</SectionTitle>
+                <SectionTitle>Planning 2026–2027 — Créneau de {eleveActuel.prenom}</SectionTitle>
                 {(() => {
                   const coursEnfant = COURS.find(c => c.classe === eleveActuel.classe || eleveActuel.classe?.includes(c.heure));
                   if (!coursEnfant) return (
