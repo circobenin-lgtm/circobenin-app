@@ -3109,15 +3109,43 @@ export default function App() {
 
                 return (
                   <div>
+                    {(() => {
+                      const maintenant = new Date();
+                      const moisEnCours = maintenant.toISOString().slice(0, 7);
+                      const opsMois = operationsCaisse.filter(o => o.date && o.date.startsWith(moisEnCours));
+                      const entreesMois = opsMois.filter(o => o.sens === "entree").reduce((a, o) => a + o.montant, 0);
+                      const sortiesMois = opsMois.filter(o => o.sens === "sortie").reduce((a, o) => a + o.montant, 0);
+                      return (
+                        <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                          <div>
+                            <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Ce mois-ci — {maintenant.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</div>
+                            <div style={{ display: "flex", gap: 24 }}>
+                              <div><div style={{ fontSize: 11, opacity: 0.7 }}>Entrées</div><div style={{ fontSize: 20, fontWeight: 700 }}>{entreesMois.toLocaleString()} F</div></div>
+                              <div><div style={{ fontSize: 11, opacity: 0.7 }}>Sorties</div><div style={{ fontSize: 20, fontWeight: 700 }}>{sortiesMois.toLocaleString()} F</div></div>
+                              <div><div style={{ fontSize: 11, opacity: 0.7 }}>Solde mois</div><div style={{ fontSize: 20, fontWeight: 700, color: entreesMois - sortiesMois >= 0 ? "#a5f3c0" : "#fca5a5" }}>{(entreesMois - sortiesMois).toLocaleString()} F</div></div>
+                            </div>
+                          </div>
+                          <Btn onClick={ouvrirNouvelleOperation} color="rgba(255,255,255,0.2)">+ Nouvelle opération</Btn>
+                        </div>
+                      );
+                    })()}
                     <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
-                      <SectionTitle>Trésorerie — registre des opérations</SectionTitle>
+                      <SectionTitle>Registre des opérations</SectionTitle>
                       <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                         <select value={tresorerieFiltreProjet} onChange={e => setTresorerieFiltreProjet(e.target.value)}
                           style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}>
                           <option value="tous">Tous les projets</option>
                           {PROJETS_TRESORERIE.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
-                        <Btn small onClick={ouvrirNouvelleOperation}>+ Nouvelle opération</Btn>
+                        <select onChange={e => {
+                          const val = e.target.value;
+                          if (val === "tous") setTresorerieFiltreProjet("tous");
+                        }} style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }}>
+                          <option value="">Tous les mois</option>
+                          {[...new Set(operationsCaisse.map(o => o.date ? o.date.slice(0,7) : ""))].filter(Boolean).sort().reverse().map(m => (
+                            <option key={m} value={m}>{new Date(m + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
