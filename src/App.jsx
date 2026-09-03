@@ -923,36 +923,28 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
                   </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {typeInscription === "ete" ? CRENEAUX_STAGE_ETE.map(c => {
-                    const sel = form.creneaux.includes(c.id);
-                    return (
-                    <div key={c.id} onClick={() => setForm({...form, creneaux: sel ? form.creneaux.filter(x => x !== c.id) : [...form.creneaux, c.id]})} style={{
-                      padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                      border: `2px solid ${sel ? "#ff9800" : "#e5e7eb"}`,
-                      background: sel ? "#fff3e0" : "#fff",
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                    }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: sel ? "#ff9800" : "#111" }}>
-                        {sel ? "✓ " : ""}{c.label}
-                      </span>
-                      <span style={{ fontSize: 12, background: "#fff3e0", color: "#ff9800", borderRadius: 20, padding: "2px 10px", fontWeight: 700 }}>{c.age}</span>
-                    </div>
-                  )}) : COURS_RENTREE.map(c => {
-                    const key = c.jour + " " + c.heure + " - " + c.fin;
-                    const sel = form.creneaux.includes(key);
-                    return (
-                    <div key={c.id} onClick={() => setForm({...form, creneaux: sel ? form.creneaux.filter(x => x !== key) : [...form.creneaux, key]})} style={{
-                      padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                      border: `2px solid ${sel ? "#2d7a4f" : "#e5e7eb"}`,
-                      background: sel ? "#e8f5e9" : "#fff",
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                    }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: sel ? "#2d7a4f" : "#111" }}>
-                        {sel ? "✓ " : ""}{c.jour === "Lun" ? "Lundi" : c.jour === "Mar" ? "Mardi" : c.jour === "Mer" ? "Mercredi" : c.jour === "Jeu" ? "Jeudi" : c.jour === "Ven" ? "Vendredi" : "Samedi"} {c.heure} – {c.fin}
-                      </span>
-                      <span style={{ background: "#fff3e0", color: "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>{c.age}</span>
-                    </div>
-                  })}
+                  {(() => {
+                    const liste = typeInscription === "ete" ? CRENEAUX_STAGE_ETE.map(c => {
+                      const sel = form.creneaux.includes(c.id);
+                      return (
+                        <div key={c.id} onClick={() => setForm({...form, creneaux: sel ? form.creneaux.filter(x => x !== c.id) : [...form.creneaux, c.id]})} style={{ padding: "10px 14px", borderRadius: 10, cursor: "pointer", border: "2px solid " + (sel ? "#ff9800" : "#e5e7eb"), background: sel ? "#fff3e0" : "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: sel ? "#ff9800" : "#111" }}>{sel ? "✓ " : ""}{c.label}</span>
+                          <span style={{ fontSize: 12, background: "#fff3e0", color: "#ff9800", borderRadius: 20, padding: "2px 10px", fontWeight: 700 }}>{c.age}</span>
+                        </div>
+                      );
+                    }) : COURS_RENTREE.map(c => {
+                      const key = c.jour + " " + c.heure + " - " + c.fin;
+                      const sel = form.creneaux.includes(key);
+                      const jourLabel = c.jour === "Lun" ? "Lundi" : c.jour === "Mar" ? "Mardi" : c.jour === "Mer" ? "Mercredi" : c.jour === "Jeu" ? "Jeudi" : c.jour === "Ven" ? "Vendredi" : "Samedi";
+                      return (
+                        <div key={c.id} onClick={() => setForm({...form, creneaux: sel ? form.creneaux.filter(x => x !== key) : [...form.creneaux, key]})} style={{ padding: "10px 14px", borderRadius: 10, cursor: "pointer", border: "2px solid " + (sel ? "#2d7a4f" : "#e5e7eb"), background: sel ? "#e8f5e9" : "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: sel ? "#2d7a4f" : "#111" }}>{sel ? "✓ " : ""}{jourLabel} {c.heure} - {c.fin}</span>
+                          <span style={{ background: "#fff3e0", color: "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>{c.age}</span>
+                        </div>
+                      );
+                    });
+                    return liste;
+                  })()}
                 </div>
               </div>
             )}
