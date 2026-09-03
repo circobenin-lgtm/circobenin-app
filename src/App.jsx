@@ -738,9 +738,15 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   }, [preselect]);
   const [form, setForm] = useState({
     prenom: "", nom: "", dateNaissance: "", email: "", telephone: "",
-    discipline: "", navette: false, autoPhoto: null,
+    disciplines: [], creneaux: [], navette: false, autoPhoto: null,
     prenomParent: "", nomParent: "", emailParent: "", telParent: "",
   });
+
+  const TARIFS_AN = { 1: 150000, 2: 285000, 3: 420000 };
+  const TARIFS_TRIM = { 1: 50000, 2: 95000, 3: 140000 };
+  const nbCreneaux = Math.min(form.creneaux.length, 3);
+  const montantAn = nbCreneaux > 0 ? (TARIFS_AN[nbCreneaux] || 420000 + (nbCreneaux - 3) * 150000) : 0;
+  const montantTrim = nbCreneaux > 0 ? (TARIFS_TRIM[nbCreneaux] || Math.round(montantAn / 3)) : 0;
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(false);
@@ -852,7 +858,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
             <div style={{ fontFamily: "Playfair Display,serif", fontSize: 18, color: "#2d7a4f", marginBottom: 20 }}>Étape 1 — Choisissez votre inscription</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {types.map(t => (
-                <div key={t.id} onClick={() => setTypeInscription(t.id)} style={{
+                <div key={t.id} onClick={() => { setTypeInscription(t.id); setStep(1); }} style={{
                   padding: "16px", borderRadius: 14, border: `2px solid ${typeInscription === t.id ? t.couleur : "#e5e7eb"}`,
                   cursor: "pointer", background: typeInscription === t.id ? t.couleur + "10" : "#fff", transition: "all 0.2s",
                 }}>
@@ -862,11 +868,6 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
                 </div>
               ))}
             </div>
-            {typeInscription && (
-              <div onClick={() => setStep(1)} style={{ marginTop: 24, background: "#2d7a4f", color: "#fff", borderRadius: 12, padding: "12px 24px", cursor: "pointer", fontWeight: 600, fontSize: 14, display: "inline-block" }}>
-                Continuer →
-              </div>
-            )}
           </div>
         )}
 
@@ -893,37 +894,61 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
               <div><label style={labelStyle}>Téléphone *</label><input style={inputStyle} value={form.telephone} onChange={e => setForm({...form, telephone: e.target.value})} placeholder="+229..." /></div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Discipline souhaitée</label>
+              <label style={labelStyle}>Qu'avez-vous déjà pratiqué ? <span style={{ fontWeight: 400, color: "#9ca3af" }}>(plusieurs choix possibles)</span></label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {disciplines.map(d => (
-                  <div key={d} onClick={() => setForm({...form, discipline: d})} style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, cursor: "pointer", border: `2px solid ${form.discipline === d ? "#2d7a4f" : "#e5e7eb"}`, background: form.discipline === d ? "#e8f5e9" : "#fff", color: form.discipline === d ? "#2d7a4f" : "#374151", fontWeight: form.discipline === d ? 700 : 400 }}>{d}</div>
-                ))}
+                {disciplines.map(d => {
+                  const sel = form.disciplines.includes(d);
+                  return (
+                    <div key={d} onClick={() => setForm({...form, disciplines: sel ? form.disciplines.filter(x => x !== d) : [...form.disciplines, d]})} style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, cursor: "pointer", border: `2px solid ${sel ? "#2d7a4f" : "#e5e7eb"}`, background: sel ? "#e8f5e9" : "#fff", color: sel ? "#2d7a4f" : "#374151", fontWeight: sel ? 700 : 400 }}>
+                      {sel ? "✓ " : ""}{d}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             {(typeInscription === "hebdo" || typeInscription === "ete") && (
               <div style={{ marginBottom: 14 }}>
-                <label style={labelStyle}>Créneau souhaité</label>
+                <label style={labelStyle}>
+                  Créneau(x) souhaité(s) <span style={{ fontWeight: 400, color: "#9ca3af" }}>(plusieurs choix possibles)</span>
+                </label>
+                {typeInscription === "hebdo" && nbCreneaux > 0 && (
+                  <div style={{ background: "#e8f5e9", borderRadius: 10, padding: "10px 14px", marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ fontSize: 13, color: "#2d7a4f", fontWeight: 600 }}>
+                      {nbCreneaux} créneau{nbCreneaux > 1 ? "x" : ""} sélectionné{nbCreneaux > 1 ? "s" : ""}
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#2d7a4f" }}>{montantAn.toLocaleString()} FCFA/an</div>
+                      <div style={{ fontSize: 12, color: "#6b7280" }}>ou {montantTrim.toLocaleString()} FCFA/trimestre</div>
+                    </div>
+                  </div>
+                )}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {typeInscription === "ete" ? CRENEAUX_STAGE_ETE.map(c => (
-                    <div key={c.id} onClick={() => setForm({...form, creneau: c.label + " – " + c.horaire + " (" + c.age + ")"})} style={{
+                  {typeInscription === "ete" ? CRENEAUX_STAGE_ETE.map(c => {
+                    const sel = form.creneaux.includes(c.id);
+                    return (
+                    <div key={c.id} onClick={() => setForm({...form, creneaux: sel ? form.creneaux.filter(x => x !== c.id) : [...form.creneaux, c.id]})} style={{
                       padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                      border: `2px solid ${form.creneau === c.label + " – " + c.horaire + " (" + c.age + ")" ? "#ff9800" : "#e5e7eb"}`,
-                      background: form.creneau === c.label + " – " + c.horaire + " (" + c.age + ")" ? "#fff3e0" : "#fff",
+                      border: `2px solid ${sel ? "#ff9800" : "#e5e7eb"}`,
+                      background: sel ? "#fff3e0" : "#fff",
                       display: "flex", justifyContent: "space-between", alignItems: "center",
                     }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: form.creneau === c.label + " – " + c.horaire + " (" + c.age + ")" ? "#ff9800" : "#111" }}>
-                        {c.label}
+                      <span style={{ fontSize: 14, fontWeight: 600, color: sel ? "#ff9800" : "#111" }}>
+                        {sel ? "✓ " : ""}{c.label}
                       </span>
                       <span style={{ fontSize: 12, background: "#fff3e0", color: "#ff9800", borderRadius: 20, padding: "2px 10px", fontWeight: 700 }}>{c.age}</span>
                     </div>
-                  )) : COURS_RENTREE.map(c => (
-                    <div key={c.id} onClick={() => setForm({...form, creneau: c.jour + " " + c.heure + " – " + c.fin})} style={{
+                  )}) : COURS_RENTREE.map(c => {
+                    const key = c.jour + " " + c.heure + " – " + c.fin;
+                    const sel = form.creneaux.includes(key);
+                    return (
+                    <div key={c.id} onClick={() => setForm({...form, creneaux: sel ? form.creneaux.filter(x => x !== key) : [...form.creneaux, key]})} style={{
                       padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                      border: `2px solid ${form.creneau === c.jour + " " + c.heure + " – " + c.fin ? "#2d7a4f" : "#e5e7eb"}`,
-                      background: form.creneau === c.jour + " " + c.heure + " – " + c.fin ? "#e8f5e9" : "#fff",
+                      border: `2px solid ${sel ? "#2d7a4f" : "#e5e7eb"}`,
+                      background: sel ? "#e8f5e9" : "#fff",
                       display: "flex", justifyContent: "space-between", alignItems: "center",
                     }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: form.creneau === c.jour + " " + c.heure + " – " + c.fin ? "#2d7a4f" : "#111" }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: sel ? "#2d7a4f" : "#111" }}>
+                        {sel ? "✓ " : ""}{c.jour === "Lun" ? "Lundi" : c.jour === "Mar" ? "Mardi" : c.jour === "Mer" ? "Mercredi" : c.jour === "Jeu" ? "Jeudi" : c.jour === "Ven" ? "Vendredi" : "Samedi"} {c.heure} – {c.fin}
                         {{ Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" }[c.jour]} {c.heure} – {c.fin}
                       </span>
                       <span style={{ background: "#fff3e0", color: "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>👤 {c.age}</span>
