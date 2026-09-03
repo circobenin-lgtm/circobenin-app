@@ -754,8 +754,11 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   const [modePaiement, setModePaiement] = useState(null); // "enligne" ou "surplace"
   const [estAdherent, setEstAdherent] = useState(false);
   const FRAIS_INSCRIPTION = 10000;
-  const COTIS_TRIMESTRE = 45000;
-  const COTIS_ANNEE = 135000;
+  const TARIFS_AN = { 0: 0, 1: 150000, 2: 285000, 3: 420000 };
+  const TARIFS_TRIM = { 0: 0, 1: 50000, 2: 95000, 3: 140000 };
+  const nbCren = Math.min(Math.max(form.creneaux ? form.creneaux.length : 1, 1), 3);
+  const COTIS_TRIMESTRE = TARIFS_TRIM[nbCren] || 140000;
+  const COTIS_ANNEE = TARIFS_AN[nbCren] || 420000;
   const TARIF_STAGE_ETE_NON_ADH = 45000;
   const TARIF_STAGE_ETE_ADH = 40000;
   const montantTotal = typeInscription === "ete"
@@ -1383,7 +1386,7 @@ export default function App() {
   const [formuleForm, setFormuleForm] = useState("trimestre");
   const [sessionRestauree, setSessionRestauree] = useState(false);
 
-  const SESSION_DUREE_MS = 5 * 60 * 1000; // 5 minutes
+  const SESSION_DUREE_MS = 30 * 60 * 1000; // 30 minutes (assez pour remplir une inscription)
   const SESSION_KEY = "circobenin_session";
 
   const sauvegarderSession = (data) => {
