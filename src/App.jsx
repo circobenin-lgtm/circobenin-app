@@ -1175,7 +1175,7 @@ export default function App() {
   const [showModalEleve, setShowModalEleve] = useState(false);
   const [showModalProjet, setShowModalProjet] = useState(false);
   const [showModalSpectacle, setShowModalSpectacle] = useState(false);
-  const [nouvelEleve, setNouvelEleve] = useState({ prenom: "", nom: "", age: "", discipline: "Cirque", classe: "" });
+  const [nouvelEleve, setNouvelEleve] = useState({ prenom: "", nom: "", dateNaissance: "", email: "", discipline: "Cirque", classe: "", nomParent: "", telephoneParent: "" });
   const [nouveauProjet, setNouveauProjet] = useState({ titre: "", type: "Social", date: "", statut: "En préparation" });
   const [nouveauSpectacle, setNouveauSpectacle] = useState({ titre: "", type: "Solo", duree: "", description: "" });
   const [elevesState, setElevesState] = useState([]);
@@ -1537,10 +1537,14 @@ export default function App() {
           prenom: e.prenom,
           nomFamille: e.nom,
           classe: e.classe,
-          discipline: e.discipline,
-          statut: e.statut,
+          discipline: "Cirque",
+          statut: e.statut || "actif",
           nomParent: e.nom_parent,
           telephoneParent: e.telephone_parent,
+          email: e.email || "",
+          dateNaissance: e.date_naissance || null,
+          age: e.date_naissance ? Math.floor((new Date() - new Date(e.date_naissance)) / (365.25 * 24 * 3600 * 1000)) : null,
+          creneaux: e.classe ? [e.classe] : [],
           paye: false,
           presence: 0,
         }));
@@ -2592,7 +2596,7 @@ export default function App() {
                             <span style={{ fontSize: 14, fontWeight: 600 }}>{e.nom}</span>
                           </div>
                         </td>
-                        <td style={{ padding: "14px 20px", fontSize: 14, color: C.gris }}>{e.age} ans</td>
+                        <td style={{ padding: "14px 20px", fontSize: 14, color: C.gris }}>{e.age ? e.age + " ans" : "—"}</td>
                         <td style={{ padding: "14px 20px" }}><Badge text={e.classe} bg={C.fond} color={C.vert} /></td>
                         <td style={{ padding: "14px 20px", fontSize: 14 }}>{e.discipline}</td>
                         <td style={{ padding: "14px 20px" }}>
@@ -4105,17 +4109,21 @@ export default function App() {
                 <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.nom} onChange={e => setNouvelEleve({...nouvelEleve, nom: e.target.value})} placeholder="Nom de famille" /></div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Âge</label>
-                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.age} onChange={e => setNouvelEleve({...nouvelEleve, age: e.target.value})} placeholder="Ex: 8" type="number" /></div>
-              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Discipline</label>
-                <select style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.discipline} onChange={e => setNouvelEleve({...nouvelEleve, discipline: e.target.value})}>
-                  {["Cirque", "Diabolo", "Jonglerie", "Acrobatie", "Aérien", "Équilibre"].map(d => <option key={d}>{d}</option>)}
-                </select></div>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Date de naissance</label>
+                <input type="date" style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.dateNaissance} onChange={e => setNouvelEleve({...nouvelEleve, dateNaissance: e.target.value})} /></div>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Email</label>
+                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.email} onChange={e => setNouvelEleve({...nouvelEleve, email: e.target.value})} placeholder="email@exemple.com" /></div>
             </div>
-            <div style={{ marginBottom: 24 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Créneau</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Nom du parent</label>
+                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.nomParent} onChange={e => setNouvelEleve({...nouvelEleve, nomParent: e.target.value})} placeholder="Nom complet du parent" /></div>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Téléphone parent</label>
+                <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.telephoneParent} onChange={e => setNouvelEleve({...nouvelEleve, telephoneParent: e.target.value})} placeholder="+229..." /></div>
+            </div>
+            <div style={{ marginBottom: 14 }}><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Créneau principal</label>
               <select style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.classe} onChange={e => setNouvelEleve({...nouvelEleve, classe: e.target.value})}>
                 <option value="">Sélectionner un créneau</option>
-                {COURS.map(c => <option key={c.id} value={c.jour + " " + c.heure}>{c.jour} {c.heure} — {c.age}</option>)}
+                {COURS_RENTREE.map(c => <option key={c.id} value={c.jour + " " + c.heure + " - " + c.fin}>{c.jour === "Lun" ? "Lundi" : c.jour === "Mar" ? "Mardi" : c.jour === "Mer" ? "Mercredi" : c.jour === "Jeu" ? "Jeudi" : c.jour === "Ven" ? "Vendredi" : "Samedi"} {c.heure} - {c.fin} ({c.age})</option>)}
               </select></div>
             <div style={{ display: "flex", gap: 12 }}>
               <div onClick={() => setShowModalEleve(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid #e5e7eb", textAlign: "center", cursor: "pointer", fontSize: 14 }}>Annuler</div>
@@ -4124,8 +4132,12 @@ export default function App() {
                 try {
                   const { data: inserted, error } = await supabase.from("eleves").insert([{
                     nom: nouvelEleve.nom, prenom: nouvelEleve.prenom,
-                    classe: nouvelEleve.classe, discipline: nouvelEleve.discipline,
+                    classe: nouvelEleve.classe, discipline: "Cirque",
                     statut: "actif",
+                    date_naissance: nouvelEleve.dateNaissance || null,
+                    email: nouvelEleve.email || null,
+                    nom_parent: nouvelEleve.nomParent || null,
+                    telephone_parent: nouvelEleve.telephoneParent || null,
                   }]).select().single();
                   if (!error && inserted) {
                     const p = nouvelEleve.prenom.toUpperCase().replace(/[^A-Z]/g, "");
@@ -4142,7 +4154,7 @@ export default function App() {
                     chargerEleves();
                   }
                 } catch (e) {}
-                setNouvelEleve({ prenom: "", nom: "", age: "", discipline: "Cirque", classe: "" });
+                setNouvelEleve({ prenom: "", nom: "", dateNaissance: "", email: "", discipline: "Cirque", classe: "", nomParent: "", telephoneParent: "" });
                 setShowModalEleve(false);
               }} style={{ flex: 1, padding: "12px", borderRadius: 10, background: C.vert, color: "#fff", textAlign: "center", cursor: "pointer", fontSize: 14, fontWeight: 700 }}>Inscrire l'élève ✓</div>
             </div>
