@@ -949,7 +949,6 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
                     }}>
                       <span style={{ fontSize: 14, fontWeight: 600, color: sel ? "#2d7a4f" : "#111" }}>
                         {sel ? "✓ " : ""}{c.jour === "Lun" ? "Lundi" : c.jour === "Mar" ? "Mardi" : c.jour === "Mer" ? "Mercredi" : c.jour === "Jeu" ? "Jeudi" : c.jour === "Ven" ? "Vendredi" : "Samedi"} {c.heure} – {c.fin}
-                        {{ Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" }[c.jour]} {c.heure} – {c.fin}
                       </span>
                       <span style={{ background: "#fff3e0", color: "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>👤 {c.age}</span>
                     </div>
