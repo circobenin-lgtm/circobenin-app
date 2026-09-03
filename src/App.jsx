@@ -43,12 +43,13 @@ const FT = "'Playfair Display', Georgia, serif";
 const FB = "'DM Sans', sans-serif";
 
 const ROLES = {
-  directeur: { label: "Direction", color: C.vert, initiale: "DI", nom: "Direction" },
-  ca: { label: "Conseil d'Administration", color: C.bleu, initiale: "CA", nom: "Conseil d'Administration" },
-  admin: { label: "Administration", color: C.orange, initiale: "AD", nom: "Administration" },
-  formateur: { label: "Intervenants", color: C.violet, initiale: "IN", nom: "Intervenants" },
-  public: { label: "Visiteurs", color: C.gris, initiale: "VI", nom: "Visiteurs" },
-  parent: { label: "Parents & Apprenants Pro", color: C.magenta, initiale: "PA", nom: "Parents & Apprenants Pro" },
+  directeur: { label: "Direction", color: C.vert, initiale: "DI", nom: "Direction", pin: true },
+  ca: { label: "Conseil d'Administration", color: C.bleu, initiale: "CA", nom: "Conseil d'Administration", pin: true },
+  admin: { label: "Administration", color: C.orange, initiale: "AD", nom: "Administration", pin: true },
+  formateur: { label: "Intervenants", color: C.violet, initiale: "IN", nom: "Intervenants", pin: true },
+  visiteurs: { label: "Visiteurs", color: C.gris, initiale: "VI", nom: "Visiteurs", pin: false },
+  parent: { label: "Parents", color: C.magenta, initiale: "PA", nom: "Parents", pin: false },
+  apprenant_pro: { label: "Apprenants Pro", color: "#00897b", initiale: "AP", nom: "Apprenants Pro", pin: false },
 };
 
 const NAV_PAR_ROLE = {
@@ -100,7 +101,7 @@ const NAV_PAR_ROLE = {
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
-  public: [
+  visiteurs: [
     { id: "accueil", icon: "⬡", label: "Accueil" },
     { id: "programme", icon: "◫", label: "Programme" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
@@ -112,6 +113,13 @@ const NAV_PAR_ROLE = {
     { id: "mon_enfant", icon: "◈", label: "Mon enfant" },
     { id: "planning_enfant", icon: "◫", label: "Planning" },
     { id: "paiements_enfant", icon: "₦", label: "Paiements" },
+    { id: "compagnie", icon: "🎪", label: "Compagnie" },
+  ],
+  apprenant_pro: [
+    { id: "mon_profil", icon: "◈", label: "Mon Profil" },
+    { id: "ma_formation", icon: "◫", label: "Ma Formation" },
+    { id: "mes_presences", icon: "✓", label: "Mes Présences" },
+    { id: "mes_paiements", icon: "₦", label: "Mes Paiements" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
   ],};
 
@@ -1604,9 +1612,22 @@ export default function App() {
           <h1 style={{ fontFamily: FT, fontSize: 26, color: C.vert, margin: "0 0 4px" }}>Circo Bénin</h1>
           <p style={{ color: C.gris, fontSize: 14, margin: 0 }}>Choisissez votre espace de connexion</p>
         </div>
+        {/* Bouton Inscription rapide */}
+        <div onClick={() => { setRole("visiteurs"); setPage("inscription"); }} style={{
+          background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", color: "#fff",
+          borderRadius: 12, padding: "14px 18px", cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 14, marginBottom: 8,
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>◈</div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>S'inscrire à Circo Bénin</div>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>Accès libre — ateliers, stages, formation</div>
+          </div>
+          <div style={{ marginLeft: "auto", fontSize: 18 }}>→</div>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {Object.entries(ROLES).map(([key, r]) => (
-            <div key={key} onClick={() => { if (key === "parent") { setRole("__parent_pending__"); } else if (key !== "public") { setRole("__pin_pending__"); setPendingRole(key); } else { setRole(key); setPage(NAV_PAR_ROLE[key][0].id); } }} style={{
+            <div key={key} onClick={() => { if (key === "parent" || key === "apprenant_pro") { setRole("__parent_pending__"); setPendingRole(key); } else if (key === "visiteurs") { setRole(key); setPage(NAV_PAR_ROLE[key][0].id); } else { setRole("__pin_pending__"); setPendingRole(key); } }} style={{
               display: "flex", alignItems: "center", gap: 14,
               padding: "14px 18px", borderRadius: 12,
               border: `2px solid ${C.grisClair}`, cursor: "pointer",
@@ -1671,7 +1692,7 @@ export default function App() {
     </div>
   );
 
-  // ── ECRAN CODE PARENT ──
+  // ── ECRAN CODE PARENT / APPRENANT PRO ──
   if (role === "__parent_pending__") return (
     <div style={{
       minHeight: "100vh", background: `linear-gradient(135deg, ${C.vert} 0%, ${C.vertM} 60%, ${C.vertClair} 100%)`,
@@ -1679,7 +1700,7 @@ export default function App() {
     }}>
       <div style={{ background: "#fff", borderRadius: 24, padding: 48, width: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>👨‍👩‍👧</div>
-        <h2 style={{ fontFamily: FT, color: C.vert, margin: "0 0 8px" }}>Espace Parent</h2>
+        <h2 style={{ fontFamily: FT, color: C.vert, margin: "0 0 8px" }}>{pendingRole === "apprenant_pro" ? "Espace Apprenant Pro" : "Espace Parent"}</h2>
         <p style={{ color: C.gris, fontSize: 14, marginBottom: 28 }}>Saisissez votre code d'accès (4 caractères minimum)</p>
         <input
           type="password"
@@ -1698,7 +1719,12 @@ export default function App() {
             const ok = await connecterParentAvecCode(parentCodeInput.trim().toUpperCase());
             setParentCodeLoading(false);
             if (!ok) { setParentCodeError(true); return; }
-            setPage("mon_enfant");
+            if (pendingRole === "apprenant_pro") {
+              setRole("apprenant_pro");
+              setPage("mon_profil");
+            } else {
+              setPage("mon_enfant");
+            }
           }}>{parentCodeLoading ? "Vérification…" : "Accéder à mon espace →"}</Btn>
         )}
         <div onClick={() => { setRole(null); setParentCodeInput(""); setParentCodeError(false); }} style={{ marginTop: 16, color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
@@ -3935,6 +3961,108 @@ export default function App() {
           {page === "inscription" && (
             <InscriptionForm onPayer={() => setPage("payer")} onContact={() => setPage("contact")} preselect={preselectType} onClearPreselect={() => setPreselectType(null)} />
           )}
+
+          {/* ── ESPACE APPRENANT PRO ── */}
+          {page === "mon_profil" && role === "apprenant_pro" && eleveActuel && (
+            <div>
+              <div style={{ background: "linear-gradient(135deg, #00897b, #00695c)", borderRadius: 20, padding: "36px 32px", color: "#fff", marginBottom: 24 }}>
+                <h2 style={{ fontFamily: FT, fontSize: 26, margin: "0 0 6px" }}>Bonjour {eleveActuel.prenom} 👋</h2>
+                <p style={{ opacity: 0.85, margin: 0 }}>Espace Apprenant Pro — Formation professionnelle Circo Bénin</p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                <Card style={{ borderTop: "4px solid #00897b" }}>
+                  <SectionTitle>Mon profil</SectionTitle>
+                  {[
+                    { label: "Nom", val: eleveActuel.prenom + " " + eleveActuel.nom },
+                    { label: "Discipline", val: eleveActuel.discipline || "—" },
+                    { label: "Statut", val: "Apprenant Pro" },
+                  ].map(f => (
+                    <div key={f.label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #eee", fontSize: 14 }}>
+                      <span style={{ color: C.gris }}>{f.label}</span>
+                      <span style={{ fontWeight: 600 }}>{f.val}</span>
+                    </div>
+                  ))}
+                </Card>
+                <Card style={{ borderTop: "4px solid #00897b" }}>
+                  <SectionTitle>Ma formation</SectionTitle>
+                  <p style={{ fontSize: 13, color: C.gris }}>Formation professionnelle 3 ans — Circo Bénin</p>
+                  <Badge text="En cours" bg="#e0f2f1" color="#00897b" />
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {page === "ma_formation" && role === "apprenant_pro" && (
+            <div>
+              <div style={{ background: "linear-gradient(135deg, #00897b, #00695c)", borderRadius: 20, padding: "36px 32px", color: "#fff", marginBottom: 24 }}>
+                <h2 style={{ fontFamily: FT, fontSize: 26, margin: "0 0 6px" }}>Ma Formation</h2>
+                <p style={{ opacity: 0.85, margin: 0 }}>Programme de formation professionnelle — Circo Bénin</p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                {FORMATION_PRO.map((f, i) => (
+                  <Card key={i} style={{ borderTop: `4px solid ${f.couleur}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: f.couleur, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16 }}>{f.annee}</div>
+                      <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700 }}>Année {f.annee} — {f.titre}</div>
+                    </div>
+                    {f.disciplines.map((d, j) => (
+                      <div key={j} style={{ fontSize: 13, padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>▸ {d}</div>
+                    ))}
+                    <div style={{ marginTop: 10, background: f.couleur + "15", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: f.couleur, fontWeight: 600 }}>🎯 {f.objectif}</div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {page === "mes_presences" && role === "apprenant_pro" && eleveActuel && (
+            <div>
+              <Card>
+                <SectionTitle>Mes présences — Formation Pro</SectionTitle>
+                {(() => {
+                  const presencesApprenant = historiquePresences.filter(p => p.eleve_id === eleveActuel.id);
+                  if (presencesApprenant.length === 0) return <p style={{ color: C.gris, fontSize: 13 }}>Aucune donnée de présence enregistrée.</p>;
+                  const presents = presencesApprenant.filter(p => p.present).length;
+                  const taux = Math.round((presents / presencesApprenant.length) * 100);
+                  return (
+                    <div style={{ textAlign: "center", padding: "20px 0" }}>
+                      <div style={{ fontSize: 56, fontWeight: 700, color: "#00897b", fontFamily: FT }}>{taux}%</div>
+                      <div style={{ fontSize: 13, color: C.gris, marginBottom: 20 }}>{presents} présence(s) sur {presencesApprenant.length} séance(s)</div>
+                    </div>
+                  );
+                })()}
+              </Card>
+            </div>
+          )}
+
+          {page === "mes_paiements" && role === "apprenant_pro" && eleveActuel && (() => {
+            const montantDu = compteEleveActuel ? compteEleveActuel.montant_du : 0;
+            const totalPaye = versementsEleveActuel.reduce((a, v) => a + v.montant, 0);
+            const reste = Math.max(montantDu - totalPaye, 0);
+            return (
+              <div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+                  <StatCard label="Total payé" value={totalPaye.toLocaleString() + " F"} icon="✓" color="#00897b" />
+                  <StatCard label="Reste dû" value={reste.toLocaleString() + " F"} icon="⏳" color={C.orange} />
+                  <StatCard label="Formule" value={compteEleveActuel?.formule || "—"} icon="◈" color={C.bleu} />
+                </div>
+                <Card>
+                  <SectionTitle>Historique des paiements</SectionTitle>
+                  {versementsEleveActuel.length === 0 ? (
+                    <p style={{ color: C.gris, fontSize: 13 }}>Aucun paiement enregistré.</p>
+                  ) : versementsEleveActuel.map(p => (
+                    <div key={p.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #eee" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{p.montant.toLocaleString()} FCFA</div>
+                        <div style={{ fontSize: 12, color: C.gris }}>{p.mode} · {p.date}</div>
+                      </div>
+                      <Badge text="Payé" bg="#e0f2f1" color="#00897b" />
+                    </div>
+                  ))}
+                </Card>
+              </div>
+            );
+          })()}
 
         </div>
       </main>
