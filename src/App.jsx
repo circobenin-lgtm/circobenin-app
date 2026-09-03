@@ -938,7 +938,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
                       <span style={{ fontSize: 12, background: "#fff3e0", color: "#ff9800", borderRadius: 20, padding: "2px 10px", fontWeight: 700 }}>{c.age}</span>
                     </div>
                   )}) : COURS_RENTREE.map(c => {
-                    const key = c.jour + " " + c.heure + " – " + c.fin;
+                    const key = c.jour + " " + c.heure + " - " + c.fin;
                     const sel = form.creneaux.includes(key);
                     return (
                     <div key={c.id} onClick={() => setForm({...form, creneaux: sel ? form.creneaux.filter(x => x !== key) : [...form.creneaux, key]})} style={{
