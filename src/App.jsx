@@ -173,7 +173,7 @@ const COURS = [
 ];
 
 // Planning de la PROCHAINE rentrée (2026-2027) — annoncé sur la page Programme public
-// et dans le détail de l'événement "Rentrée Circo Bénin" du 14 septembre 2026.
+// et dans le détail de l'événement "Rentrée Circo Bénin" du 28 septembre 2026.
 const COURS_RENTREE = [
   { id: 101, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
   { id: 102, jour: "Lun", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
@@ -337,7 +337,7 @@ const EVENEMENTS = [
     details: "Venez assister au grand spectacle de fin d'année présenté par les élèves de Circo Bénin ! Un moment festif et émouvant pour découvrir le travail accompli pendant l'année. Entrée libre, ouvert à toutes les familles." },
   { id: 2, date: "20 juillet 2026", titre: "Stage d'été — 10 jours", desc: "Stage intensif multidisciplinaire : Cirque, Arts plastiques, Danse et Percussion", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800", typeInscription: "ete",
     details: "Du lundi 20 au vendredi 31 juillet 2026 (sans les week-ends = 10 jours), Circo Bénin propose un stage intensif multidisciplinaire.\n\n🕘 Horaires : 9h00 – 17h00\n\n🎪 Disciplines : Cirque · Arts plastiques · Danse · Percussion\n\n💰 Tarifs :\n• Non-adhérent : 45 000 FCFA\n• Adhérent Circo Bénin : 40 000 FCFA\n\nInscriptions ouvertes — places limitées !" },
-  { id: 3, date: "14 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f", typeInscription: "hebdo",
+  { id: 3, date: "28 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f", typeInscription: "hebdo",
     details: "La rentrée 2026-2027 marque la reprise des ateliers hebdomadaires pour tous les âges : Bébé Cirque, Petits, Enfants, Ados et Adultes. Inscrivez-vous dès maintenant pour réserver votre créneau." },
   { id: 4, date: "Toussaint 2026", titre: "Stage de Toussaint", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed", typeInscription: "toussaint",
     details: "Profitez des vacances de Toussaint pour un stage intensif de cirque ! Jonglerie, acrobatie, aérien, équilibre et expression au programme." },
@@ -791,7 +791,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
     const formuleLabel = formulePaiement === "annee" ? "Année complète" : "1er trimestre";
     const bodyAccueil = "<h2>Nouvelle inscription - " + type.titre + "</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Naissance :</b> " + form.dateNaissance + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Tel :</b> " + form.telephone + "</p><p><b>Discipline :</b> " + form.discipline + "</p><p><b>Créneau :</b> " + (form.creneau || "Non renseigné") + "</p><p><b>Formule :</b> " + formuleLabel + " — " + montant.toLocaleString() + " FCFA</p><p><b>Mode de paiement :</b> " + (mode === "enligne" ? "En ligne (FedaPay)" : "Sur place") + "</p>";
     const bodyConfirmEnLigne = "<h2>Merci pour votre inscription à Circo Bénin !</h2><p>Bonjour " + form.prenom + ",</p><p>Votre inscription pour <b>" + type.titre + "</b> a bien été enregistrée et votre paiement de <b>" + montant.toLocaleString() + " FCFA</b> (" + formuleLabel + ") a été reçu.</p><p>Nous vous souhaitons la bienvenue à Circo Bénin !</p><p>Circo Bénin · Cotonou, Bénin · app.circobenin.com</p>";
-    const bodyConfirmSurPlace = "<h2>Inscription Circo Bénin — Finalisez votre inscription</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'inscription pour <b>" + type.titre + "</b>.</p><p>Il vous reste à finaliser votre inscription en venant payer <b>" + montant.toLocaleString() + " FCFA</b> (" + formuleLabel + ") directement à Circo Bénin.</p><p><b>Adresse :</b> Circo Bénin, Cotonou, Bénin<br/><b>Téléphone :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60<br/><b>Email :</b> circobenin@gmail.com</p><p>Nous vous attendons ! 🎪</p><p>Circo Bénin · app.circobenin.com</p>";
+    const bodyConfirmSurPlace = "<h2>Inscription Circo Bénin — Finalisez votre inscription</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'inscription pour <b>" + type.titre + "</b>.</p><p>Il vous reste à finaliser votre inscription en venant payer :</p><p><b>" + montant.toLocaleString() + " FCFA (" + formuleLabel + ")</b></p><p>Ou optez pour l\'année complète : <b>" + (FRAIS_INSCRIPTION + COTIS_ANNEE).toLocaleString() + " FCFA (année)</b> — vous économisez sur le long terme !</p><p>Venez payer directement à Circo Bénin.</p><p><b>Adresse :</b> Circo Bénin, Cotonou, Bénin<br/><b>Téléphone :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60<br/><b>Email :</b> circobenin@gmail.com</p><p>Nous vous attendons ! 🎪</p><p>Circo Bénin · app.circobenin.com</p>";
     try {
       // Enregistrement dans Supabase pour suivi admin (page Inscriptions 2026-2027)
       try {
@@ -3694,7 +3694,7 @@ export default function App() {
               <Card style={{ borderTop: `4px solid ${C.magenta}` }}>
                 <SectionTitle>Réinscrire {eleveActuel.prenom} pour 2026–2027</SectionTitle>
                 <p style={{ fontSize: 13, color: C.gris, marginBottom: 16 }}>
-                  La rentrée prochaine commence le <strong>14 septembre 2026</strong>. Réservez dès maintenant la place de {eleveActuel.prenom} en choisissant un créneau.
+                  La rentrée prochaine commence le <strong>28 septembre 2026</strong>. Réservez dès maintenant la place de {eleveActuel.prenom} en choisissant un créneau.
                 </p>
                 <Btn onClick={() => setPage("inscription")} color={C.magenta}>
                   Réinscrire {eleveActuel.prenom} →
