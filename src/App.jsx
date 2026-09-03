@@ -160,37 +160,37 @@ const ELEVES = [
 
 // Planning de l'année scolaire EN COURS (2025-2026)
 const COURS = [
-  { id: 1, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "3 – 5 ans" },
-  { id: 2, jour: "Lun", heure: "18h00", fin: "19h00", duree: 1, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
-  { id: 3, jour: "Mer", heure: "15h45", fin: "16h30", duree: 0.75, classe: "Atelier Mercredi 15h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "18 – 35 mois" },
-  { id: 4, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 7, presences: [], age: "6 – 8 ans" },
-  { id: 5, jour: "Mer", heure: "17h45", fin: "18h45", duree: 1, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 3, presences: [], age: "9 – 12 ans" },
-  { id: 6, jour: "Mer", heure: "19h00", fin: "20h00", duree: 1, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
-  { id: 7, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 4, presences: [], age: "9 – 12 ans et plus" },
+  { id: 1, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "3 – 5 ans" },
+  { id: 2, jour: "Lun", heure: "18h00", fin: "19h00", duree: 1, classe: "Atelier Lundi 18h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
+  { id: 3, jour: "Mer", heure: "15h45", fin: "16h30", duree: 0.75, classe: "Atelier Mercredi 15h45", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "18 – 35 mois" },
+  { id: 4, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 7, presences: [], age: "6 – 8 ans" },
+  { id: 5, jour: "Mer", heure: "17h45", fin: "18h45", duree: 1, classe: "Atelier Mercredi 17h45", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 3, presences: [], age: "9 – 12 ans" },
+  { id: 6, jour: "Mer", heure: "19h00", fin: "20h00", duree: 1, classe: "Atelier Mercredi 19h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
+  { id: 7, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 4, presences: [], age: "9 – 12 ans et plus" },
   { id: 8, jour: "Ven", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Vendredi 16h30", formateurs: ["Prime"], salle: "Piste B", nb: 3, presences: [], age: "3 – 8 ans" },
   { id: 9, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Prime"], salle: "Piste A", nb: 5, presences: [], age: "Avancés" },
-  { id: 10, jour: "Sam", heure: "10h45", fin: "11h45", duree: 1, classe: "Atelier Samedi 10h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 2, presences: [], age: "3 – 5 ans" },
+  { id: 10, jour: "Sam", heure: "10h45", fin: "11h45", duree: 1, classe: "Atelier Samedi 10h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 2, presences: [], age: "3 – 5 ans" },
 ];
 
 // Planning de la PROCHAINE rentrée (2026-2027) — annoncé sur la page Programme public
 // et dans le détail de l'événement "Rentrée Circo Bénin" du 28 septembre 2026.
 const COURS_RENTREE = [
-  { id: 101, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
-  { id: 102, jour: "Lun", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Lundi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
-  { id: 103, jour: "Mar", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Mardi 18h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
-  { id: 104, jour: "Mer", heure: "15h30", fin: "16h15", duree: 0.75, classe: "Atelier Mercredi 15h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
-  { id: 105, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
-  { id: 106, jour: "Mer", heure: "17h45", fin: "19h00", duree: 1.25, classe: "Atelier Mercredi 17h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 107, jour: "Mer", heure: "19h00", fin: "20h30", duree: 1.5, classe: "Atelier Mercredi 19h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
-  { id: 108, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
-  { id: 109, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 110, jour: "Ven", heure: "18h45", fin: "19h45", duree: 1, classe: "Perfectionnement individualisé", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Sur évaluation" },
-  { id: 111, jour: "Sam", heure: "10h00", fin: "10h45", duree: 0.75, classe: "Atelier Samedi 10h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
-  { id: 112, jour: "Sam", heure: "11h00", fin: "12h00", duree: 1, classe: "Atelier Samedi 11h", formateurs: ["Jean Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
-  { id: 113, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
-  { id: 114, jour: "Mar", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mardi 16h30", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
-  { id: 115, jour: "Sam", heure: "14h45", fin: "15h45", duree: 1, classe: "Atelier Samedi 14h45", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 116, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
+  { id: 101, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
+  { id: 102, jour: "Lun", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Lundi 18h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
+  { id: 103, jour: "Mar", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Mardi 18h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
+  { id: 104, jour: "Mer", heure: "15h30", fin: "16h15", duree: 0.75, classe: "Atelier Mercredi 15h30", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 105, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 106, jour: "Mer", heure: "17h45", fin: "19h00", duree: 1.25, classe: "Atelier Mercredi 17h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 107, jour: "Mer", heure: "19h00", fin: "20h30", duree: 1.5, classe: "Atelier Mercredi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
+  { id: 108, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
+  { id: 109, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 110, jour: "Ven", heure: "18h45", fin: "19h45", duree: 1, classe: "Perfectionnement individualisé", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Sur évaluation" },
+  { id: 111, jour: "Sam", heure: "10h00", fin: "10h45", duree: 0.75, classe: "Atelier Samedi 10h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 112, jour: "Sam", heure: "11h00", fin: "12h00", duree: 1, classe: "Atelier Samedi 11h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 113, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
+  { id: 114, jour: "Mar", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mardi 16h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
+  { id: 115, jour: "Sam", heure: "14h45", fin: "15h45", duree: 1, classe: "Atelier Samedi 14h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "10 – 13 ans" },
+  { id: 116, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
 ];
 
 const CRENEAUX_STAGE_ETE = [
@@ -200,42 +200,31 @@ const CRENEAUX_STAGE_ETE = [
 ];
 
 const INTERVENANTS = {
-  "Jean Luc": {
+  "Jean-Luc": {
     code: "JEAN531",
-    couleur: "#7c3aed",
-    heures_circo: 8,
-    heures_montaigne: 6,
-    heures_talon: 0,
-    heures_prepa: 3,
-    total_semaine: 17,
-    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
-    extra: [
-      { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
-    ]
+    couleur: "#2d7a4f",
+    heures_circo: 10,
+    heures_prepa: 2,
+    total_semaine: 12,
+    cours_ids: [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+    extra: []
   },
   "Spéro": {
     code: "SPER531",
-    couleur: "#7c3aed",
-    heures_circo: 8,
-    heures_montaigne: 6,
-    heures_talon: 2,
-    heures_prepa: 3,
-    total_semaine: 19,
-    cours_ids: [1, 2, 3, 4, 5, 6, 7, 10],
-    extra: [
-      { lieu: "École Montaigne", type: "Cirque scolaire", heures: 6, note: "PS, MS, GS — 6 groupes × 1h" },
-      { lieu: "Manoel Talon", type: "Ateliers", heures: 2, note: "Mardi 15h30-17h30" },
-    ]
+    couleur: "#e91e8c",
+    heures_circo: 10,
+    heures_prepa: 2,
+    total_semaine: 12,
+    cours_ids: [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+    extra: []
   },
   "Youssou": {
     code: "YOUS531",
-    couleur: "#7c3aed",
-    heures_circo: 5.75,
-    heures_montaigne: 0,
-    heures_talon: 0,
-    heures_prepa: 0,
-    total_semaine: 5.75,
-    cours_ids: [1, 2, 3, 4, 5, 6],
+    couleur: "#ff9800",
+    heures_circo: 6,
+    heures_prepa: 1,
+    total_semaine: 7,
+    cours_ids: [104, 105, 111, 112],
     extra: []
   },
 };
@@ -262,7 +251,7 @@ const FORMATION_FORMATEURS = {
   ],
 };
 
-const COURS_JEAN_LUC = COURS.filter(c => c.formateurs && c.formateurs.includes("Jean Luc"));
+const COURS_JEAN_LUC = COURS.filter(c => c.formateurs && c.formateurs.includes("Jean-Luc"));
 
 const COMPTES_SYCEBNL = [
   { code: "521", libelle: "Banque", classe: 5 },
@@ -291,10 +280,10 @@ const COMPTES_SYCEBNL = [
 const PROJETS_TRESORERIE = ["Circo Bénin — fonctionnement", "Festival Cirque en Fusion", "Espoir Football Club", "Autre projet"];
 
 const PROJETS = [
-  { id: 1, titre: "Cirque en Fusion 2026", type: "Festival", date: "25–28 Nov 2026", statut: "En préparation", public: true, formateurs: ["Jean Luc", "Spéro", "Youssou", "Prime"] },
-  { id: 2, titre: "Stage vacances de Pâques", type: "Stage", date: "Avr 2025", statut: "Inscriptions ouvertes", public: true, formateurs: ["Jean Luc", "Prime"] },
+  { id: 1, titre: "Cirque en Fusion 2026", type: "Festival", date: "25–28 Nov 2026", statut: "En préparation", public: true, formateurs: ["Jean-Luc", "Spéro", "Youssou", "Prime"] },
+  { id: 2, titre: "Stage vacances de Pâques", type: "Stage", date: "Avr 2025", statut: "Inscriptions ouvertes", public: true, formateurs: ["Jean-Luc", "Prime"] },
   { id: 3, titre: "Formation formateurs AOF", type: "Formation", date: "Sept 2025", statut: "À venir", public: true, formateurs: ["Prime"] },
-  { id: 4, titre: "HXEDESSOU KPEHOU 2025", type: "Social", date: "Jan–Déc 2025", statut: "En cours", public: false, formateurs: ["Jean Luc", "Spéro"] },
+  { id: 4, titre: "HXEDESSOU KPEHOU 2025", type: "Social", date: "Jan–Déc 2025", statut: "En cours", public: false, formateurs: ["Jean-Luc", "Spéro"] },
   { id: 5, titre: "Résidence Quilombisme", type: "Résidence", date: "Jan 2027", statut: "En préparation", public: false, formateurs: ["Prime"] },
 ];
 
@@ -382,7 +371,7 @@ const PAIEMENTS = [
 ];
 
 const MESSAGES = [
-  { id: 1, de: "Jean Luc", texte: "Piste A disponible samedi matin ?", heure: "09:14", lu: false },
+  { id: 1, de: "Jean-Luc", texte: "Piste A disponible samedi matin ?", heure: "09:14", lu: false },
   { id: 2, de: "Spéro", texte: "Inscriptions stage Pâques : 18 dossiers reçus", heure: "11:32", lu: false },
   { id: 3, de: "Institut Français", texte: "Confirmation partenariat festival — doc à signer", heure: "14:05", lu: true },
   { id: 4, de: "Youssou", texte: "Nouveau matériel de jonglerie livré !", heure: "16:20", lu: true },
@@ -1148,7 +1137,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
 
 export default function App() {
   const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'formateur': 'Profcirc@531'};
-  const CODES_INTERVENANTS = {'Jean Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
+  const CODES_INTERVENANTS = {'Jean-Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
   const [role, setRole] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [sidebar, setSidebar] = useState(true);
@@ -1237,7 +1226,7 @@ export default function App() {
     const debut = new Date().toISOString();
     setPointageEnCours({ lieu, debut });
     const { data } = await supabase.from("pointages_heures").insert([{
-      intervenant: nomIntervenant || "Jean Luc",
+      intervenant: nomIntervenant || "Jean-Luc",
       lieu: lieu,
       debut: debut,
       fin: null,
@@ -1989,7 +1978,7 @@ export default function App() {
             <div>
               {(() => {
                 const intervenant = pendingRole === "formateur" ? null : null;
-                const nomInter = nomIntervenant || "Jean Luc";
+                const nomInter = nomIntervenant || "Jean-Luc";
                 const infoInter = INTERVENANTS[nomInter] || {};
                 const mesCours = COURS.filter(c => c.formateurs && c.formateurs.includes(nomInter));
                 return (
@@ -2041,7 +2030,7 @@ export default function App() {
           {page === "mes_projets" && (
             <div>
               {(() => {
-                const nomInter = nomIntervenant || "Jean Luc";
+                const nomInter = nomIntervenant || "Jean-Luc";
                 return (
                   <div>
                     <p style={{ color: C.gris, fontSize: 14, marginBottom: 24 }}>
@@ -2076,7 +2065,7 @@ export default function App() {
           {page === "pointage" && (
             <div>
               {(() => {
-                const nomInter = nomIntervenant || "Jean Luc";
+                const nomInter = nomIntervenant || "Jean-Luc";
                 const lieuxConnus = ["Circo Bénin", "École Montaigne", "Manoel Talon"];
                 const enCours = pointageEnCours;
                 return (
@@ -2150,7 +2139,7 @@ export default function App() {
           {page === "mon_bilan" && (
             <div>
               {(() => {
-                const nomInter = nomIntervenant || "Jean Luc";
+                const nomInter = nomIntervenant || "Jean-Luc";
                 const info = INTERVENANTS[nomInter] || {};
                 const semaines = 35;
                 return (
@@ -3358,7 +3347,7 @@ export default function App() {
                 <div style={{ padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
                   <div style={{ padding: "6px 16px", fontSize: 11, fontWeight: 700, color: C.gris, textTransform: "uppercase", letterSpacing: "0.05em" }}>Contacts rapides</div>
                   {[
-                    { nom: "Jean Luc", email: "intervenants@circobenin.com", init: "JL" },
+                    { nom: "Jean-Luc", email: "intervenants@circobenin.com", init: "JL" },
                     { nom: "Spéro", email: "intervenants@circobenin.com", init: "SP" },
                     { nom: "CA", email: "ca@circobenin.com", init: "CA" },
                     { nom: "Administration", email: "admin@circobenin.com", init: "AD" },
