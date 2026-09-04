@@ -175,22 +175,32 @@ const COURS = [
 // Planning de la PROCHAINE rentrée (2026-2027) — annoncé sur la page Programme public
 // et dans le détail de l'événement "Rentrée Circo Bénin" du 28 septembre 2026.
 const COURS_RENTREE = [
-  { id: 101, jour: "Lun", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Lundi 16h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
-  { id: 102, jour: "Lun", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Lundi 18h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
-  { id: 103, jour: "Mar", heure: "18h00", fin: "19h30", duree: 1.5, classe: "Atelier Mardi 18h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
-  { id: 104, jour: "Mer", heure: "15h30", fin: "16h15", duree: 0.75, classe: "Atelier Mercredi 15h30", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
-  { id: 105, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
-  { id: 106, jour: "Mer", heure: "17h45", fin: "19h00", duree: 1.25, classe: "Atelier Mercredi 17h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 107, jour: "Mer", heure: "19h00", fin: "20h30", duree: 1.5, classe: "Atelier Mercredi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
-  { id: 108, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
-  { id: 109, jour: "Ven", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Vendredi 17h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 110, jour: "Ven", heure: "18h45", fin: "19h45", duree: 1, classe: "Perfectionnement individualisé", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Sur évaluation" },
-  { id: 111, jour: "Sam", heure: "10h00", fin: "10h45", duree: 0.75, classe: "Atelier Samedi 10h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
-  { id: 112, jour: "Sam", heure: "11h00", fin: "12h00", duree: 1, classe: "Atelier Samedi 11h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
-  { id: 113, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 7 ans" },
-  { id: 114, jour: "Mar", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mardi 16h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "8 – 9 ans" },
-  { id: 115, jour: "Sam", heure: "14h45", fin: "15h45", duree: 1, classe: "Atelier Samedi 14h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "10 – 13 ans" },
-  { id: 116, jour: "Sam", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Samedi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "11 – 15 ans" },
+  // LUNDI
+  { id: 101, jour: "Lun", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Lundi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 8 ans" },
+  { id: 102, jour: "Lun", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Lundi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "9 – 12 ans" },
+  { id: 103, jour: "Lun", heure: "19h00", fin: "21h00", duree: 2, classe: "Atelier Lundi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
+  // MARDI
+  { id: 104, jour: "Mar", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Mardi 16h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 105, jour: "Mar", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Mardi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "13 – 17 ans" },
+  { id: 106, jour: "Mar", heure: "19h00", fin: "21h00", duree: 2, classe: "Atelier Mardi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
+  // MERCREDI
+  { id: 107, jour: "Mer", heure: "14h00", fin: "14h45", duree: 0.75, classe: "Bébé Cirque Mercredi", formateurs: ["Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 108, jour: "Mer", heure: "15h00", fin: "16h00", duree: 1, classe: "Atelier Mercredi 15h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 109, jour: "Mer", heure: "16h15", fin: "17h15", duree: 1, classe: "Atelier Mercredi 16h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
+  { id: 110, jour: "Mer", heure: "17h30", fin: "19h00", duree: 1.5, classe: "Atelier Mercredi 17h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 12 ans" },
+  { id: 111, jour: "Mer", heure: "19h15", fin: "21h15", duree: 2, classe: "Atelier Mercredi 19h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
+  // JEUDI
+  { id: 112, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 8 ans" },
+  { id: 113, jour: "Jeu", heure: "17h15", fin: "19h15", duree: 2, classe: "Formation Pro Jeudi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Formation Pro" },
+  // VENDREDI
+  { id: 114, jour: "Ven", heure: "16h00", fin: "17h30", duree: 1.5, classe: "Atelier Vendredi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 13 ans" },
+  { id: 115, jour: "Ven", heure: "17h45", fin: "19h45", duree: 2, classe: "Atelier Vendredi 17h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
+  // SAMEDI
+  { id: 116, jour: "Sam", heure: "09h00", fin: "09h45", duree: 0.75, classe: "Bébé Cirque Samedi", formateurs: ["Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 117, jour: "Sam", heure: "10h00", fin: "11h00", duree: 1, classe: "Atelier Samedi 10h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
+  { id: 118, jour: "Sam", heure: "11h15", fin: "12h15", duree: 1, classe: "Atelier Samedi 11h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
+  { id: 119, jour: "Sam", heure: "14h30", fin: "16h00", duree: 1.5, classe: "Atelier Samedi 14h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 12 ans" },
+  { id: 120, jour: "Sam", heure: "16h15", fin: "18h15", duree: 2, classe: "Formation Pro Samedi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Formation Pro" },
 ];
 
 const CRENEAUX_STAGE_ETE = [
