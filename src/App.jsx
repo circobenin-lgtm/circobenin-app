@@ -2800,18 +2800,11 @@ export default function App() {
             <div>
               {/* Toggle planning */}
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                {[{ id: "actuel", label: "Saison 2026–2027" }, { id: "rentree", label: "Rentrée 2026–2027" }].map(p => (
-                  <div key={p.id} onClick={() => setPlanningAffiche(p.id)} style={{
-                    padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
-                    background: planningAffiche === p.id ? C.vert : C.fond,
-                    color: planningAffiche === p.id ? "#fff" : C.gris,
-                    border: `2px solid ${planningAffiche === p.id ? C.vert : C.grisClair}`,
-                  }}>{p.label}</div>
-                ))}
+                <div style={{ padding: "8px 20px", borderRadius: 20, fontSize: 13, fontWeight: 700, background: C.vert, color: "#fff", border: `2px solid ${C.vert}` }}>Planning 2026–2027</div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 10, marginBottom: 20 }}>
                 {(planningAffiche === "actuel" ? ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"] : ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]).map(j => {
-                  const liste = planningAffiche === "actuel" ? COURS : COURS_RENTREE;
+                  const liste = COURS_RENTREE;
                   const cj = liste.filter(c => c.jour === j);
                   return (
                     <div key={j} style={{ background: cj.length ? "#fff" : C.fond, borderRadius: 12, padding: 14, minHeight: 110, border: `1px solid ${C.grisClair}` }}>
