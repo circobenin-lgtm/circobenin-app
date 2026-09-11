@@ -164,7 +164,7 @@ const COURS = [
   { id: 2, jour: "Lun", heure: "18h00", fin: "19h00", duree: 1, classe: "Atelier Lundi 18h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
   { id: 3, jour: "Mer", heure: "15h45", fin: "16h30", duree: 0.75, classe: "Atelier Mercredi 15h45", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 2, presences: [], age: "18 – 35 mois" },
   { id: 4, jour: "Mer", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Mercredi 16h30", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 7, presences: [], age: "6 – 8 ans" },
-  { id: 5, jour: "Mer", heure: "17h45", fin: "18h45", duree: 1, classe: "Atelier Mercredi 17h45", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 3, presences: [], age: "9 – 12 ans" },
+  { id: 5, jour: "Mer", heure: "17h45", fin: "18h45", duree: 1, classe: "Atelier Mercredi 17h45", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste A", nb: 3, presences: [], age: "Renforcés" },
   { id: 6, jour: "Mer", heure: "19h00", fin: "20h00", duree: 1, classe: "Atelier Mercredi 19h", formateurs: ["Jean-Luc", "Spéro", "Youssou"], salle: "Piste B", nb: 4, presences: [], age: "Adultes" },
   { id: 7, jour: "Jeu", heure: "17h00", fin: "18h00", duree: 1, classe: "Atelier Jeudi 17h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 4, presences: [], age: "9 – 12 ans et plus" },
   { id: 8, jour: "Ven", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Vendredi 16h30", formateurs: ["Prime"], salle: "Piste B", nb: 3, presences: [], age: "3 – 8 ans" },
@@ -177,7 +177,7 @@ const COURS = [
 const COURS_RENTREE = [
   // LUNDI
   { id: 101, jour: "Lun", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Lundi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 8 ans" },
-  { id: 102, jour: "Lun", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Lundi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "9 – 12 ans" },
+  { id: 102, jour: "Lun", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Lundi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Renforcés" },
   { id: 103, jour: "Lun", heure: "19h00", fin: "21h00", duree: 2, classe: "Atelier Lundi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
   // MARDI
   { id: 104, jour: "Mar", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Mardi 16h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
@@ -187,20 +187,20 @@ const COURS_RENTREE = [
   { id: 107, jour: "Mer", heure: "14h00", fin: "14h45", duree: 0.75, classe: "Bébé Cirque Mercredi", formateurs: ["Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
   { id: 108, jour: "Mer", heure: "15h00", fin: "16h00", duree: 1, classe: "Atelier Mercredi 15h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
   { id: 109, jour: "Mer", heure: "16h15", fin: "17h15", duree: 1, classe: "Atelier Mercredi 16h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
-  { id: 110, jour: "Mer", heure: "17h30", fin: "19h00", duree: 1.5, classe: "Atelier Mercredi 17h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 12 ans" },
+  { id: 110, jour: "Mer", heure: "17h30", fin: "19h00", duree: 1.5, classe: "Atelier Mercredi 17h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Renforcés" },
   { id: 111, jour: "Mer", heure: "19h15", fin: "21h15", duree: 2, classe: "Atelier Mercredi 19h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
   // JEUDI
   { id: 112, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 8 ans" },
-  { id: 113, jour: "Jeu", heure: "17h15", fin: "19h15", duree: 2, classe: "Formation Pro Jeudi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Formation Pro" },
+  { id: 113, jour: "Jeu", heure: "17h15", fin: "19h15", duree: 2, classe: "Pratique libre Jeudi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Pratique libre" },
   // VENDREDI
-  { id: 114, jour: "Ven", heure: "16h00", fin: "17h30", duree: 1.5, classe: "Atelier Vendredi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 13 ans" },
+  { id: 114, jour: "Ven", heure: "14h30", fin: "16h00", duree: 1.5, classe: "Atelier Vendredi 14h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Renforcés" },
   { id: 115, jour: "Ven", heure: "17h45", fin: "19h45", duree: 2, classe: "Atelier Vendredi 17h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Adultes" },
   // SAMEDI
   { id: 116, jour: "Sam", heure: "09h00", fin: "09h45", duree: 0.75, classe: "Bébé Cirque Samedi", formateurs: ["Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
   { id: 117, jour: "Sam", heure: "10h00", fin: "11h00", duree: 1, classe: "Atelier Samedi 10h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
   { id: 118, jour: "Sam", heure: "11h15", fin: "12h15", duree: 1, classe: "Atelier Samedi 11h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
-  { id: 119, jour: "Sam", heure: "14h30", fin: "16h00", duree: 1.5, classe: "Atelier Samedi 14h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 12 ans" },
-  { id: 120, jour: "Sam", heure: "16h15", fin: "18h15", duree: 2, classe: "Formation Pro Samedi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Formation Pro" },
+  { id: 119, jour: "Sam", heure: "14h30", fin: "16h00", duree: 1.5, classe: "Atelier Samedi 14h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Renforcés" },
+  { id: 120, jour: "Sam", heure: "16h15", fin: "18h15", duree: 2, classe: "Pratique libre Samedi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Pratique libre" },
 ];
 
 const CRENEAUX_STAGE_ETE = [
@@ -337,7 +337,7 @@ const EVENEMENTS = [
   { id: 2, date: "20 juillet 2026", titre: "Stage d'été — 10 jours", desc: "Stage intensif multidisciplinaire : Cirque, Arts plastiques, Danse et Percussion", emoji: "☀️", statut: "Inscriptions ouvertes", couleur: "#ff9800", typeInscription: "ete",
     details: "Du lundi 20 au vendredi 31 juillet 2026 (sans les week-ends = 10 jours), Circo Bénin propose un stage intensif multidisciplinaire.\n\n🕘 Horaires : 9h00 – 17h00\n\n🎪 Disciplines : Cirque · Arts plastiques · Danse · Percussion\n\n💰 Tarifs :\n• Non-adhérent : 45 000 FCFA\n• Adhérent Circo Bénin : 40 000 FCFA\n\nInscriptions ouvertes — places limitées !" },
   { id: 3, date: "28 septembre 2026", titre: "Rentrée Circo Bénin", desc: "Reprise des ateliers hebdomadaires — toutes disciplines", emoji: "🎒", statut: "À venir", couleur: "#2d7a4f", typeInscription: "hebdo",
-    details: "La rentrée 2026-2027 marque la reprise des ateliers hebdomadaires pour tous les âges : Bébé Cirque, Petits, Enfants, Ados et Adultes. Inscrivez-vous dès maintenant pour réserver votre créneau." },
+    details: "Inscriptions ouvertes à partir du 14 septembre 2026.\n\nCours d'essai : du 28 septembre au 3 octobre 2026.\n\nNouveau lieu : Fidjrossè, à côté du marché Adjaha, Cotonou.\n\nAteliers pour tous les âges : Bébé Cirque, 3-5 ans, 6-8 ans, Renforcés (9-12 ans), Ados, Adultes et Pratique libre." },
   { id: 4, date: "Toussaint 2026", titre: "Stage de Toussaint", desc: "Stages intensifs sur toutes les disciplines pendant les vacances de Toussaint", emoji: "🍂", statut: "À venir", couleur: "#7c3aed", typeInscription: "toussaint",
     details: "Profitez des vacances de Toussaint pour un stage intensif de cirque ! Jonglerie, acrobatie, aérien, équilibre et expression au programme." },
   { id: 5, date: "25–28 novembre 2026", titre: "Festival Cirque en Fusion", desc: "3ème édition du Festival International des Arts du Cirque — Cotonou", emoji: "🏆", statut: "En préparation", couleur: "#e91e8c", typeInscription: null,
@@ -765,7 +765,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
     : FRAIS_INSCRIPTION + (formulePaiement === "annee" ? COTIS_ANNEE : COTIS_TRIMESTRE);
 
   const types = [
-    { id: "hebdo", emoji: "🎪", titre: "Atelier hebdomadaire", desc: "Rentrée septembre 2026", couleur: "#2d7a4f" },
+    { id: "hebdo", emoji: "🎪", titre: "Atelier hebdomadaire", desc: "Rentrée 28 septembre 2026", couleur: "#2d7a4f" },
     { id: "ete", emoji: "☀️", titre: "Stage été", desc: "Juillet – Août 2026", couleur: "#ff9800" },
     { id: "toussaint", emoji: "🍂", titre: "Stage Toussaint", desc: "Vacances de Toussaint 2026", couleur: "#7c3aed" },
     { id: "noel", emoji: "🎄", titre: "Stage Noël", desc: "Vacances de Noël 2026", couleur: "#e91e8c" },
@@ -790,7 +790,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
     const formuleLabel = formulePaiement === "annee" ? "Année complète" : "1er trimestre";
     const bodyAccueil = "<h2>Nouvelle inscription - " + type.titre + "</h2><p><b>Nom :</b> " + form.prenom + " " + form.nom + "</p><p><b>Naissance :</b> " + form.dateNaissance + "</p><p><b>Email :</b> " + form.email + "</p><p><b>Tel :</b> " + form.telephone + "</p><p><b>Discipline :</b> " + form.discipline + "</p><p><b>Créneau :</b> " + (form.creneau || "Non renseigné") + "</p><p><b>Formule :</b> " + formuleLabel + " — " + montant.toLocaleString() + " FCFA</p><p><b>Mode de paiement :</b> " + (mode === "enligne" ? "En ligne (FedaPay)" : "Sur place") + "</p>";
     const bodyConfirmEnLigne = "<h2>Merci pour votre inscription à Circo Bénin !</h2><p>Bonjour " + form.prenom + ",</p><p>Votre inscription pour <b>" + type.titre + "</b> a bien été enregistrée et votre paiement de <b>" + montant.toLocaleString() + " FCFA</b> (" + formuleLabel + ") a été reçu.</p><p>Nous vous souhaitons la bienvenue à Circo Bénin !</p><p>Circo Bénin · Cotonou, Bénin · app.circobenin.com</p>";
-    const bodyConfirmSurPlace = "<h2>Inscription Circo Bénin — Finalisez votre inscription</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'inscription pour <b>" + type.titre + "</b>.</p><p>Il vous reste à finaliser votre inscription en venant payer :</p><p><b>" + montant.toLocaleString() + " FCFA (" + formuleLabel + ")</b></p><p>Ou optez pour l\'année complète : <b>" + (FRAIS_INSCRIPTION + COTIS_ANNEE).toLocaleString() + " FCFA (année)</b> — vous économisez sur le long terme !</p><p>Venez payer directement à Circo Bénin.</p><p><b>Adresse :</b> Circo Bénin, Cotonou, Bénin<br/><b>Téléphone :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60<br/><b>Email :</b> circobenin@gmail.com</p><p>Nous vous attendons ! 🎪</p><p>Circo Bénin · app.circobenin.com</p>";
+    const bodyConfirmSurPlace = "<h2>Inscription Circo Bénin — Finalisez votre inscription</h2><p>Bonjour " + form.prenom + ",</p><p>Nous avons bien reçu votre demande d'inscription pour <b>" + type.titre + "</b>.</p><p>Il vous reste à finaliser votre inscription en venant payer :</p><p><b>" + montant.toLocaleString() + " FCFA (" + formuleLabel + ")</b></p><p>Ou optez pour l\'année complète : <b>" + (FRAIS_INSCRIPTION + COTIS_ANNEE).toLocaleString() + " FCFA (année)</b> — vous économisez sur le long terme !</p><p>Venez payer directement à Circo Bénin.</p><p><b>Adresse :</b> Circo Bénin — Fidjrossè, à côté du marché Adjaha, Cotonou<br/><b>Téléphone :</b> +229 01 61 54 12 79 / 00229 01 96 14 63 60<br/><b>Email :</b> circobenin@gmail.com</p><p>Nous vous attendons ! 🎪</p><p>Circo Bénin · app.circobenin.com</p>";
     try {
       // Enregistrement dans Supabase pour suivi admin (page Inscriptions 2026-2027)
       try {
@@ -3807,7 +3807,7 @@ export default function App() {
               <Card style={{ borderTop: `4px solid ${C.magenta}` }}>
                 <SectionTitle>Réinscrire {eleveActuel.prenom} pour 2026–2027</SectionTitle>
                 <p style={{ fontSize: 13, color: C.gris, marginBottom: 16 }}>
-                  La rentrée prochaine commence le <strong>28 septembre 2026</strong>. Réservez dès maintenant la place de {eleveActuel.prenom} en choisissant un créneau.
+                  Inscriptions à partir du <strong>14 septembre 2026</strong>. Cours d'essai du <strong>28 septembre au 3 octobre 2026</strong>. Réservez dès maintenant la place de {eleveActuel.prenom} !
                 </p>
                 <Btn onClick={() => setPage("inscription")} color={C.magenta}>
                   Réinscrire {eleveActuel.prenom} →
