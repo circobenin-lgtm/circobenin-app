@@ -1,16 +1,18 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { to, from, subject, html } = req.body;
+  const { to, from, subject, html, cc } = req.body;
 
   try {
+    const payload = { from, to, subject, html };
+    if (cc) payload.cc = cc;
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to, subject, html }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
