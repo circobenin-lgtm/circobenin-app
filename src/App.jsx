@@ -637,7 +637,8 @@ function ContactForm() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "Circo Benin <accueil@circobenin.com>",
-          to: "accueil@circobenin.com",
+          to: "prime.ezinse@circobenin.com",
+          cc: "accueil@circobenin.com",
           subject: "Message de " + nom + " — " + (sujet || "Contact site"),
           html: "<h2>Nouveau message depuis le site</h2><p><b>Nom :</b> " + nom + "</p><p><b>Email :</b> " + email + "</p><p><b>Sujet :</b> " + (sujet || "—") + "</p><p><b>Message :</b></p><p>" + message.split("\n").join("<br/>") + "</p>",
         }),
@@ -648,7 +649,7 @@ function ContactForm() {
           from: "Circo Benin <accueil@circobenin.com>",
           to: email,
           subject: "Votre message a bien été reçu — Circo Bénin",
-          html: "<h2>Merci de nous avoir contactés !</h2><p>Bonjour " + nom + ",</p><p>Nous avons bien reçu votre message et reviendrons vers vous très prochainement.</p><br/><p>📍 Cadjehoun I Lot 1066, Cotonou, Bénin</p><p>📞 +229 01 96 14 63 60</p><p>Circo Bénin — Première école des arts du cirque du Bénin</p>",
+          html: "<h2>Merci de nous avoir contactés !</h2><p>Bonjour " + nom + ",</p><p>Nous avons bien reçu votre message et reviendrons vers vous très prochainement.</p><br/><p>📍 Fidjrossè, à côté du marché Adjaha, Cotonou, Bénin</p><p>📞 +229 01 96 14 63 60 / +229 01 52 76 33 33</p><p>Circo Bénin — Première école des arts du cirque du Bénin</p>",
         }),
       });
       setSent(true);
@@ -666,7 +667,7 @@ function ContactForm() {
         <div style={{ background: "#fff", borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", borderTop: "4px solid #2d7a4f" }}>
           <div style={{ fontSize: 28, marginBottom: 12 }}>📍</div>
           <div style={{ fontFamily: "Playfair Display,serif", color: "#2d7a4f", fontSize: 17, marginBottom: 12 }}>Adresse</div>
-          <div style={{ fontSize: 14, lineHeight: 1.8 }}><strong>Cadjehoun I</strong><br/>Lot 1066<br/>Cotonou, Bénin</div>
+          <div style={{ fontSize: 14, lineHeight: 1.8 }}><strong>Fidjrossè</strong><br/>À côté du marché Adjaha<br/>Cotonou, Bénin</div>
         </div>
         <div style={{ background: "#fff", borderRadius: 16, padding: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", borderTop: "4px solid #e91e8c" }}>
           <div style={{ fontSize: 28, marginBottom: 12 }}>📞</div>
