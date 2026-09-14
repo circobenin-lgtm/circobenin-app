@@ -184,7 +184,7 @@ const COURS_RENTREE = [
   { id: 105, jour: "Mar", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Mardi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "13 – 17 ans" },
   { id: 106, jour: "Mar", heure: "19h00", fin: "21h00", duree: 2, classe: "Atelier Mardi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
   // MERCREDI
-  { id: 107, jour: "Mer", heure: "14h00", fin: "14h45", duree: 0.75, classe: "Bébé Cirque Mercredi", formateurs: ["Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
+  { id: 107, jour: "Mar", heure: "15h00", fin: "15h45", duree: 0.75, classe: "Bébé Cirque Mardi", formateurs: ["Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
   { id: 108, jour: "Mer", heure: "15h00", fin: "16h00", duree: 1, classe: "Atelier Mercredi 15h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
   { id: 109, jour: "Mer", heure: "16h15", fin: "17h15", duree: 1, classe: "Atelier Mercredi 16h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
   { id: 110, jour: "Mer", heure: "17h30", fin: "19h00", duree: 1.5, classe: "Atelier Mercredi 17h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Renforcés" },
