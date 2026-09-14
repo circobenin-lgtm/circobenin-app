@@ -177,14 +177,14 @@ const COURS = [
 const COURS_RENTREE = [
   // LUNDI
   { id: 101, jour: "Lun", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Lundi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 8 ans" },
-  { id: 102, jour: "Lun", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Lundi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Renforcés" },
+  { id: 102, jour: "Lun", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Lundi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "9 – 12 ans" },
   { id: 103, jour: "Lun", heure: "19h00", fin: "21h00", duree: 2, classe: "Atelier Lundi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
   // MARDI
   { id: 107, jour: "Mar", heure: "15h00", fin: "15h45", duree: 0.75, classe: "Bébé Cirque Mardi", formateurs: ["Youssou"], salle: "Piste A", nb: 0, presences: [], age: "18 – 36 mois" },
   { id: 104, jour: "Mar", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Mardi 16h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
   { id: 105, jour: "Mar", heure: "17h15", fin: "18h45", duree: 1.5, classe: "Atelier Mardi 17h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "13 – 17 ans" },
-  // MERCREDI
   { id: 106, jour: "Mar", heure: "19h00", fin: "21h00", duree: 2, classe: "Atelier Mardi 19h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
+  // MERCREDI
   { id: 108, jour: "Mer", heure: "15h00", fin: "16h00", duree: 1, classe: "Atelier Mercredi 15h", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
   { id: 109, jour: "Mer", heure: "16h15", fin: "17h15", duree: 1, classe: "Atelier Mercredi 16h15", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
   { id: 110, jour: "Mer", heure: "17h30", fin: "19h00", duree: 1.5, classe: "Atelier Mercredi 17h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Renforcés" },
@@ -193,7 +193,7 @@ const COURS_RENTREE = [
   { id: 112, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 8 ans" },
   { id: 113, jour: "Jeu", heure: "17h15", fin: "19h15", duree: 2, classe: "Pratique libre Jeudi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Pratique libre" },
   // VENDREDI
-  { id: 114, jour: "Ven", heure: "16h00", fin: "17h30", duree: 1.5, classe: "Atelier Vendredi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Renforcés" },
+  { id: 114, jour: "Ven", heure: "16h00", fin: "17h30", duree: 1.5, classe: "Atelier Vendredi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 12 ans" },
   { id: 121, jour: "Ven", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Vendredi 16h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
   { id: 115, jour: "Ven", heure: "17h45", fin: "19h45", duree: 2, classe: "Atelier Vendredi 17h45", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "Adultes" },
   // SAMEDI
