@@ -68,6 +68,7 @@ const NAV_PAR_ROLE = {
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
+    { id: "message_groupe", icon: "▦", label: "Msg parents" },
     { id: "public", icon: "◐", label: "Vue publique" },
   ],
   ca: [
@@ -3401,6 +3402,87 @@ export default function App() {
           )}
 
           {/* ── MESSAGERIE EMAIL ── */}
+          {/* ── MESSAGE GROUPÉ PARENTS ── */}
+          {page === "message_groupe" && (
+            <div>
+              <div style={{ background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", borderRadius: 20, padding: "28px 32px", color: "#fff", marginBottom: 24 }}>
+                <div style={{ fontFamily: FT, fontSize: 22, marginBottom: 6 }}>Message groupé aux parents</div>
+                <div style={{ opacity: 0.85, fontSize: 14 }}>Personnalisez et envoyez un message à tous les parents</div>
+              </div>
+              {(() => {
+                const [mgSujet, setMgSujet] = React.useState("Réinscription Circo Bénin 2026-2027");
+                const [mgCorps, setMgCorps] = React.useState("Bonjour [prénom parent] 👋\n\nNous espérons que vous allez bien !\n\nLa nouvelle rentrée Circo Bénin approche — 28 septembre 2026 dans notre nouveau local à Fidjrossè, à côté du marché Adjaha.\n\nComptez-vous réinscrire [prénom enfant] cette année ? Les places sont limitées et les inscriptions sont ouvertes dès le 14 septembre sur app.circobenin.com\n\nNous serions ravis de retrouver [prénom enfant] ! 🤸\n\nL'équipe Circo Bénin\n📞 +229 01 96 14 63 60");
+                const [mgEnvoi, setMgEnvoi] = React.useState({});
+                const [mgEnCours, setMgEnCours] = React.useState(false);
+
+                const parentsAvecEmail = elevesState.filter(e => e.emailParent || e.email).map(e => ({
+                  nom: e.nom, prenom: e.prenom,
+                  prenomParent: e.nomParent || "",
+                  email: e.emailParent || e.email,
+                }));
+
+                const envoyerTous = async () => {
+                  setMgEnCours(true);
+                  const resultats = {};
+                  for (const p of parentsAvecEmail) {
+                    resultats[p.email] = "envoi...";
+                    setMgEnvoi({...resultats});
+                    const corps = mgCorps.replace(/\[prénom parent\]/g, p.prenomParent || p.nom).replace(/\[prénom enfant\]/g, p.prenom);
+                    const html = corps.split("\n").map(l => l ? "<p>" + l + "</p>" : "<br/>").join("");
+                    try {
+                      const res = await fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ from: "Circo Benin <accueil@circobenin.com>", to: p.email, subject: mgSujet, html }) });
+                      resultats[p.email] = res.ok ? "✓ Envoyé" : "✗ Erreur";
+                    } catch { resultats[p.email] = "✗ Erreur"; }
+                    setMgEnvoi({...resultats});
+                    await new Promise(r => setTimeout(r, 600));
+                  }
+                  setMgEnCours(false);
+                };
+
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                    <Card>
+                      <SectionTitle>Rédiger le message</SectionTitle>
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Sujet</label>
+                        <input value={mgSujet} onChange={e => setMgSujet(e.target.value)}
+                          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} />
+                      </div>
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>
+                          Message <span style={{ fontWeight: 400 }}>(utilisez [prénom parent] et [prénom enfant])</span>
+                        </label>
+                        <textarea value={mgCorps} onChange={e => setMgCorps(e.target.value)} rows={12}
+                          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit", lineHeight: 1.6 }} />
+                      </div>
+                      <Btn onClick={envoyerTous} disabled={mgEnCours || parentsAvecEmail.length === 0}>
+                        {mgEnCours ? "Envoi en cours..." : "Envoyer à " + parentsAvecEmail.length + " parent(s)"}
+                      </Btn>
+                    </Card>
+                    <Card>
+                      <SectionTitle>Destinataires ({parentsAvecEmail.length})</SectionTitle>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 480, overflow: "auto" }}>
+                        {parentsAvecEmail.map((p, i) => (
+                          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>
+                            <div>
+                              <div style={{ fontWeight: 600 }}>{p.prenom} {p.nom}</div>
+                              <div style={{ fontSize: 11, color: C.gris }}>{p.email}</div>
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: mgEnvoi[p.email] === "✓ Envoyé" ? C.vert : mgEnvoi[p.email] === "✗ Erreur" ? C.rouge : C.gris }}>
+                              {mgEnvoi[p.email] || "En attente"}
+                            </div>
+                          </div>
+                        ))}
+                        {parentsAvecEmail.length === 0 && <p style={{ color: C.gris, fontSize: 13 }}>Aucun parent avec email enregistré.</p>}
+                      </div>
+                    </Card>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {page === "tchat" && (
             <div style={{ display: "flex", gap: 20, height: "calc(100vh - 180px)" }}>
               <div style={{ width: 280, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", flexShrink: 0 }}>
