@@ -53,7 +53,8 @@ export default async function handler(req, res) {
 
     const eleveId = transaction.custom_metadata && transaction.custom_metadata.eleve_id;
     if (!eleveId) {
-      return res.status(400).json({ error: "eleve_id manquant dans les métadonnées de la transaction" });
+      // Paiement d'inscription publique — pas d'eleve_id, on accuse réception sans erreur
+      return res.status(200).json({ received: true, ignored: "pas d'eleve_id (inscription publique)" });
     }
 
     const { createClient } = require("@supabase/supabase-js");
