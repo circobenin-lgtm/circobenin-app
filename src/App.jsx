@@ -1410,6 +1410,7 @@ export default function App() {
   const [preinscriptions, setPreinscriptions] = useState([]);
   const [suiviStages, setSuiviStages] = useState([]);
   const [suiviAdhesions, setSuiviAdhesions] = useState([]);
+  const [codesParents, setCodesParents] = useState([]);
   const [formuleForm, setFormuleForm] = useState("trimestre");
   const [sessionRestauree, setSessionRestauree] = useState(false);
   // Espace parent — sa propre réinscription 26-27, et un comptage anonyme
@@ -1561,11 +1562,19 @@ export default function App() {
     } catch (e) {}
   };
 
+  const chargerCodesParents = async () => {
+    try {
+      const { data, error } = await supabase.from("codes_parents").select("code, eleve_id");
+      if (!error && data) setCodesParents(data);
+    } catch (e) {}
+  };
+
   useEffect(() => {
     if (role === "directeur" || role === "admin") {
       chargerPreinscriptions();
       chargerSuiviStages();
       chargerSuiviAdhesions();
+      chargerCodesParents();
     }
   }, [role]);
 
@@ -1696,6 +1705,7 @@ export default function App() {
       }], { onConflict: "eleve_id" });
       chargerEleves();
       chargerComptesPaiement();
+      chargerCodesParents();
       alert(p.prenom + " " + p.nom + " — compte élève créé ✓\n\nCode parent à communiquer : " + code);
     } catch (e) {
       alert("Erreur lors de la création du compte élève" + (e && e.message ? " : " + e.message : "") + ".");
@@ -3018,6 +3028,7 @@ export default function App() {
                     const age = p.date_naissance ? Math.floor((new Date() - new Date(p.date_naissance)) / (365.25 * 24 * 3600 * 1000)) : null;
                     const disciplines = (p.discipline || "").split(",").map(s => s.trim()).filter(Boolean);
                     const eleveLie = eleveDeLigne(p);
+                    const codeParentLigne = eleveLie ? (codesParents.find(c => c.eleve_id === eleveLie.id) || {}).code : null;
                     return (
                       <Card key={p.id}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
@@ -3049,7 +3060,11 @@ export default function App() {
                             <Badge text={adh ? "🤝 Adhérent" : "Non adhérent"} bg={adh ? "#f3e5f5" : C.grisClair} color={adh ? C.magenta : C.gris} />
                             <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
                             {eleveLie ? (
-                              <Badge text="✓ Compte élève créé" bg="#e8f5e9" color={C.vert} />
+                              codeParentLigne ? (
+                                <Badge text={"🔑 Code : " + codeParentLigne} bg="#e8f5e9" color={C.vert} />
+                              ) : (
+                                <Badge text="✓ Compte élève créé" bg="#e8f5e9" color={C.vert} />
+                              )
                             ) : (
                               <Btn small onClick={() => creerCompteDepuisInscription(p)}>Créer le compte élève →</Btn>
                             )}
