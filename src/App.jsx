@@ -1634,6 +1634,50 @@ export default function App() {
     if (role) chargerComptesPaiement();
   }, [role]);
 
+  // Convertit une inscription en ligne (table preinscriptions, sans compte)
+  // en un vrai compte élève + code parent + compte de paiement.
+  const creerCompteDepuisInscription = async (p) => {
+    try {
+      const groupes = coursDeLigne(p);
+      const classe = groupes.length > 0 ? `${groupes[0].jour} ${groupes[0].heure} - ${groupes[0].fin}` : (p.creneau || "");
+      const { data: inserted, error } = await supabase.from("eleves").insert([{
+        nom: p.nom, prenom: p.prenom,
+        classe, discipline: p.discipline || "Cirque",
+        statut: "actif",
+        date_naissance: p.date_naissance || null,
+        email: p.email || null,
+        nom_parent: p.prenom_parent || p.nom_parent ? [p.prenom_parent, p.nom_parent].filter(Boolean).join(" ") : null,
+        telephone_parent: p.tel_parent || p.telephone || null,
+      }]).select().single();
+      if (error || !inserted) { alert("Erreur lors de la création du compte élève."); return; }
+
+      const pr = (p.prenom || "").toUpperCase().replace(/[^A-Z]/g, "");
+      const lettres = pr.length >= 4 ? pr.slice(0, 4) : pr.padEnd(4, "X");
+      const annee = p.date_naissance ? new Date(p.date_naissance).getFullYear() : new Date().getFullYear();
+      const base = lettres + annee;
+      let code = base;
+      let suffixe = 2;
+      while (true) {
+        const { data: existant } = await supabase.from("codes_parents").select("code").eq("code", code).maybeSingle();
+        if (!existant) break;
+        code = base + "-" + suffixe;
+        suffixe++;
+      }
+      await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
+      await supabase.from("comptes_paiement").upsert([{
+        eleve_id: inserted.id,
+        eleve_nom: p.prenom + " " + p.nom,
+        montant_du: p.montant || (p.formule === "annee" ? 145000 : 55000),
+        formule: p.formule || "trimestre",
+      }], { onConflict: "eleve_id" });
+      chargerEleves();
+      chargerComptesPaiement();
+      alert(p.prenom + " " + p.nom + " — compte élève créé ✓\n\nCode parent à communiquer : " + code);
+    } catch (e) {
+      alert("Erreur lors de la création du compte élève.");
+    }
+  };
+
   const GRILLE_TRIM = { 1: 50000, 2: 95000, 3: 140000 };
   const GRILLE_AN = { 1: 150000, 2: 285000, 3: 420000 };
 
@@ -2878,6 +2922,10 @@ export default function App() {
             const norm = normCreneau;
             const groupesDe = p => coursDeLigne(p);
             const adhesionDe = p => suiviAdhesions.find(a => norm(a.email) && norm(a.email) === norm(p.email));
+            const eleveDeLigne = p => elevesState.find(e =>
+              (p.email && e.email && norm(e.email) === norm(p.email)) ||
+              (norm(e.prenom) === norm(p.prenom) && norm(e.nomFamille) === norm(p.nom))
+            );
             const montantDe = p => p.montant || (p.formule === "annee" ? 145000 : 55000);
             const montantEnLigne = preinscriptions.filter(p => p.mode_paiement === "enligne").reduce((a, p) => a + montantDe(p), 0);
             const montantAVenir = preinscriptions.filter(p => p.mode_paiement !== "enligne").reduce((a, p) => a + montantDe(p), 0);
@@ -2945,6 +2993,7 @@ export default function App() {
                     const adh = adhesionDe(p);
                     const age = p.date_naissance ? Math.floor((new Date() - new Date(p.date_naissance)) / (365.25 * 24 * 3600 * 1000)) : null;
                     const disciplines = (p.discipline || "").split(",").map(s => s.trim()).filter(Boolean);
+                    const eleveLie = eleveDeLigne(p);
                     return (
                       <Card key={p.id}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
@@ -2975,6 +3024,11 @@ export default function App() {
                             <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 145000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 55000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
                             <Badge text={adh ? "🤝 Adhérent" : "Non adhérent"} bg={adh ? "#f3e5f5" : C.grisClair} color={adh ? C.magenta : C.gris} />
                             <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+                            {eleveLie ? (
+                              <Badge text="✓ Compte élève créé" bg="#e8f5e9" color={C.vert} />
+                            ) : (
+                              <Btn small onClick={() => creerCompteDepuisInscription(p)}>Créer le compte élève →</Btn>
+                            )}
                           </div>
                         </div>
                       </Card>
