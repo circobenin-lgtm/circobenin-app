@@ -1696,8 +1696,8 @@ export default function App() {
         code = base + "-" + suffixe;
         suffixe++;
       }
-      await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
-      await supabase.from("comptes_paiement").upsert([{
+      const { error: errCode } = await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
+      const { error: errCompte } = await supabase.from("comptes_paiement").upsert([{
         eleve_id: inserted.id,
         eleve_nom: p.prenom + " " + p.nom,
         montant_du: p.montant || (p.formule === "annee" ? 145000 : 55000),
@@ -1706,9 +1706,44 @@ export default function App() {
       chargerEleves();
       chargerComptesPaiement();
       chargerCodesParents();
-      alert(p.prenom + " " + p.nom + " — compte élève créé ✓\n\nCode parent à communiquer : " + code);
+      if (errCode) {
+        alert(p.prenom + " " + p.nom + " — compte élève créé, mais le code parent n'a PAS pu être enregistré :\n" + errCode.message);
+      } else if (errCompte) {
+        alert(p.prenom + " " + p.nom + " — compte créé avec le code " + code + ", mais le compte de paiement n'a pas pu être enregistré :\n" + errCompte.message);
+      } else {
+        alert(p.prenom + " " + p.nom + " — compte élève créé ✓\n\nCode parent à communiquer : " + code);
+      }
     } catch (e) {
       alert("Erreur lors de la création du compte élève" + (e && e.message ? " : " + e.message : "") + ".");
+    }
+  };
+
+  // Répare le cas d'un élève déjà créé (compte élève existant) mais sans code
+  // parent, par exemple parce que cet enregistrement avait échoué en silence.
+  const genererCodeParentPourEleve = async (p, eleve) => {
+    try {
+      const pr = (p.prenom || eleve.prenom || "").toUpperCase().replace(/[^A-Z]/g, "");
+      const lettres = pr.length >= 4 ? pr.slice(0, 4) : pr.padEnd(4, "X");
+      const dateNaiss = p.date_naissance || eleve.dateNaissance;
+      const annee = dateNaiss ? new Date(dateNaiss).getFullYear() : new Date().getFullYear();
+      const base = lettres + annee;
+      let code = base;
+      let suffixe = 2;
+      while (true) {
+        const { data: existant } = await supabase.from("codes_parents").select("code").eq("code", code).maybeSingle();
+        if (!existant) break;
+        code = base + "-" + suffixe;
+        suffixe++;
+      }
+      const { error } = await supabase.from("codes_parents").insert([{ code, eleve_id: eleve.id }]);
+      chargerCodesParents();
+      if (error) {
+        alert("Impossible d'enregistrer le code parent de " + eleve.prenom + " :\n" + error.message);
+      } else {
+        alert(eleve.prenom + " — code parent généré ✓\n\nCode à communiquer : " + code);
+      }
+    } catch (e) {
+      alert("Erreur lors de la génération du code" + (e && e.message ? " : " + e.message : "") + ".");
     }
   };
 
@@ -3063,7 +3098,7 @@ export default function App() {
                               codeParentLigne ? (
                                 <Badge text={"🔑 Code : " + codeParentLigne} bg="#e8f5e9" color={C.vert} />
                               ) : (
-                                <Badge text="✓ Compte élève créé" bg="#e8f5e9" color={C.vert} />
+                                <Btn small onClick={() => genererCodeParentPourEleve(p, eleveLie)}>Générer le code parent →</Btn>
                               )
                             ) : (
                               <Btn small onClick={() => creerCompteDepuisInscription(p)}>Créer le compte élève →</Btn>
