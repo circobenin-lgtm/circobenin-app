@@ -2943,6 +2943,8 @@ export default function App() {
                   {preinscriptions.map(p => {
                     const groupes = groupesDe(p);
                     const adh = adhesionDe(p);
+                    const age = p.date_naissance ? Math.floor((new Date() - new Date(p.date_naissance)) / (365.25 * 24 * 3600 * 1000)) : null;
+                    const disciplines = (p.discipline || "").split(",").map(s => s.trim()).filter(Boolean);
                     return (
                       <Card key={p.id}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
@@ -2951,8 +2953,22 @@ export default function App() {
                             <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>
                               {groupes.length > 0 ? groupes.map(g => joursComplets[g.jour] + " " + g.heure).join(" · ") : (p.creneau || "Créneau non précisé")}
                             </div>
+                            <div style={{ fontSize: 12, color: C.gris }}>
+                              {p.date_naissance ? "Né(e) le " + new Date(p.date_naissance).toLocaleDateString("fr-FR") + (age !== null ? " (" + age + " an" + (age > 1 ? "s" : "") + ")" : "") : "Date de naissance non précisée"}
+                            </div>
                             <div style={{ fontSize: 12, color: C.gris }}>{p.email} · {p.telephone}</div>
-                            {p.prenom_parent && <div style={{ fontSize: 12, color: C.gris }}>Parent : {p.prenom_parent} {p.nom_parent}</div>}
+                            {p.prenom_parent && (
+                              <div style={{ fontSize: 12, color: C.gris }}>
+                                Parent : {p.prenom_parent} {p.nom_parent}
+                                {(p.tel_parent || p.email_parent) && " · " + [p.tel_parent, p.email_parent].filter(Boolean).join(" · ")}
+                              </div>
+                            )}
+                            {disciplines.length > 0 && (
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                                {disciplines.map(d => <Badge key={d} text={d} bg={C.fond} color={C.vert} />)}
+                              </div>
+                            )}
+                            {p.navette && <Badge text="🚐 Navette scolaire" bg="#fff3e0" color="#e65100" />}
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                             <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
