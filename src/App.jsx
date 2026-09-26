@@ -2831,42 +2831,101 @@ export default function App() {
           )}
 
           {/* ── INSCRIPTIONS 2026-2027 ── */}
-          {page === "preinscriptions" && (
+          {page === "preinscriptions" && (() => {
+            const norm = s => (s || "").trim().toLowerCase();
+            const groupesDe = p => (p.creneau || "").split("|").map(s => s.trim()).filter(Boolean);
+            const adhesionDe = p => suiviAdhesions.find(a => norm(a.email) && norm(a.email) === norm(p.email));
+            const montantDe = p => p.montant || (p.formule === "annee" ? 145000 : 55000);
+            const montantEnLigne = preinscriptions.filter(p => p.mode_paiement === "enligne").reduce((a, p) => a + montantDe(p), 0);
+            const montantAVenir = preinscriptions.filter(p => p.mode_paiement !== "enligne").reduce((a, p) => a + montantDe(p), 0);
+            const nbAdherents = preinscriptions.filter(p => adhesionDe(p)).length;
+            const repartition = COURS_RENTREE.map(c => ({
+              ...c,
+              inscrits: preinscriptions.filter(p => groupesDe(p).includes(String(c.id))),
+            }));
+            const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+            return (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                 <div>
-                  <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>Pré-inscriptions rentrée 2026–2027</div>
+                  <div style={{ fontFamily: FT, fontSize: 18, color: C.vert }}>Inscriptions en ligne — Rentrée 2026–2027</div>
                   <div style={{ fontSize: 13, color: C.gris, marginTop: 2 }}>{preinscriptions.length} demande{preinscriptions.length !== 1 ? "s" : ""} reçue{preinscriptions.length !== 1 ? "s" : ""}</div>
                 </div>
-                <Btn small onClick={chargerPreinscriptions}>↻ Actualiser</Btn>
+                <Btn small onClick={() => { chargerPreinscriptions(); chargerSuiviAdhesions(); }}>↻ Actualiser</Btn>
               </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 24 }}>
+                <StatCard label="Inscriptions reçues" value={preinscriptions.length} icon="📋" color={C.vert} />
+                <StatCard label="Encaissé en ligne" value={montantEnLigne.toLocaleString() + " F"} icon="💳" color={C.bleu} />
+                <StatCard label="Montant à venir" value={montantAVenir.toLocaleString() + " F"} icon="⏳" color={C.orange} />
+                <StatCard label="Adhésions liées" value={nbAdherents + " / " + preinscriptions.length} icon="🤝" color={C.magenta} />
+              </div>
+
+              <Card style={{ marginBottom: 24 }}>
+                <SectionTitle>Répartition par groupe</SectionTitle>
+                {repartition.every(c => c.inscrits.length === 0) ? (
+                  <p style={{ color: C.gris, fontSize: 13 }}>Aucune demande liée à un groupe pour l'instant.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"].map(jour => {
+                      const groupesJour = repartition.filter(c => c.jour === jour);
+                      if (groupesJour.length === 0) return null;
+                      return (
+                        <div key={jour}>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: C.vert, marginBottom: 6 }}>{joursComplets[jour]}</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                            {groupesJour.map(c => (
+                              <div key={c.id} style={{
+                                display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10,
+                                background: c.inscrits.length > 0 ? "#E8F5E9" : C.grisClair,
+                              }}>
+                                <span style={{ fontSize: 13, fontWeight: 600 }}>{c.heure} · {c.age}</span>
+                                <Badge text={c.inscrits.length + " insc."} bg="#fff" color={c.inscrits.length > 0 ? C.vert : C.gris} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </Card>
+
               {preinscriptions.length === 0 ? (
                 <Card>
                   <p style={{ textAlign: "center", color: C.gris, fontSize: 14, padding: "40px 0" }}>Aucune pré-inscription reçue pour le moment.<br/>Les demandes soumises via le formulaire en ligne apparaîtront ici.</p>
                 </Card>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {preinscriptions.map(p => (
-                    <Card key={p.id}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: 15 }}>{p.prenom} {p.nom}</div>
-                          <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>{p.type_inscription} · {p.creneau || "Créneau non précisé"}</div>
-                          <div style={{ fontSize: 12, color: C.gris }}>{p.email} · {p.telephone}</div>
-                          {p.prenom_parent && <div style={{ fontSize: 12, color: C.gris }}>Parent : {p.prenom_parent} {p.nom_parent}</div>}
+                  {preinscriptions.map(p => {
+                    const groupes = groupesDe(p).map(id => COURS_RENTREE.find(c => String(c.id) === id)).filter(Boolean);
+                    const adh = adhesionDe(p);
+                    return (
+                      <Card key={p.id}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 15 }}>{p.prenom} {p.nom}</div>
+                            <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>
+                              {groupes.length > 0 ? groupes.map(g => joursComplets[g.jour] + " " + g.heure).join(" · ") : (p.creneau || "Créneau non précisé")}
+                            </div>
+                            <div style={{ fontSize: 12, color: C.gris }}>{p.email} · {p.telephone}</div>
+                            {p.prenom_parent && <div style={{ fontSize: 12, color: C.gris }}>Parent : {p.prenom_parent} {p.nom_parent}</div>}
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                            <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
+                            <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 145000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 55000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
+                            <Badge text={adh ? "🤝 Adhérent" : "Non adhérent"} bg={adh ? "#f3e5f5" : C.grisClair} color={adh ? C.magenta : C.gris} />
+                            <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+                          </div>
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                          <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
-                          <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 145000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 55000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
-                          <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* ── STAGES ── */}
           {page === "suivi_stages" && (
