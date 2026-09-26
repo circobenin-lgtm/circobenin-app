@@ -1640,7 +1640,7 @@ export default function App() {
     try {
       const groupes = coursDeLigne(p);
       const classe = groupes.length > 0 ? `${groupes[0].jour} ${groupes[0].heure} - ${groupes[0].fin}` : (p.creneau || "");
-      const payload = {
+      let payload = {
         nom: p.nom, prenom: p.prenom,
         classe, discipline: p.discipline || "Cirque",
         statut: "actif",
@@ -1649,13 +1649,26 @@ export default function App() {
         nom_parent: p.prenom_parent || p.nom_parent ? [p.prenom_parent, p.nom_parent].filter(Boolean).join(" ") : null,
         telephone_parent: p.tel_parent || p.telephone || null,
       };
-      let { data: inserted, error } = await supabase.from("eleves").insert([payload]).select().single();
-      // Cas fréquent : deux enfants d'une même famille partagent l'email/téléphone du
-      // parent, ce qui heurte une contrainte d'unicité — on retente sans ces champs.
-      if (error && /duplicate|unique/i.test(error.message || "") && (payload.email || payload.telephone_parent)) {
-        const retry = await supabase.from("eleves").insert([{ ...payload, email: null, telephone_parent: null }]).select().single();
-        inserted = retry.data;
-        error = retry.error;
+      let inserted, error;
+      for (let tentative = 0; tentative < 8; tentative++) {
+        const res = await supabase.from("eleves").insert([payload]).select().single();
+        inserted = res.data;
+        error = res.error;
+        if (!error) break;
+        // Colonne absente du schéma réel de la table → on la retire et on retente.
+        const colonneInconnue = (error.message || "").match(/Could not find the '([^']+)' column/);
+        if (colonneInconnue && colonneInconnue[1] in payload) {
+          const { [colonneInconnue[1]]: _omise, ...reste } = payload;
+          payload = reste;
+          continue;
+        }
+        // Deux enfants d'une même famille partagent l'email/téléphone du parent,
+        // ce qui heurte une contrainte d'unicité → on retente sans ces champs.
+        if (/duplicate|unique/i.test(error.message || "") && (payload.email || payload.telephone_parent)) {
+          payload = { ...payload, email: null, telephone_parent: null };
+          continue;
+        }
+        break;
       }
       if (error || !inserted) {
         alert("Erreur lors de la création du compte élève" + (error ? " : " + error.message : "") + ".");
