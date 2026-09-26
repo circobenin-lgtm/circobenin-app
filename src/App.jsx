@@ -1640,7 +1640,7 @@ export default function App() {
     try {
       const groupes = coursDeLigne(p);
       const classe = groupes.length > 0 ? `${groupes[0].jour} ${groupes[0].heure} - ${groupes[0].fin}` : (p.creneau || "");
-      const { data: inserted, error } = await supabase.from("eleves").insert([{
+      const payload = {
         nom: p.nom, prenom: p.prenom,
         classe, discipline: p.discipline || "Cirque",
         statut: "actif",
@@ -1648,8 +1648,19 @@ export default function App() {
         email: p.email || null,
         nom_parent: p.prenom_parent || p.nom_parent ? [p.prenom_parent, p.nom_parent].filter(Boolean).join(" ") : null,
         telephone_parent: p.tel_parent || p.telephone || null,
-      }]).select().single();
-      if (error || !inserted) { alert("Erreur lors de la création du compte élève."); return; }
+      };
+      let { data: inserted, error } = await supabase.from("eleves").insert([payload]).select().single();
+      // Cas fréquent : deux enfants d'une même famille partagent l'email/téléphone du
+      // parent, ce qui heurte une contrainte d'unicité — on retente sans ces champs.
+      if (error && /duplicate|unique/i.test(error.message || "") && (payload.email || payload.telephone_parent)) {
+        const retry = await supabase.from("eleves").insert([{ ...payload, email: null, telephone_parent: null }]).select().single();
+        inserted = retry.data;
+        error = retry.error;
+      }
+      if (error || !inserted) {
+        alert("Erreur lors de la création du compte élève" + (error ? " : " + error.message : "") + ".");
+        return;
+      }
 
       const pr = (p.prenom || "").toUpperCase().replace(/[^A-Z]/g, "");
       const lettres = pr.length >= 4 ? pr.slice(0, 4) : pr.padEnd(4, "X");
@@ -1674,7 +1685,7 @@ export default function App() {
       chargerComptesPaiement();
       alert(p.prenom + " " + p.nom + " — compte élève créé ✓\n\nCode parent à communiquer : " + code);
     } catch (e) {
-      alert("Erreur lors de la création du compte élève.");
+      alert("Erreur lors de la création du compte élève" + (e && e.message ? " : " + e.message : "") + ".");
     }
   };
 
