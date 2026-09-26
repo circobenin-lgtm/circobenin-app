@@ -205,6 +205,25 @@ const COURS_RENTREE = [
   { id: 120, jour: "Sam", heure: "16h15", fin: "18h15", duree: 2, classe: "Pratique libre Samedi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Pratique libre" },
 ];
 
+const JOURS_LABELS = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+
+// ── Correspondance créneau texte ↔ cours (le formulaire public enregistre le
+// créneau choisi comme du texte "Lun 17h15 - 18h45", pas un id) ──
+const normCreneau = s => (s || "").trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
+const cleCreneauCours = c => normCreneau(`${c.jour} ${c.heure} - ${c.fin}`);
+const creneauxTokens = creneauStr => (creneauStr || "").split("|").map(s => normCreneau(s)).filter(Boolean);
+const coursDeLigne = (ligne, coursListe = COURS_RENTREE) => {
+  const tokens = creneauxTokens(ligne && ligne.creneau);
+  return coursListe.filter(c => tokens.includes(cleCreneauCours(c)));
+};
+const compterInscritsParCours = (lignes, coursListe = COURS_RENTREE) => {
+  const comptes = {};
+  (lignes || []).forEach(l => {
+    creneauxTokens(l.creneau).forEach(t => { comptes[t] = (comptes[t] || 0) + 1; });
+  });
+  return coursListe.map(c => ({ ...c, inscrits: comptes[cleCreneauCours(c)] || 0 }));
+};
+
 const CRENEAUX_STAGE_ETE = [
   { id: "ete1", label: "Lun 20 juil. → Ven 31 juil. 2026 — Matin", age: "6 – 10 ans", horaire: "09h00 – 12h30" },
   { id: "ete2", label: "Lun 20 juil. → Ven 31 juil. 2026 — Après-midi", age: "11 – 17 ans", horaire: "14h00 – 17h00" },
@@ -1393,6 +1412,10 @@ export default function App() {
   const [suiviAdhesions, setSuiviAdhesions] = useState([]);
   const [formuleForm, setFormuleForm] = useState("trimestre");
   const [sessionRestauree, setSessionRestauree] = useState(false);
+  // Espace parent — sa propre réinscription 26-27, et un comptage anonyme
+  // (colonne "creneau" seule, sans nom/email/téléphone des autres familles)
+  const [reinscriptionEnfant, setReinscriptionEnfant] = useState(null);
+  const [creneauxRentreeLignes, setCreneauxRentreeLignes] = useState([]);
 
   const SESSION_DUREE_MS = 30 * 60 * 1000; // 30 minutes (assez pour remplir une inscription)
   const SESSION_KEY = "circobenin_session";
@@ -1545,6 +1568,26 @@ export default function App() {
       chargerSuiviAdhesions();
     }
   }, [role]);
+
+  // Espace parent : vérifie si l'enfant est déjà réinscrit 26-27, et récupère
+  // un comptage anonyme des inscriptions par créneau (sans données des autres familles).
+  useEffect(() => {
+    if (role !== "parent" || !eleveActuel) return;
+    (async () => {
+      try {
+        let q = supabase.from("preinscriptions").select("*").order("created_at", { ascending: false });
+        q = eleveActuel.email
+          ? q.ilike("email", eleveActuel.email)
+          : q.ilike("prenom", eleveActuel.prenom || "").ilike("nom", eleveActuel.nom || "");
+        const { data } = await q.limit(1);
+        setReinscriptionEnfant(data && data[0] ? data[0] : null);
+      } catch (e) {}
+      try {
+        const { data } = await supabase.from("preinscriptions").select("creneau");
+        setCreneauxRentreeLignes(data || []);
+      } catch (e) {}
+    })();
+  }, [role, eleveActuel]);
 
   const chargerEleves = async () => {
     try {
@@ -2832,16 +2875,8 @@ export default function App() {
 
           {/* ── INSCRIPTIONS 2026-2027 ── */}
           {page === "preinscriptions" && (() => {
-            // Normalise espaces et tirets (le tiret peut être saisi "-", "–" ou "—" selon la source)
-            const norm = s => (s || "").trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
-            // Le formulaire public enregistre le(s) créneau(x) choisis comme du texte
-            // ("Lun 17h15 - 18h45"), joints par " | " s'il y en a plusieurs — pas un id.
-            const cleDeCours = c => `${c.jour} ${c.heure} - ${c.fin}`;
-            const tokensDe = p => (p.creneau || "").split("|").map(s => norm(s)).filter(Boolean);
-            const groupesDe = p => {
-              const tokens = tokensDe(p);
-              return COURS_RENTREE.filter(c => tokens.includes(norm(cleDeCours(c))));
-            };
+            const norm = normCreneau;
+            const groupesDe = p => coursDeLigne(p);
             const adhesionDe = p => suiviAdhesions.find(a => norm(a.email) && norm(a.email) === norm(p.email));
             const montantDe = p => p.montant || (p.formule === "annee" ? 145000 : 55000);
             const montantEnLigne = preinscriptions.filter(p => p.mode_paiement === "enligne").reduce((a, p) => a + montantDe(p), 0);
@@ -2849,9 +2884,9 @@ export default function App() {
             const nbAdherents = preinscriptions.filter(p => adhesionDe(p)).length;
             const repartition = COURS_RENTREE.map(c => ({
               ...c,
-              inscrits: preinscriptions.filter(p => tokensDe(p).includes(norm(cleDeCours(c)))),
+              inscrits: preinscriptions.filter(p => creneauxTokens(p.creneau).includes(cleCreneauCours(c))),
             }));
-            const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+            const joursComplets = JOURS_LABELS;
             return (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -3897,58 +3932,91 @@ export default function App() {
           )}
 
           {/* ── ESPACE PARENT : PLANNING ── */}
-          {page === "planning_enfant" && eleveActuel && (
+          {page === "planning_enfant" && eleveActuel && (() => {
+            const coursEnfant = COURS.find(c => c.classe === eleveActuel.classe || eleveActuel.classe?.includes(c.heure));
+            const groupesRentree = compterInscritsParCours(creneauxRentreeLignes);
+            const clesEnfant = reinscriptionEnfant ? creneauxTokens(reinscriptionEnfant.creneau) : [];
+            return (
             <div>
               {/* Créneau actuel de l'enfant */}
               <Card style={{ marginBottom: 20 }}>
                 <SectionTitle>Planning 2026–2027 — Créneau de {eleveActuel.prenom}</SectionTitle>
-                {(() => {
-                  const coursEnfant = COURS.find(c => c.classe === eleveActuel.classe || eleveActuel.classe?.includes(c.heure));
-                  if (!coursEnfant) return (
-                    <p style={{ fontSize: 13, color: C.gris, padding: "16px 0" }}>Aucun créneau enregistré pour le moment. Contactez Circo Bénin pour plus d'informations.</p>
-                  );
-                  return (
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0" }}>
-                      <Badge text={coursEnfant.jour} bg={C.vert} color="#fff" />
-                      <Badge text={coursEnfant.heure} bg={C.fond} color={C.vert} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700 }}>{coursEnfant.age}</div>
-                        <div style={{ fontSize: 12, color: C.gris }}>{coursEnfant.heure} – {coursEnfant.fin} · {coursEnfant.formateurs?.join(", ")}</div>
-                      </div>
-                      <Badge text="Inscrit ✓" bg="#e8f5e9" color={C.vert} />
+                {!coursEnfant ? (
+                  <p style={{ fontSize: 13, color: C.gris, padding: "16px 0" }}>Aucun créneau enregistré pour le moment. Contactez Circo Bénin pour plus d'informations.</p>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0" }}>
+                    <Badge text={coursEnfant.jour} bg={C.vert} color="#fff" />
+                    <Badge text={coursEnfant.heure} bg={C.fond} color={C.vert} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>{coursEnfant.age}</div>
+                      <div style={{ fontSize: 12, color: C.gris }}>{coursEnfant.heure} – {coursEnfant.fin} · {coursEnfant.formateurs?.join(", ")}</div>
                     </div>
-                  );
-                })()}
+                    <Badge text={coursEnfant.nb + " inscrit" + (coursEnfant.nb > 1 ? "s" : "")} bg="#fff3e0" color="#e65100" />
+                    <Badge text="Inscrit ✓" bg="#e8f5e9" color={C.vert} />
+                  </div>
+                )}
               </Card>
 
-              {/* Planning rentrée prochaine */}
+              {/* Planning rentrée prochaine — grille par jour, comme côté Direction */}
               <Card style={{ marginBottom: 20 }}>
                 <SectionTitle>Planning rentrée 2026–2027</SectionTitle>
                 <p style={{ fontSize: 13, color: C.gris, marginBottom: 14 }}>Découvrez les nouveaux créneaux disponibles pour la prochaine rentrée.</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {COURS_RENTREE.map(c => (
-                    <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: C.fond, borderRadius: 8 }}>
-                      <div>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: C.vert }}>{{ Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" }[c.jour]} {c.heure}–{c.fin}</span>
+                <div className="grid-planning-parent" style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 10 }}>
+                  {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map(j => {
+                    const cj = groupesRentree.filter(c => c.jour === j);
+                    return (
+                      <div key={j} style={{ background: cj.length ? "#fff" : C.fond, borderRadius: 12, padding: 14, minHeight: 110, border: `1px solid ${C.grisClair}` }}>
+                        <div style={{ fontFamily: FT, fontSize: 13, fontWeight: 700, color: cj.length ? C.vert : C.gris, marginBottom: 8 }}>{j}</div>
+                        {cj.map(c => {
+                          const estCelleDeLenfant = clesEnfant.includes(cleCreneauCours(c));
+                          return (
+                            <div key={c.id} style={{
+                              background: estCelleDeLenfant ? "#e8f5e9" : C.fond, borderRadius: 8, padding: "8px 10px", marginBottom: 6,
+                              borderLeft: `3px solid ${estCelleDeLenfant ? C.vert : C.magenta}`, textAlign: "center",
+                            }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: C.vert }}>{c.heure}</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: C.noir, margin: "3px 0" }}>{c.age}</div>
+                              <div style={{ fontSize: 11, color: C.gris }}>{c.fin}</div>
+                              <div style={{ fontSize: 11, color: C.gris, marginTop: 2 }}>{c.inscrits} inscrit{c.inscrits > 1 ? "s" : ""}</div>
+                              {estCelleDeLenfant && <div style={{ fontSize: 10, fontWeight: 700, color: C.vert, marginTop: 2 }}>✓ Place de {eleveActuel.prenom}</div>}
+                            </div>
+                          );
+                        })}
                       </div>
-                      <Badge text={c.age} bg="#fff3e0" color="#e65100" />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
 
               {/* Réinscription */}
-              <Card style={{ borderTop: `4px solid ${C.magenta}` }}>
-                <SectionTitle>Réinscrire {eleveActuel.prenom} pour 2026–2027</SectionTitle>
-                <p style={{ fontSize: 13, color: C.gris, marginBottom: 16 }}>
-                  Inscriptions à partir du <strong>14 septembre 2026</strong>. Cours d'essai du <strong>28 septembre au 3 octobre 2026</strong>. Réservez dès maintenant la place de {eleveActuel.prenom} !
-                </p>
-                <Btn onClick={() => setPage("inscription")} color={C.magenta}>
-                  Réinscrire {eleveActuel.prenom} →
-                </Btn>
-              </Card>
+              {reinscriptionEnfant ? (
+                <Card style={{ borderTop: `4px solid ${C.vert}` }}>
+                  <SectionTitle>Réinscription 2026–2027</SectionTitle>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+                    <Badge text={"✓ " + eleveActuel.prenom + " est déjà réinscrit(e)"} bg="#e8f5e9" color={C.vert} />
+                    <Badge text={reinscriptionEnfant.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Paiement sur place"}
+                      bg={reinscriptionEnfant.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"}
+                      color={reinscriptionEnfant.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
+                  </div>
+                  <p style={{ fontSize: 13, color: C.gris }}>
+                    Inscription reçue le {new Date(reinscriptionEnfant.created_at).toLocaleDateString("fr-FR")}
+                    {reinscriptionEnfant.mode_paiement !== "enligne" && " — le règlement se fait sur place à la rentrée."}
+                  </p>
+                </Card>
+              ) : (
+                <Card style={{ borderTop: `4px solid ${C.magenta}` }}>
+                  <SectionTitle>Réinscrire {eleveActuel.prenom} pour 2026–2027</SectionTitle>
+                  <p style={{ fontSize: 13, color: C.gris, marginBottom: 16 }}>
+                    Inscriptions à partir du <strong>14 septembre 2026</strong>. Cours d'essai du <strong>28 septembre au 3 octobre 2026</strong>. Réservez dès maintenant la place de {eleveActuel.prenom} !
+                  </p>
+                  <Btn onClick={() => setPage("inscription")} color={C.magenta}>
+                    Réinscrire {eleveActuel.prenom} →
+                  </Btn>
+                </Card>
+              )}
             </div>
-          )}
+            );
+          })()}
 
           {/* ── ESPACE PARENT : PAIEMENTS ── */}
           {page === "paiements_enfant" && eleveActuel && (() => {
@@ -3956,6 +4024,13 @@ export default function App() {
             const totalPaye = versementsEleveActuel.reduce((a, v) => a + v.montant, 0);
             const reste = Math.max(montantDu - totalPaye, 0);
             const dernierPaiement = versementsEleveActuel[0];
+            // Si l'administration n'a pas encore créé de compte de paiement (montantDu à 0),
+            // on affiche le montant issu de la réinscription en ligne comme estimation "à venir".
+            const montantEstime = reinscriptionEnfant && reinscriptionEnfant.mode_paiement !== "enligne"
+              ? (reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 145000 : 55000))
+              : 0;
+            const enAttenteEstimee = montantDu === 0 && montantEstime > 0;
+            const attenteAffichee = enAttenteEstimee ? montantEstime : reste;
             return (
               <div>
                 <div className="grid-stats-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
@@ -3966,8 +4041,8 @@ export default function App() {
                   </Card>
                   <Card style={{ textAlign: "center", borderTop: "4px solid #e91e8c" }}>
                     <div style={{ fontSize: 28, marginBottom: 6 }}>⏳</div>
-                    <div style={{ fontWeight: 700, fontSize: 20, color: C.magenta }}>{reste.toLocaleString()}</div>
-                    <div style={{ fontSize: 12, color: C.gris }}>FCFA en attente</div>
+                    <div style={{ fontWeight: 700, fontSize: 20, color: C.magenta }}>{attenteAffichee.toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: C.gris }}>FCFA en attente{enAttenteEstimee ? " (estimé)" : ""}</div>
                   </Card>
                   <Card style={{ textAlign: "center", borderTop: "4px solid #1a5c38" }}>
                     <div style={{ fontSize: 28, marginBottom: 6 }}>📅</div>
@@ -3995,6 +4070,11 @@ export default function App() {
                     </div>
                   ) : montantDu > 0 ? (
                     <div style={{ marginTop: 20, textAlign: "center", color: C.vert, fontSize: 14, fontWeight: 600 }}>✓ Compte à jour, aucun paiement en attente</div>
+                  ) : enAttenteEstimee ? (
+                    <div style={{ marginTop: 20, textAlign: "center" }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: C.orange }}>⏳ {montantEstime.toLocaleString()} FCFA à régler sur place</div>
+                      <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>D'après votre réinscription du {new Date(reinscriptionEnfant.created_at).toLocaleDateString("fr-FR")} — ce montant sera confirmé par l'administration une fois le règlement enregistré.</div>
+                    </div>
                   ) : (
                     <div style={{ marginTop: 20, textAlign: "center", color: C.gris, fontSize: 13 }}>Aucun montant n'a encore été enregistré par l'administration pour cet élève.</div>
                   )}
