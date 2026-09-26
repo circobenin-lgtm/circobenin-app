@@ -4126,13 +4126,9 @@ export default function App() {
                               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                 <span style={{ fontSize: 12, color: "#6b7280" }}>📍 {c.salle}</span>
                                 <span style={{ fontSize: 12, color: "#6b7280" }}>⏱ {c.duree === 0.75 ? "45 min" : c.duree + "h"}</span>
-                                <span style={{ fontSize: 12, color: "#6b7280" }}>👥 {c.nb} élève{c.nb > 1 ? "s" : ""}</span>
                               </div>
                               <div style={{ marginTop: 6, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                                 {c.age && <span style={{ background: "#fff3e0", color: "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700 }}>👤 {c.age}</span>}
-                                {c.formateurs.map((f, j) => (
-                                  <span key={j} style={{ background: couleur + "15", color: couleur, borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 600 }}>{f}</span>
-                                ))}
                               </div>
                             </div>
                             <div style={{ textAlign: "right" }}>
