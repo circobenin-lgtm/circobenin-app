@@ -4426,7 +4426,7 @@ export default function App() {
                 <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.nom} onChange={e => setNouvelEleve({...nouvelEleve, nom: e.target.value})} placeholder="Nom de famille" /></div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Date de naissance</label>
+              <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Date de naissance * <span style={{ fontWeight: 400, color: "#9ca3af" }}>(sert au code parent)</span></label>
                 <input type="date" style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.dateNaissance} onChange={e => setNouvelEleve({...nouvelEleve, dateNaissance: e.target.value})} /></div>
               <div><label style={{ fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 6 }}>Email</label>
                 <input style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, boxSizing: "border-box" }} value={nouvelEleve.email} onChange={e => setNouvelEleve({...nouvelEleve, email: e.target.value})} placeholder="email@exemple.com" /></div>
@@ -4445,7 +4445,10 @@ export default function App() {
             <div style={{ display: "flex", gap: 12 }}>
               <div onClick={() => setShowModalEleve(false)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid #e5e7eb", textAlign: "center", cursor: "pointer", fontSize: 14 }}>Annuler</div>
               <div onClick={async () => {
-                if (!nouvelEleve.prenom || !nouvelEleve.nom) return;
+                if (!nouvelEleve.prenom || !nouvelEleve.nom || !nouvelEleve.dateNaissance) {
+                  alert("Merci de renseigner le prénom, le nom et la date de naissance (nécessaires pour générer le code parent).");
+                  return;
+                }
                 try {
                   const { data: inserted, error } = await supabase.from("eleves").insert([{
                     nom: nouvelEleve.nom, prenom: nouvelEleve.prenom,
@@ -4457,14 +4460,17 @@ export default function App() {
                     telephone_parent: nouvelEleve.telephoneParent || null,
                   }]).select().single();
                   if (!error && inserted) {
+                    // Code parent = 4 premières lettres du prénom de l'enfant + son année de naissance
                     const p = nouvelEleve.prenom.toUpperCase().replace(/[^A-Z]/g, "");
-                    const base = (p.length >= 4 ? p.slice(0, 4) : p.padEnd(4, "X")) + "531";
+                    const lettres = p.length >= 4 ? p.slice(0, 4) : p.padEnd(4, "X");
+                    const annee = new Date(nouvelEleve.dateNaissance).getFullYear();
+                    const base = lettres + annee;
                     let code = base;
                     let suffixe = 2;
                     while (true) {
                       const { data: existant } = await supabase.from("codes_parents").select("code").eq("code", code).maybeSingle();
                       if (!existant) break;
-                      code = base.slice(0, 3) + suffixe;
+                      code = base + "-" + suffixe;
                       suffixe++;
                     }
                     await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
@@ -4477,6 +4483,7 @@ export default function App() {
                     }], { onConflict: "eleve_id" });
                     chargerEleves();
                     chargerComptesPaiement();
+                    alert(nouvelEleve.prenom + " inscrit(e) ✓\n\nCode parent à communiquer : " + code);
                   }
                 } catch (e) {}
                 setNouvelEleve({ prenom: "", nom: "", dateNaissance: "", email: "", discipline: "Cirque", classe: "", nomParent: "", telephoneParent: "" });
