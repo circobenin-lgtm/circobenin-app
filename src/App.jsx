@@ -2832,8 +2832,16 @@ export default function App() {
 
           {/* ── INSCRIPTIONS 2026-2027 ── */}
           {page === "preinscriptions" && (() => {
-            const norm = s => (s || "").trim().toLowerCase();
-            const groupesDe = p => (p.creneau || "").split("|").map(s => s.trim()).filter(Boolean);
+            // Normalise espaces et tirets (le tiret peut être saisi "-", "–" ou "—" selon la source)
+            const norm = s => (s || "").trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
+            // Le formulaire public enregistre le(s) créneau(x) choisis comme du texte
+            // ("Lun 17h15 - 18h45"), joints par " | " s'il y en a plusieurs — pas un id.
+            const cleDeCours = c => `${c.jour} ${c.heure} - ${c.fin}`;
+            const tokensDe = p => (p.creneau || "").split("|").map(s => norm(s)).filter(Boolean);
+            const groupesDe = p => {
+              const tokens = tokensDe(p);
+              return COURS_RENTREE.filter(c => tokens.includes(norm(cleDeCours(c))));
+            };
             const adhesionDe = p => suiviAdhesions.find(a => norm(a.email) && norm(a.email) === norm(p.email));
             const montantDe = p => p.montant || (p.formule === "annee" ? 145000 : 55000);
             const montantEnLigne = preinscriptions.filter(p => p.mode_paiement === "enligne").reduce((a, p) => a + montantDe(p), 0);
@@ -2841,7 +2849,7 @@ export default function App() {
             const nbAdherents = preinscriptions.filter(p => adhesionDe(p)).length;
             const repartition = COURS_RENTREE.map(c => ({
               ...c,
-              inscrits: preinscriptions.filter(p => groupesDe(p).includes(String(c.id))),
+              inscrits: preinscriptions.filter(p => tokensDe(p).includes(norm(cleDeCours(c)))),
             }));
             const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
             return (
@@ -2898,7 +2906,7 @@ export default function App() {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {preinscriptions.map(p => {
-                    const groupes = groupesDe(p).map(id => COURS_RENTREE.find(c => String(c.id) === id)).filter(Boolean);
+                    const groupes = groupesDe(p);
                     const adh = adhesionDe(p);
                     return (
                       <Card key={p.id}>
