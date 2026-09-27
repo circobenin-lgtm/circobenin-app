@@ -211,6 +211,14 @@ const JOURS_LABELS = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi"
 // créneau choisi comme du texte "Lun 17h15 - 18h45", pas un id) ──
 const normCreneau = s => (s || "").trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
 const cleCreneauCours = c => normCreneau(`${c.jour} ${c.heure} - ${c.fin}`);
+// Code parent = prénom complet de l'enfant (sans accents/espaces, en majuscules) + son année de naissance.
+const genererBaseCodeParent = (prenom, dateNaissance) => {
+  const p = (prenom || "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toUpperCase().replace(/[^A-Z]/g, "");
+  const annee = dateNaissance ? new Date(dateNaissance).getFullYear() : new Date().getFullYear();
+  return p + annee;
+};
 const creneauxTokens = creneauStr => (creneauStr || "").split("|").map(s => normCreneau(s)).filter(Boolean);
 const coursDeLigne = (ligne, coursListe = COURS_RENTREE) => {
   const tokens = creneauxTokens(ligne && ligne.creneau);
@@ -1684,10 +1692,7 @@ export default function App() {
         return;
       }
 
-      const pr = (p.prenom || "").toUpperCase().replace(/[^A-Z]/g, "");
-      const lettres = pr.length >= 4 ? pr.slice(0, 4) : pr.padEnd(4, "X");
-      const annee = p.date_naissance ? new Date(p.date_naissance).getFullYear() : new Date().getFullYear();
-      const base = lettres + annee;
+      const base = genererBaseCodeParent(p.prenom, p.date_naissance);
       let code = base;
       let suffixe = 2;
       while (true) {
@@ -1722,11 +1727,8 @@ export default function App() {
   // parent, par exemple parce que cet enregistrement avait échoué en silence.
   const genererCodeParentPourEleve = async (p, eleve) => {
     try {
-      const pr = (p.prenom || eleve.prenom || "").toUpperCase().replace(/[^A-Z]/g, "");
-      const lettres = pr.length >= 4 ? pr.slice(0, 4) : pr.padEnd(4, "X");
       const dateNaiss = p.date_naissance || eleve.dateNaissance;
-      const annee = dateNaiss ? new Date(dateNaiss).getFullYear() : new Date().getFullYear();
-      const base = lettres + annee;
+      const base = genererBaseCodeParent(p.prenom || eleve.prenom, dateNaiss);
       let code = base;
       let suffixe = 2;
       while (true) {
@@ -4604,11 +4606,8 @@ export default function App() {
                     telephone_parent: nouvelEleve.telephoneParent || null,
                   }]).select().single();
                   if (!error && inserted) {
-                    // Code parent = 4 premières lettres du prénom de l'enfant + son année de naissance
-                    const p = nouvelEleve.prenom.toUpperCase().replace(/[^A-Z]/g, "");
-                    const lettres = p.length >= 4 ? p.slice(0, 4) : p.padEnd(4, "X");
-                    const annee = new Date(nouvelEleve.dateNaissance).getFullYear();
-                    const base = lettres + annee;
+                    // Code parent = prénom complet de l'enfant + son année de naissance
+                    const base = genererBaseCodeParent(nouvelEleve.prenom, nouvelEleve.dateNaissance);
                     let code = base;
                     let suffixe = 2;
                     while (true) {
