@@ -1703,12 +1703,28 @@ export default function App() {
       }
 
       const { code, erreur: errCode } = await genererCodeParentServeur(inserted.id, p.prenom, p.date_naissance);
+      const montantInscription = p.montant || (p.formule === "annee" ? 145000 : 55000);
       const { error: errCompte } = await supabase.from("comptes_paiement").upsert([{
         eleve_id: inserted.id,
         eleve_nom: p.prenom + " " + p.nom,
-        montant_du: p.montant || (p.formule === "annee" ? 145000 : 55000),
+        montant_du: montantInscription,
         formule: p.formule || "trimestre",
       }], { onConflict: "eleve_id" });
+      // Si le paiement a été fait en ligne au moment de l'inscription (avant même que
+      // ce compte élève existe), le webhook FedaPay n'a pas pu l'enregistrer faute
+      // d'eleve_id — on rattrape ce versement ici pour que l'espace parent ne montre
+      // pas ce montant comme "en attente" alors qu'il a déjà été réglé.
+      if (p.mode_paiement === "enligne") {
+        const { data: versementExistant } = await supabase
+          .from("versements_eleves").select("id").eq("eleve_id", inserted.id).maybeSingle();
+        if (!versementExistant) {
+          await supabase.from("versements_eleves").insert([{
+            eleve_id: inserted.id, eleve_nom: p.prenom + " " + p.nom,
+            montant: montantInscription, mode: "En ligne (FedaPay)",
+            date: (p.created_at || new Date().toISOString()).slice(0, 10),
+          }]);
+        }
+      }
       chargerEleves();
       chargerComptesPaiement();
       chargerCodesParents();
