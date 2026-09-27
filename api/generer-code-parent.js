@@ -4,22 +4,26 @@
 // client avec la clé anon.
 const { createClient } = require("@supabase/supabase-js");
 
-module.exports = async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
-    return res.status(500).json({ error: "SUPABASE_SERVICE_ROLE_KEY non configurée sur le serveur." });
-  }
-
-  const { eleveId, prenom, dateNaissance } = req.body || {};
-  if (!eleveId || !prenom) {
-    return res.status(400).json({ error: "eleveId et prenom sont requis." });
-  }
-
-  const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, serviceKey);
-
+export default async function handler(req, res) {
   try {
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceKey) {
+      return res.status(500).json({ error: "SUPABASE_SERVICE_ROLE_KEY non configurée sur le serveur." });
+    }
+
+    let body = req.body;
+    if (typeof body === "string") {
+      try { body = JSON.parse(body); } catch (e) { body = {}; }
+    }
+    const { eleveId, prenom, dateNaissance } = body || {};
+    if (!eleveId || !prenom) {
+      return res.status(400).json({ error: "eleveId et prenom sont requis." });
+    }
+
+    const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, serviceKey);
+
     const lettres = String(prenom)
       .normalize("NFD").replace(/[̀-ͯ]/g, "")
       .toUpperCase().replace(/[^A-Z]/g, "");
@@ -45,4 +49,4 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     return res.status(500).json({ error: (e && e.message) || "Erreur inconnue." });
   }
-};
+}
