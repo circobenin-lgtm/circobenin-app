@@ -4185,9 +4185,15 @@ export default function App() {
               : 0;
             const enAttenteEstimee = montantDu === 0 && montantEstime > 0;
             const attenteAffichee = enAttenteEstimee ? montantEstime : reste;
+            const totalDuAffiche = enAttenteEstimee ? montantEstime : montantDu;
             return (
               <div>
-                <div className="grid-stats-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+                <div className="grid-stats-4" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+                  <Card style={{ textAlign: "center", borderTop: `4px solid ${C.bleu}` }}>
+                    <div style={{ fontSize: 28, marginBottom: 6 }}>🧾</div>
+                    <div style={{ fontWeight: 700, fontSize: 20, color: C.bleu }}>{totalDuAffiche.toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: C.gris }}>FCFA dus au total{enAttenteEstimee ? " (estimé)" : ""}</div>
+                  </Card>
                   <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
                     <div style={{ fontSize: 28, marginBottom: 6 }}>✅</div>
                     <div style={{ fontWeight: 700, fontSize: 20, color: C.vert }}>{totalPaye.toLocaleString()}</div>
