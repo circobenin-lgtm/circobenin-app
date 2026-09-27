@@ -4185,10 +4185,16 @@ export default function App() {
           {/* ── ESPACE PARENT : PAIEMENTS ── */}
           {page === "paiements_enfant" && eleveActuel && (() => {
             const formuleActuelle = compteEleveActuel ? compteEleveActuel.formule : (reinscriptionEnfant && reinscriptionEnfant.formule);
-            // Formule "trimestre" : le montant enregistré est celui d'UN trimestre — le total
-            // dû sur l'année couvre les 3 trimestres + les frais d'inscription (une fois).
+            // Formule "trimestre" : le montant enregistré (à l'inscription) couvre les frais
+            // d'inscription (10 000, une fois) + LE PREMIER trimestre — pas juste un trimestre
+            // seul. Le total dû sur l'année = frais d'inscription + 3 trimestres.
             // Formule "annee" : le montant enregistré couvre déjà l'année entière.
-            const totalAnnee = m => formuleActuelle === "annee" ? m : (m > 0 ? FRAIS_INSCRIPTION + m * 3 : 0);
+            const totalAnnee = m => {
+              if (formuleActuelle === "annee") return m;
+              if (m <= 0) return 0;
+              const prixTrimestre = m - FRAIS_INSCRIPTION;
+              return FRAIS_INSCRIPTION + prixTrimestre * 3;
+            };
             const montantDu = totalAnnee(compteEleveActuel ? compteEleveActuel.montant_du : 0);
             const totalPaye = versementsEleveActuel.reduce((a, v) => a + v.montant, 0);
             const reste = Math.max(montantDu - totalPaye, 0);
