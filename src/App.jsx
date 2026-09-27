@@ -63,6 +63,7 @@ const NAV_PAR_ROLE = {
     { id: "presences", icon: "✓", label: "Présences" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
+    { id: "annonces", icon: "📣", label: "Annonces" },
     { id: "projets", icon: "◉", label: "Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
@@ -96,8 +97,10 @@ const NAV_PAR_ROLE = {
   formateur: [
     { id: "mon_planning", icon: "◫", label: "Mon Planning" },
     { id: "presences", icon: "✓", label: "Présences" },
+    { id: "mes_eleves", icon: "◈", label: "Mes élèves" },
     { id: "mon_bilan", icon: "⏱", label: "Mon Bilan" },
     { id: "pointage", icon: "⏲", label: "Pointage" },
+    { id: "annonces", icon: "📣", label: "Annonces" },
     { id: "mes_projets", icon: "◉", label: "Mes Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -1425,6 +1428,9 @@ export default function App() {
   const [suiviAdhesions, setSuiviAdhesions] = useState([]);
   const [codesParents, setCodesParents] = useState([]);
   const [formuleForm, setFormuleForm] = useState("trimestre");
+  // Annonces de la direction, visibles par tous les intervenants
+  const [annonces, setAnnonces] = useState([]);
+  const [annonceForm, setAnnonceForm] = useState({ titre: "", message: "" });
   const [sessionRestauree, setSessionRestauree] = useState(false);
   // Espace parent — sa propre réinscription 26-27, et un comptage anonyme
   // (colonne "creneau" seule, sans nom/email/téléphone des autres familles)
@@ -1639,6 +1645,17 @@ export default function App() {
 
   useEffect(() => {
     if (role) chargerEleves();
+  }, [role]);
+
+  const chargerAnnonces = async () => {
+    try {
+      const { data } = await supabase.from("annonces").select("*").order("created_at", { ascending: false }).limit(30);
+      setAnnonces(data || []);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role === "directeur" || role === "admin" || role === "formateur" || role === "ca") chargerAnnonces();
   }, [role]);
 
   const chargerComptesPaiement = async () => {
@@ -2441,9 +2458,11 @@ export default function App() {
             <div>
               {!activeCours ? (
                 <div>
-                  <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>Sélectionnez un créneau pour prendre les présences</p>
+                  <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>
+                    {role === "formateur" ? "Sélectionnez un de vos créneaux pour prendre les présences" : "Sélectionnez un créneau pour prendre les présences"}
+                  </p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-                    {COURS_RENTREE.map(c => {
+                    {(role === "formateur" ? COURS_RENTREE.filter(c => c.formateurs.includes(nomIntervenant)) : COURS_RENTREE).map(c => {
                       const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
                       const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
                       return (
@@ -2470,7 +2489,10 @@ export default function App() {
                     const elevesClasse = cours ? elevesState.filter(e => e.classe && (e.classe.includes(cours.heure) || e.classe.includes(cours.jour + " " + cours.heure))) : [];
                     const nbEleves = elevesClasse.length || (cours ? cours.nb : 0);
                     const pres = presencesCours[activeCours] || {};
-                    const isReadOnly = role === "directeur" || role === "admin";
+                    // Un intervenant ne peut cocher les présences que de ses propres cours ;
+                    // pour les autres (et pour Direction/Admin), l'écran reste en lecture seule.
+                    const estMonCours = cours && cours.formateurs && cours.formateurs.includes(nomIntervenant);
+                    const isReadOnly = role === "directeur" || role === "admin" || (role === "formateur" && !estMonCours);
                     return (
                       <div>
                         <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
@@ -2566,6 +2588,88 @@ export default function App() {
                     );
                   })()}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ── MES ÉLÈVES (formateur) ── */}
+          {page === "mes_eleves" && (
+            <div>
+              <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>Les élèves de vos cours, par créneau.</p>
+              {(() => {
+                const mesCours = COURS_RENTREE.filter(c => c.formateurs.includes(nomIntervenant));
+                if (mesCours.length === 0) return <p style={{ color: C.gris, fontSize: 14 }}>Aucun cours ne vous est encore assigné.</p>;
+                const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+                return mesCours.map(c => {
+                  const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                  return (
+                    <Card key={c.id} style={{ marginBottom: 20 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
+                        <Badge text={joursComplets[c.jour]} bg={C.vert} color="#fff" />
+                        <Badge text={c.heure + " – " + c.fin} bg={C.fond} color={C.vert} />
+                        <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700 }}>{c.age}</div>
+                      </div>
+                      {elevesduCours.length === 0 ? (
+                        <p style={{ color: C.gris, fontSize: 13 }}>Aucun élève inscrit sur ce créneau pour l'instant.</p>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          {elevesduCours.map(e => {
+                            const t = calculerTauxPresence(e.id, "septembre");
+                            return (
+                              <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, background: C.grisClair }}>
+                                <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.violet, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{e.nom[0]}</div>
+                                <div>
+                                  <div style={{ fontSize: 14, fontWeight: 600 }}>{e.nom}</div>
+                                  <div style={{ fontSize: 11, color: C.gris }}>{e.age ? e.age + " ans" : "—"} · Taux de présence : {t.taux === null ? "—" : t.taux + "%"}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                });
+              })()}
+            </div>
+          )}
+
+          {/* ── ANNONCES DE LA DIRECTION ── */}
+          {page === "annonces" && (
+            <div>
+              {(role === "directeur" || role === "admin") && (
+                <Card style={{ marginBottom: 24 }}>
+                  <SectionTitle>Publier une annonce</SectionTitle>
+                  <input value={annonceForm.titre} onChange={e => setAnnonceForm({ ...annonceForm, titre: e.target.value })}
+                    placeholder="Titre" style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e5e7eb", fontSize: 14, marginBottom: 10, boxSizing: "border-box" }} />
+                  <textarea value={annonceForm.message} onChange={e => setAnnonceForm({ ...annonceForm, message: e.target.value })}
+                    placeholder="Message pour l'équipe d'intervenants..." rows={4}
+                    style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${C.grisClair}`, fontSize: 14, background: C.fond, outline: "none", fontFamily: FB, resize: "none", boxSizing: "border-box", marginBottom: 12 }} />
+                  <Btn onClick={async () => {
+                    if (!annonceForm.titre.trim() || !annonceForm.message.trim()) return;
+                    const { error } = await supabase.from("annonces").insert([{
+                      titre: annonceForm.titre.trim(), message: annonceForm.message.trim(),
+                      auteur: nomIntervenant || (role === "directeur" ? "Direction" : "Admin"),
+                    }]);
+                    if (error) { alert("Erreur lors de la publication : " + error.message); return; }
+                    setAnnonceForm({ titre: "", message: "" });
+                    chargerAnnonces();
+                  }}>Publier →</Btn>
+                </Card>
+              )}
+              {annonces.length === 0 ? (
+                <p style={{ color: C.gris, fontSize: 14 }}>Aucune annonce pour l'instant.</p>
+              ) : (
+                annonces.map(a => (
+                  <Card key={a.id} style={{ marginBottom: 14, borderLeft: `4px solid ${C.vert}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
+                      <div style={{ fontFamily: FT, fontWeight: 700, fontSize: 16 }}>{a.titre}</div>
+                      <div style={{ fontSize: 12, color: C.gris, whiteSpace: "nowrap" }}>{a.created_at ? new Date(a.created_at).toLocaleDateString("fr-FR") : ""}</div>
+                    </div>
+                    <div style={{ fontSize: 14, color: C.noir, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{a.message}</div>
+                    {a.auteur && <div style={{ fontSize: 12, color: C.gris, marginTop: 10 }}>— {a.auteur}</div>}
+                  </Card>
+                ))
               )}
             </div>
           )}
