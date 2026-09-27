@@ -207,14 +207,17 @@ const COURS_RENTREE = [
 
 const JOURS_LABELS = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
 
-// ── Année 2026-2027 : frais d'inscription (une fois) + dates de rappel de trimestre.
-// Dates par défaut (à ajuster si le calendrier scolaire réel diffère) : rentrée de
-// septembre, puis début janvier et mi-avril.
+// ── Année 2026-2027 : frais d'inscription (une fois) + fenêtres de rappel de
+// paiement, la dernière semaine avant chaque grande coupure — pour que les
+// parents règlent avant de partir en vacances plutôt qu'à la rentrée.
+// Dates recoupées entre le calendrier de l'école Montaigne et le calendrier
+// scolaire officiel du Bénin 2026-2027 (les deux s'accordent sur ces coupures) :
+// vacances de Noël → dernier jour de classe le vendredi 18 décembre 2026 ;
+// vacances de février/mars → dernier jour de classe le vendredi 19 février 2027.
 const FRAIS_INSCRIPTION = 10000;
 const TRIMESTRES_2026_2027 = [
-  { label: "1er trimestre", debut: "2026-09-01" },
-  { label: "2e trimestre", debut: "2027-01-05" },
-  { label: "3e trimestre", debut: "2027-04-20" },
+  { label: "2e trimestre — avant les vacances de décembre", debut: "2026-12-14", fin: "2026-12-18" },
+  { label: "3e trimestre — avant les vacances de mars", debut: "2027-02-15", fin: "2027-02-19" },
 ];
 
 // ── Correspondance créneau texte ↔ cours (le formulaire public enregistre le
@@ -4207,12 +4210,14 @@ export default function App() {
             const enAttenteEstimee = montantDu === 0 && montantEstime > 0;
             const attenteAffichee = enAttenteEstimee ? montantEstime : reste;
             const totalDuAffiche = enAttenteEstimee ? montantEstime : montantDu;
-            // Rappel : trimestre commencé il y a 14 jours ou moins, et solde encore dû.
+            // Rappel : on est dans la dernière semaine avant une coupure (Noël ou
+            // février/mars), et un solde reste dû.
             const aujourdhui = new Date();
             const rappelTrimestre = attenteAffichee > 0 ? TRIMESTRES_2026_2027.find(t => {
               const debut = new Date(t.debut);
-              const finFenetre = new Date(debut.getTime() + 14 * 24 * 60 * 60 * 1000);
-              return aujourdhui >= debut && aujourdhui <= finFenetre;
+              const fin = new Date(t.fin);
+              fin.setHours(23, 59, 59, 999);
+              return aujourdhui >= debut && aujourdhui <= fin;
             }) : null;
             return (
               <div>
@@ -4221,9 +4226,9 @@ export default function App() {
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ fontSize: 24 }}>📣</div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>Rappel — {rappelTrimestre.label} commencé</div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>Rappel — {rappelTrimestre.label}</div>
                         <div style={{ fontSize: 13, color: C.gris, marginTop: 2 }}>
-                          Il reste {attenteAffichee.toLocaleString()} FCFA à régler pour la suite de l'année.
+                          Il reste {attenteAffichee.toLocaleString()} FCFA à régler avant les vacances.
                         </div>
                       </div>
                     </div>
