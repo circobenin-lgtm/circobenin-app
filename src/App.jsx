@@ -61,6 +61,7 @@ const NAV_PAR_ROLE = {
     { id: "suivi_adhesions", icon: "🤝", label: "Adhésions" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "presences", icon: "✓", label: "Présences" },
+    { id: "assigner_cours", icon: "👥", label: "Assigner les cours" },
     { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "annonces", icon: "📣", label: "Annonces" },
@@ -1431,6 +1432,11 @@ export default function App() {
   // Annonces de la direction, visibles par tous les intervenants
   const [annonces, setAnnonces] = useState([]);
   const [annonceForm, setAnnonceForm] = useState({ titre: "", message: "" });
+  // Assignation réelle des cours aux intervenants (qui fait quel cours) — tant
+  // qu'un cours n'a pas d'assignation en base, il reste ouvert à tous les
+  // intervenants (la répartition Jean-Luc/Spéro codée dans COURS_RENTREE n'est
+  // qu'un gabarit de départ, pas la réalité du terrain).
+  const [assignationsCours, setAssignationsCours] = useState({});
   const [sessionRestauree, setSessionRestauree] = useState(false);
   // Espace parent — sa propre réinscription 26-27, et un comptage anonyme
   // (colonne "creneau" seule, sans nom/email/téléphone des autres familles)
@@ -1657,6 +1663,36 @@ export default function App() {
   useEffect(() => {
     if (role === "directeur" || role === "admin" || role === "formateur" || role === "ca") chargerAnnonces();
   }, [role]);
+
+  const chargerAssignationsCours = async () => {
+    try {
+      const { data } = await supabase.from("assignations_cours").select("*");
+      const map = {};
+      (data || []).forEach(r => { if (!map[r.cours_id]) map[r.cours_id] = []; map[r.cours_id].push(r.formateur); });
+      setAssignationsCours(map);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role === "directeur" || role === "admin" || role === "formateur") chargerAssignationsCours();
+  }, [role]);
+
+  // Intervenant(s) réellement assigné(s) à un cours, ou null si ce n'est pas
+  // encore décidé (auquel cas le cours reste ouvert à tous les intervenants).
+  const formateursEffectifs = coursId => {
+    const a = assignationsCours[coursId];
+    return a && a.length > 0 ? a : null;
+  };
+
+  const toggleAssignationCours = async (coursId, formateur) => {
+    const assignes = assignationsCours[coursId] || [];
+    if (assignes.includes(formateur)) {
+      await supabase.from("assignations_cours").delete().eq("cours_id", coursId).eq("formateur", formateur);
+    } else {
+      await supabase.from("assignations_cours").insert([{ cours_id: coursId, formateur }]);
+    }
+    chargerAssignationsCours();
+  };
 
   const chargerComptesPaiement = async () => {
     try {
@@ -2462,15 +2498,20 @@ export default function App() {
                     {role === "formateur" ? "Sélectionnez un de vos créneaux pour prendre les présences" : "Sélectionnez un créneau pour prendre les présences"}
                   </p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
-                    {(role === "formateur" ? COURS_RENTREE.filter(c => c.formateurs.includes(nomIntervenant)) : COURS_RENTREE).map(c => {
+                    {(role === "formateur" ? COURS_RENTREE.filter(c => {
+                      const fe = formateursEffectifs(c.id);
+                      return fe === null || fe.includes(nomIntervenant);
+                    }) : COURS_RENTREE).map(c => {
                       const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
                       const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                      const fe = formateursEffectifs(c.id);
                       return (
                         <Card key={c.id} style={{ cursor: "pointer", borderLeft: `4px solid ${C.or}` }}
                           onClick={() => setActiveCours(c.id)}>
-                          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                          <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                             <Badge text={joursComplets[c.jour]} bg={C.vert} color="#fff" />
                             <Badge text={c.heure} bg={C.fond} color={C.vert} />
+                            {role === "formateur" && fe === null && <Badge text="Pas encore assigné" bg="#FFF8E1" color={C.orange} />}
                           </div>
                           <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700 }}>{c.age}</div>
                           <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>{c.heure} – {c.fin} · {elevesduCours.length} élève(s)</div>
@@ -2490,8 +2531,10 @@ export default function App() {
                     const nbEleves = elevesClasse.length || (cours ? cours.nb : 0);
                     const pres = presencesCours[activeCours] || {};
                     // Un intervenant ne peut cocher les présences que de ses propres cours ;
-                    // pour les autres (et pour Direction/Admin), l'écran reste en lecture seule.
-                    const estMonCours = cours && cours.formateurs && cours.formateurs.includes(nomIntervenant);
+                    // tant qu'un cours n'a pas d'assignation décidée par la direction, il
+                    // reste ouvert à tous. Pour Direction/Admin, toujours en lecture seule.
+                    const feCours = cours ? formateursEffectifs(cours.id) : null;
+                    const estMonCours = feCours === null || feCours.includes(nomIntervenant);
                     const isReadOnly = role === "directeur" || role === "admin" || (role === "formateur" && !estMonCours);
                     return (
                       <div>
@@ -2592,22 +2635,67 @@ export default function App() {
             </div>
           )}
 
+          {/* ── ASSIGNER LES COURS (directeur/admin) ── */}
+          {page === "assigner_cours" && (
+            <div>
+              <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>
+                Décide qui donne quel cours. Tant qu'un créneau n'a aucune case cochée, il reste visible et modifiable par tous les intervenants dans leur espace Présences.
+              </p>
+              {(() => {
+                const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+                const noms = Object.keys(INTERVENANTS);
+                return COURS_RENTREE.map(c => {
+                  const assignes = assignationsCours[c.id] || [];
+                  return (
+                    <Card key={c.id} style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                        <div>
+                          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                            <Badge text={joursComplets[c.jour]} bg={C.vert} color="#fff" />
+                            <Badge text={c.heure + " – " + c.fin} bg={C.fond} color={C.vert} />
+                          </div>
+                          <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700 }}>{c.age}</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                          {noms.map(nom => {
+                            const coche = assignes.includes(nom);
+                            return (
+                              <label key={nom} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, color: coche ? C.vert : C.gris }}>
+                                <input type="checkbox" checked={coche} onChange={() => toggleAssignationCours(c.id, nom)} />
+                                {nom}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                });
+              })()}
+            </div>
+          )}
+
           {/* ── MES ÉLÈVES (formateur) ── */}
           {page === "mes_eleves" && (
             <div>
-              <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>Les élèves de vos cours, par créneau.</p>
+              <p style={{ color: C.gris, fontSize: 14, marginBottom: 20 }}>Les élèves de vos cours, par créneau. Un créneau pas encore assigné par la direction reste visible ici pour tous les intervenants.</p>
               {(() => {
-                const mesCours = COURS_RENTREE.filter(c => c.formateurs.includes(nomIntervenant));
+                const mesCours = COURS_RENTREE.filter(c => {
+                  const fe = formateursEffectifs(c.id);
+                  return fe === null || fe.includes(nomIntervenant);
+                });
                 if (mesCours.length === 0) return <p style={{ color: C.gris, fontSize: 14 }}>Aucun cours ne vous est encore assigné.</p>;
                 const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
                 return mesCours.map(c => {
                   const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                  const fe = formateursEffectifs(c.id);
                   return (
                     <Card key={c.id} style={{ marginBottom: 20 }}>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
                         <Badge text={joursComplets[c.jour]} bg={C.vert} color="#fff" />
                         <Badge text={c.heure + " – " + c.fin} bg={C.fond} color={C.vert} />
                         <div style={{ fontFamily: FT, fontSize: 16, fontWeight: 700 }}>{c.age}</div>
+                        {fe === null && <Badge text="Pas encore assigné" bg="#FFF8E1" color={C.orange} />}
                       </div>
                       {elevesduCours.length === 0 ? (
                         <p style={{ color: C.gris, fontSize: 13 }}>Aucun élève inscrit sur ce créneau pour l'instant.</p>
