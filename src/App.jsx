@@ -211,14 +211,6 @@ const JOURS_LABELS = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi"
 // créneau choisi comme du texte "Lun 17h15 - 18h45", pas un id) ──
 const normCreneau = s => (s || "").trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
 const cleCreneauCours = c => normCreneau(`${c.jour} ${c.heure} - ${c.fin}`);
-// Code parent = prénom complet de l'enfant (sans accents/espaces, en majuscules) + son année de naissance.
-const genererBaseCodeParent = (prenom, dateNaissance) => {
-  const p = (prenom || "")
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toUpperCase().replace(/[^A-Z]/g, "");
-  const annee = dateNaissance ? new Date(dateNaissance).getFullYear() : new Date().getFullYear();
-  return p + annee;
-};
 const creneauxTokens = creneauStr => (creneauStr || "").split("|").map(s => normCreneau(s)).filter(Boolean);
 const coursDeLigne = (ligne, coursListe = COURS_RENTREE) => {
   const tokens = creneauxTokens(ligne && ligne.creneau);
@@ -1651,6 +1643,24 @@ export default function App() {
     if (role) chargerComptesPaiement();
   }, [role]);
 
+  // Génère le code parent via la fonction serveur (clé service_role, qui
+  // contourne la RLS bloquant l'écriture anon sur codes_parents).
+  // Retourne { code } ou { erreur }.
+  const genererCodeParentServeur = async (eleveId, prenom, dateNaissance) => {
+    try {
+      const res = await fetch("/api/generer-code-parent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eleveId, prenom, dateNaissance }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { erreur: data.error || ("Erreur serveur (" + res.status + ")") };
+      return { code: data.code };
+    } catch (e) {
+      return { erreur: (e && e.message) || "Impossible de joindre le serveur." };
+    }
+  };
+
   // Convertit une inscription en ligne (table preinscriptions, sans compte)
   // en un vrai compte élève + code parent + compte de paiement.
   const creerCompteDepuisInscription = async (p) => {
@@ -1692,16 +1702,7 @@ export default function App() {
         return;
       }
 
-      const base = genererBaseCodeParent(p.prenom, p.date_naissance);
-      let code = base;
-      let suffixe = 2;
-      while (true) {
-        const { data: existant } = await supabase.from("codes_parents").select("code").eq("code", code).maybeSingle();
-        if (!existant) break;
-        code = base + "-" + suffixe;
-        suffixe++;
-      }
-      const { error: errCode } = await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
+      const { code, erreur: errCode } = await genererCodeParentServeur(inserted.id, p.prenom, p.date_naissance);
       const { error: errCompte } = await supabase.from("comptes_paiement").upsert([{
         eleve_id: inserted.id,
         eleve_nom: p.prenom + " " + p.nom,
@@ -1712,7 +1713,7 @@ export default function App() {
       chargerComptesPaiement();
       chargerCodesParents();
       if (errCode) {
-        alert(p.prenom + " " + p.nom + " — compte élève créé, mais le code parent n'a PAS pu être enregistré :\n" + errCode.message);
+        alert(p.prenom + " " + p.nom + " — compte élève créé, mais le code parent n'a PAS pu être enregistré :\n" + errCode);
       } else if (errCompte) {
         alert(p.prenom + " " + p.nom + " — compte créé avec le code " + code + ", mais le compte de paiement n'a pas pu être enregistré :\n" + errCompte.message);
       } else {
@@ -1728,19 +1729,10 @@ export default function App() {
   const genererCodeParentPourEleve = async (p, eleve) => {
     try {
       const dateNaiss = p.date_naissance || eleve.dateNaissance;
-      const base = genererBaseCodeParent(p.prenom || eleve.prenom, dateNaiss);
-      let code = base;
-      let suffixe = 2;
-      while (true) {
-        const { data: existant } = await supabase.from("codes_parents").select("code").eq("code", code).maybeSingle();
-        if (!existant) break;
-        code = base + "-" + suffixe;
-        suffixe++;
-      }
-      const { error } = await supabase.from("codes_parents").insert([{ code, eleve_id: eleve.id }]);
+      const { code, erreur } = await genererCodeParentServeur(eleve.id, p.prenom || eleve.prenom, dateNaiss);
       chargerCodesParents();
-      if (error) {
-        alert("Impossible d'enregistrer le code parent de " + eleve.prenom + " :\n" + error.message);
+      if (erreur) {
+        alert("Impossible d'enregistrer le code parent de " + eleve.prenom + " :\n" + erreur);
       } else {
         alert(eleve.prenom + " — code parent généré ✓\n\nCode à communiquer : " + code);
       }
@@ -4606,17 +4598,7 @@ export default function App() {
                     telephone_parent: nouvelEleve.telephoneParent || null,
                   }]).select().single();
                   if (!error && inserted) {
-                    // Code parent = prénom complet de l'enfant + son année de naissance
-                    const base = genererBaseCodeParent(nouvelEleve.prenom, nouvelEleve.dateNaissance);
-                    let code = base;
-                    let suffixe = 2;
-                    while (true) {
-                      const { data: existant } = await supabase.from("codes_parents").select("code").eq("code", code).maybeSingle();
-                      if (!existant) break;
-                      code = base + "-" + suffixe;
-                      suffixe++;
-                    }
-                    await supabase.from("codes_parents").insert([{ code, eleve_id: inserted.id }]);
+                    const { code, erreur: errCode } = await genererCodeParentServeur(inserted.id, nouvelEleve.prenom, nouvelEleve.dateNaissance);
                     // Créer compte paiement automatiquement (1 créneau par défaut)
                     await supabase.from("comptes_paiement").upsert([{
                       eleve_id: inserted.id,
@@ -4626,7 +4608,12 @@ export default function App() {
                     }], { onConflict: "eleve_id" });
                     chargerEleves();
                     chargerComptesPaiement();
-                    alert(nouvelEleve.prenom + " inscrit(e) ✓\n\nCode parent à communiquer : " + code);
+                    chargerCodesParents();
+                    if (errCode) {
+                      alert(nouvelEleve.prenom + " inscrit(e), mais le code parent n'a pas pu être enregistré :\n" + errCode);
+                    } else {
+                      alert(nouvelEleve.prenom + " inscrit(e) ✓\n\nCode parent à communiquer : " + code);
+                    }
                   }
                 } catch (e) {}
                 setNouvelEleve({ prenom: "", nom: "", dateNaissance: "", email: "", discipline: "Cirque", classe: "", nomParent: "", telephoneParent: "" });
