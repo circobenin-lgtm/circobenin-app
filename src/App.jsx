@@ -207,6 +207,16 @@ const COURS_RENTREE = [
 
 const JOURS_LABELS = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
 
+// ── Année 2026-2027 : frais d'inscription (une fois) + dates de rappel de trimestre.
+// Dates par défaut (à ajuster si le calendrier scolaire réel diffère) : rentrée de
+// septembre, puis début janvier et mi-avril.
+const FRAIS_INSCRIPTION = 10000;
+const TRIMESTRES_2026_2027 = [
+  { label: "1er trimestre", debut: "2026-09-01" },
+  { label: "2e trimestre", debut: "2027-01-05" },
+  { label: "3e trimestre", debut: "2027-04-20" },
+];
+
 // ── Correspondance créneau texte ↔ cours (le formulaire public enregistre le
 // créneau choisi comme du texte "Lun 17h15 - 18h45", pas un id) ──
 const normCreneau = s => (s || "").trim().toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ");
@@ -4174,20 +4184,45 @@ export default function App() {
 
           {/* ── ESPACE PARENT : PAIEMENTS ── */}
           {page === "paiements_enfant" && eleveActuel && (() => {
-            const montantDu = compteEleveActuel ? compteEleveActuel.montant_du : 0;
+            const formuleActuelle = compteEleveActuel ? compteEleveActuel.formule : (reinscriptionEnfant && reinscriptionEnfant.formule);
+            // Formule "trimestre" : le montant enregistré est celui d'UN trimestre — le total
+            // dû sur l'année couvre les 3 trimestres + les frais d'inscription (une fois).
+            // Formule "annee" : le montant enregistré couvre déjà l'année entière.
+            const totalAnnee = m => formuleActuelle === "annee" ? m : (m > 0 ? FRAIS_INSCRIPTION + m * 3 : 0);
+            const montantDu = totalAnnee(compteEleveActuel ? compteEleveActuel.montant_du : 0);
             const totalPaye = versementsEleveActuel.reduce((a, v) => a + v.montant, 0);
             const reste = Math.max(montantDu - totalPaye, 0);
             const dernierPaiement = versementsEleveActuel[0];
             // Si l'administration n'a pas encore créé de compte de paiement (montantDu à 0),
             // on affiche le montant issu de la réinscription en ligne comme estimation "à venir".
             const montantEstime = reinscriptionEnfant && reinscriptionEnfant.mode_paiement !== "enligne"
-              ? (reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 145000 : 55000))
+              ? totalAnnee(reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 145000 : 55000))
               : 0;
             const enAttenteEstimee = montantDu === 0 && montantEstime > 0;
             const attenteAffichee = enAttenteEstimee ? montantEstime : reste;
             const totalDuAffiche = enAttenteEstimee ? montantEstime : montantDu;
+            // Rappel : trimestre commencé il y a 14 jours ou moins, et solde encore dû.
+            const aujourdhui = new Date();
+            const rappelTrimestre = attenteAffichee > 0 ? TRIMESTRES_2026_2027.find(t => {
+              const debut = new Date(t.debut);
+              const finFenetre = new Date(debut.getTime() + 14 * 24 * 60 * 60 * 1000);
+              return aujourdhui >= debut && aujourdhui <= finFenetre;
+            }) : null;
             return (
               <div>
+                {rappelTrimestre && (
+                  <Card style={{ marginBottom: 20, borderLeft: `4px solid ${C.orange}`, background: "#fff8ec" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ fontSize: 24 }}>📣</div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>Rappel — {rappelTrimestre.label} commencé</div>
+                        <div style={{ fontSize: 13, color: C.gris, marginTop: 2 }}>
+                          Il reste {attenteAffichee.toLocaleString()} FCFA à régler pour la suite de l'année.
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                )}
                 <div className="grid-stats-4" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
                   <Card style={{ textAlign: "center", borderTop: `4px solid ${C.bleu}` }}>
                     <div style={{ fontSize: 28, marginBottom: 6 }}>🧾</div>
