@@ -1203,7 +1203,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
 }
 
 export default function App() {
-  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'secretariat': 'Secretcirc@531', 'formateur': 'Profcirc@531'};
+  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@741', 'secretariat': 'Secretcirc@531', 'formateur': 'Profcirc@531'};
   const CODES_INTERVENANTS = {'Jean-Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
   const [role, setRole] = useState(null);
   const [page, setPage] = useState("dashboard");
