@@ -4583,7 +4583,11 @@ export default function App() {
               ? totalAnnee(reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 145000 : 55000))
               : 0;
             const enAttenteEstimee = montantDu === 0 && montantEstime > 0;
-            const attenteAffichee = enAttenteEstimee ? montantEstime : reste;
+            // Même en mode "estimé" (compte de paiement pas encore créé par
+            // l'administration), il faut déduire ce qui a déjà été versé —
+            // sinon un paiement enregistré (ex. en espèces via la Trésorerie)
+            // reste invisible et le solde affiché ne bouge jamais.
+            const attenteAffichee = enAttenteEstimee ? Math.max(montantEstime - totalPaye, 0) : reste;
             const totalDuAffiche = enAttenteEstimee ? montantEstime : montantDu;
             // Rappel : on est dans la dernière semaine avant une coupure (Noël ou
             // février/mars), et un solde reste dû.
@@ -4645,17 +4649,19 @@ export default function App() {
                       <Badge text="Payé" bg="#e8f5e9" color={C.vert} />
                     </div>
                   ))}
-                  {reste > 0 ? (
+                  {reste > 0 && !enAttenteEstimee ? (
                     <div style={{ marginTop: 20 }}>
                       <Btn onClick={() => setPage("payer")}>Effectuer un paiement de {reste.toLocaleString()} FCFA →</Btn>
                     </div>
                   ) : montantDu > 0 ? (
                     <div style={{ marginTop: 20, textAlign: "center", color: C.vert, fontSize: 14, fontWeight: 600 }}>✓ Compte à jour, aucun paiement en attente</div>
-                  ) : enAttenteEstimee ? (
+                  ) : enAttenteEstimee && attenteAffichee > 0 ? (
                     <div style={{ marginTop: 20, textAlign: "center" }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: C.orange }}>⏳ {montantEstime.toLocaleString()} FCFA à régler sur place</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: C.orange }}>⏳ {attenteAffichee.toLocaleString()} FCFA à régler sur place</div>
                       <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>D'après votre réinscription du {new Date(reinscriptionEnfant.created_at).toLocaleDateString("fr-FR")} — ce montant sera confirmé par l'administration une fois le règlement enregistré.</div>
                     </div>
+                  ) : enAttenteEstimee ? (
+                    <div style={{ marginTop: 20, textAlign: "center", color: C.vert, fontSize: 14, fontWeight: 600 }}>✓ Compte à jour, aucun paiement en attente</div>
                   ) : (
                     <div style={{ marginTop: 20, textAlign: "center", color: C.gris, fontSize: 13 }}>Aucun montant n'a encore été enregistré par l'administration pour cet élève.</div>
                   )}
