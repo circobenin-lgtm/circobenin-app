@@ -8,9 +8,19 @@ export default async function handler(req, res) {
   try {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    // On nettoie la valeur au cas où elle aurait été copiée-collée avec des
+    // espaces ou retours à la ligne autour (déjà arrivé) — et on vérifie
+    // qu'elle a bien la forme d'une clé Supabase (un JWT, donc "eyJ...")
+    // plutôt qu'un texte collé par erreur (ex. une commande de terminal),
+    // pour renvoyer un message clair au lieu d'un crash "Headers.set".
+    const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
     if (!serviceKey) {
-      return res.status(500).json({ error: "SUPABASE_SERVICE_ROLE_KEY non configurée sur le serveur." });
+      return res.status(500).json({ error: "SUPABASE_SERVICE_ROLE_KEY non configurée sur le serveur (variable vide)." });
+    }
+    if (/\s/.test(serviceKey) || !serviceKey.startsWith("eyJ")) {
+      return res.status(500).json({
+        error: "SUPABASE_SERVICE_ROLE_KEY mal configurée sur Vercel : la valeur enregistrée n'est pas une clé Supabase valide (elle contient probablement un copier-coller incorrect). Va dans Vercel → Settings → Environment Variables, remplace SUPABASE_SERVICE_ROLE_KEY par la clé service_role copiée depuis Supabase (Project Settings → API), sans espace ni retour à la ligne, puis redéploie.",
+      });
     }
 
     let body = req.body;
