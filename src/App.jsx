@@ -1333,6 +1333,73 @@ export default function App() {
 
   const [heuresEquipeMoisOffset, setHeuresEquipeMoisOffset] = useState(0);
   const [heuresEquipeIntervenant, setHeuresEquipeIntervenant] = useState(null);
+
+  // Taux horaire de chaque intervenant (renseigné par la direction — jamais
+  // inventé) et historique des paies déjà générées, pour automatiser la
+  // rémunération à partir des heures réellement pointées sans jamais payer
+  // deux fois le même mois.
+  const [tauxHoraireIntervenants, setTauxHoraireIntervenants] = useState({});
+  const [paiesIntervenants, setPaiesIntervenants] = useState([]);
+  const [tauxHoraireEnEdition, setTauxHoraireEnEdition] = useState("");
+
+  const chargerTauxHoraire = async () => {
+    try {
+      const { data } = await supabase.from("taux_horaire_intervenants").select("*");
+      const map = {};
+      (data || []).forEach(r => { map[r.intervenant] = r.taux_horaire; });
+      setTauxHoraireIntervenants(map);
+    } catch (e) {}
+  };
+  const chargerPaiesIntervenants = async () => {
+    try {
+      const { data } = await supabase.from("paies_intervenants").select("*").order("mois", { ascending: false });
+      setPaiesIntervenants(data || []);
+    } catch (e) {}
+  };
+  useEffect(() => {
+    if (role === "directeur" || role === "admin" || role === "secretariat") {
+      chargerTauxHoraire();
+      chargerPaiesIntervenants();
+    }
+  }, [role]);
+
+  const enregistrerTauxHoraire = async (intervenant, valeur) => {
+    const taux = parseFloat(valeur);
+    if (isNaN(taux) || taux < 0) return;
+    await supabase.from("taux_horaire_intervenants").upsert([{ intervenant, taux_horaire: taux }], { onConflict: "intervenant" });
+    setTauxHoraireEnEdition("");
+    chargerTauxHoraire();
+  };
+
+  // Génère la paie du mois affiché pour un intervenant, à partir de ses heures
+  // réellement pointées × son taux horaire, et l'enregistre en trésorerie
+  // (compte 632). Empêche toute double génération pour le même mois.
+  const payerIntervenant = async (intervenant, moisOffset) => {
+    const taux = tauxHoraireIntervenants[intervenant];
+    if (!taux) { alert("Renseignez d'abord le taux horaire de " + intervenant + "."); return; }
+    const bilan = calculerHeuresMensuelles(intervenant, moisOffset);
+    if (bilan.total <= 0) { alert("Aucune heure pointée ce mois-ci pour " + intervenant + "."); return; }
+    const moisStr = bilan.mois.toISOString().slice(0, 10);
+    const dejaPaye = paiesIntervenants.find(p => p.intervenant === intervenant && p.mois === moisStr);
+    if (dejaPaye) { alert(intervenant + " a déjà été payé(e) pour ce mois (" + dejaPaye.montant.toLocaleString() + " FCFA)."); return; }
+    const montant = Math.round(bilan.total * taux);
+    const nomMoisLibelle = bilan.mois.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    if (!window.confirm("Payer " + intervenant + " — " + bilan.total.toFixed(2) + "h × " + taux.toLocaleString() + " FCFA = " + montant.toLocaleString() + " FCFA pour " + nomMoisLibelle + " ?")) return;
+    const { error } = await supabase.from("paies_intervenants").insert([{
+      intervenant, mois: moisStr, heures: bilan.total, taux_horaire: taux, montant,
+    }]);
+    if (error) { alert("Erreur : " + error.message); return; }
+    await supabase.from("operations_caisse").insert([{
+      date: new Date().toISOString().slice(0, 10), projet: "Circo Bénin — fonctionnement", sens: "sortie",
+      compte_caisse: "571", compte_contrepartie: "632",
+      compte_debit: "632", compte_credit: "571",
+      montant, libelle: "Rémunération intervenant — " + intervenant + " (" + nomMoisLibelle + ", " + bilan.total.toFixed(2) + "h)",
+      saisi_par: nomIntervenant || role,
+    }]);
+    chargerPaiesIntervenants();
+    chargerOperationsCaisse();
+  };
+
   const [showModalCorrection, setShowModalCorrection] = useState(false);
   const [correctionForm, setCorrectionForm] = useState({ intervenant: "", lieu: "Circo Bénin", date: "", heureDebut: "", dureeH: "" });
 
@@ -1799,10 +1866,22 @@ export default function App() {
         const { data: versementExistant } = await supabase
           .from("versements_eleves").select("id").eq("eleve_id", inserted.id).maybeSingle();
         if (!versementExistant) {
+          const dateVersementInscription = (p.created_at || new Date().toISOString()).slice(0, 10);
           await supabase.from("versements_eleves").insert([{
             eleve_id: inserted.id, eleve_nom: p.prenom + " " + p.nom,
             montant: montantInscription, mode: "En ligne (FedaPay)",
-            date: (p.created_at || new Date().toISOString()).slice(0, 10),
+            date: dateVersementInscription,
+          }]);
+          // Même rattrapage côté trésorerie : ce paiement en ligne fait au moment
+          // de l'inscription doit apparaître dans le registre des opérations,
+          // comme le fait déjà le webhook FedaPay pour un paiement ultérieur.
+          await supabase.from("operations_caisse").insert([{
+            date: dateVersementInscription, projet: "Circo Bénin — fonctionnement", sens: "entree",
+            compte_caisse: "571", compte_contrepartie: "706",
+            compte_debit: "571", compte_credit: "706",
+            montant: montantInscription,
+            libelle: "Versement cotisation — " + p.prenom + " " + p.nom + " (En ligne — FedaPay)",
+            saisi_par: "Système (FedaPay)",
           }]);
         }
       }
@@ -2936,7 +3015,7 @@ export default function App() {
                       <Card>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {bilanTous.map(({ nom, bilan }) => (
-                            <div key={nom} onClick={() => setHeuresEquipeIntervenant(nom)} style={{
+                            <div key={nom} onClick={() => { setHeuresEquipeIntervenant(nom); setTauxHoraireEnEdition(""); }} style={{
                               display: "flex", alignItems: "center", gap: 12, padding: 12,
                               borderRadius: 10, cursor: "pointer", background: C.grisClair,
                             }}>
@@ -2964,36 +3043,75 @@ export default function App() {
                           const detail = pointagesHeures
                             .filter(p => p.intervenant === heuresEquipeIntervenant && new Date(p.debut) >= moisRef && new Date(p.debut) < finMois)
                             .sort((a, b) => new Date(b.debut) - new Date(a.debut));
+                          const taux = tauxHoraireIntervenants[heuresEquipeIntervenant];
+                          const dejaPaye = paiesIntervenants.find(p => p.intervenant === heuresEquipeIntervenant && p.mois === moisRef.toISOString().slice(0, 10));
+                          const peutPayer = role === "directeur" || role === "admin" || role === "secretariat";
                           return (
-                            <Card>
-                              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-                                <div style={{ width: 56, height: 56, borderRadius: "50%", background: C.violet, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700 }}>{heuresEquipeIntervenant[0]}</div>
-                                <div>
-                                  <div style={{ fontFamily: FT, fontSize: 20, color: C.violet }}>{heuresEquipeIntervenant}</div>
-                                  <div style={{ fontSize: 13, color: C.gris, textTransform: "capitalize" }}>{nomMois}</div>
+                            <div>
+                              <Card>
+                                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+                                  <div style={{ width: 56, height: 56, borderRadius: "50%", background: C.violet, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700 }}>{heuresEquipeIntervenant[0]}</div>
+                                  <div>
+                                    <div style={{ fontFamily: FT, fontSize: 20, color: C.violet }}>{heuresEquipeIntervenant}</div>
+                                    <div style={{ fontSize: 13, color: C.gris, textTransform: "capitalize" }}>{nomMois}</div>
+                                  </div>
+                                  <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                                    <div style={{ fontSize: 28, fontWeight: 700, color: C.violet }}>{bilan.total.toFixed(2)}h</div>
+                                    <div style={{ fontSize: 12, color: C.gris }}>{bilan.nbSeances} séance(s)</div>
+                                  </div>
                                 </div>
-                                <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                                  <div style={{ fontSize: 28, fontWeight: 700, color: C.violet }}>{bilan.total.toFixed(2)}h</div>
-                                  <div style={{ fontSize: 12, color: C.gris }}>{bilan.nbSeances} séance(s)</div>
-                                </div>
-                              </div>
-                              <SectionTitle>Détail des pointages</SectionTitle>
-                              {detail.length === 0 ? (
-                                <p style={{ color: C.gris, fontSize: 13 }}>Aucun pointage ce mois-ci pour cet intervenant.</p>
-                              ) : (
-                                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                                  {detail.map((p, i) => (
-                                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>
-                                      <span>{new Date(p.debut).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} — {p.lieu}</span>
-                                      <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                        <span style={{ fontWeight: 700, color: C.violet }}>{p.duree_h != null ? p.duree_h.toFixed(2) + "h" : "en cours"}</span>
-                                        <span onClick={() => supprimerPointage(p.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 16 }} title="Supprimer">✕</span>
-                                      </span>
+                                <SectionTitle>Détail des pointages</SectionTitle>
+                                {detail.length === 0 ? (
+                                  <p style={{ color: C.gris, fontSize: 13 }}>Aucun pointage ce mois-ci pour cet intervenant.</p>
+                                ) : (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                    {detail.map((p, i) => (
+                                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderRadius: 8, background: C.grisClair, fontSize: 13 }}>
+                                        <span>{new Date(p.debut).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} — {p.lieu}</span>
+                                        <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                          <span style={{ fontWeight: 700, color: C.violet }}>{p.duree_h != null ? p.duree_h.toFixed(2) + "h" : "en cours"}</span>
+                                          <span onClick={() => supprimerPointage(p.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 16 }} title="Supprimer">✕</span>
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </Card>
+
+                              {peutPayer && (
+                                <Card style={{ marginTop: 16 }}>
+                                  <SectionTitle>Rémunération</SectionTitle>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+                                    <span style={{ fontSize: 13, color: C.gris }}>Taux horaire :</span>
+                                    <input
+                                      type="number"
+                                      placeholder={taux ? String(taux) : "non renseigné"}
+                                      value={tauxHoraireEnEdition}
+                                      onChange={e => setTauxHoraireEnEdition(e.target.value)}
+                                      style={{ width: 110, padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd", fontSize: 13 }}
+                                    />
+                                    <span style={{ fontSize: 13, color: C.gris }}>FCFA / heure</span>
+                                    <Btn small onClick={() => enregistrerTauxHoraire(heuresEquipeIntervenant, tauxHoraireEnEdition || taux)}>Enregistrer</Btn>
+                                  </div>
+                                  {dejaPaye ? (
+                                    <div style={{ padding: "10px 14px", background: "#eafaf0", borderRadius: 10, fontSize: 13, color: "#1a7a4c" }}>
+                                      ✓ Déjà payé(e) pour ce mois : {dejaPaye.montant.toLocaleString()} FCFA ({dejaPaye.heures.toFixed(2)}h × {dejaPaye.taux_horaire.toLocaleString()} FCFA)
                                     </div>
-                                  ))}
-                                </div>
+                                  ) : (
+                                    <div>
+                                      {taux ? (
+                                        <div style={{ fontSize: 13, color: C.gris, marginBottom: 10 }}>
+                                          Estimation : {bilan.total.toFixed(2)}h × {taux.toLocaleString()} FCFA = <b>{Math.round(bilan.total * taux).toLocaleString()} FCFA</b>
+                                        </div>
+                                      ) : (
+                                        <div style={{ fontSize: 13, color: C.gris, marginBottom: 10 }}>Renseignez le taux horaire pour pouvoir générer la paie.</div>
+                                      )}
+                                      <Btn onClick={() => payerIntervenant(heuresEquipeIntervenant, heuresEquipeMoisOffset)}>Générer la paie du mois</Btn>
+                                    </div>
+                                  )}
+                                </Card>
                               )}
-                            </Card>
+                            </div>
                           );
                         })()}
                       </div>
