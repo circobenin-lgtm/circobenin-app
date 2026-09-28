@@ -1435,6 +1435,7 @@ export default function App() {
   const [operationForm, setOperationForm] = useState({
     date: "", projet: "Circo Bénin — fonctionnement", sens: "sortie",
     compteCaisse: "571", compteContrepartie: "601", montant: "", libelle: "", piece: null,
+    eleveLieId: "",
   });
   const [tresorerieFiltreProjet, setTresorerieFiltreProjet] = useState("tous");
 
@@ -1454,6 +1455,7 @@ export default function App() {
     setOperationForm({
       date: new Date().toISOString().slice(0, 10), projet: "Circo Bénin — fonctionnement", sens: "sortie",
       compteCaisse: "571", compteContrepartie: "601", montant: "", libelle: "", piece: null,
+      eleveLieId: "",
     });
     setShowModalOperation(true);
   };
@@ -1464,6 +1466,7 @@ export default function App() {
       date: op.date, projet: op.projet, sens: op.sens,
       compteCaisse: op.compte_caisse, compteContrepartie: op.compte_contrepartie,
       montant: op.montant.toString(), libelle: op.libelle, piece: op.piece_url || null,
+      eleveLieId: "",
     });
     setShowModalOperation(true);
   };
@@ -1487,6 +1490,20 @@ export default function App() {
       await supabase.from("operations_caisse").update(payload).eq("id", operationEnEdition);
     } else {
       await supabase.from("operations_caisse").insert([payload]);
+    }
+    // Si cette entrée correspond à la cotisation d'un élève (compte 706) et
+    // qu'un élève a été sélectionné, on enregistre aussi le versement côté
+    // élève — sinon l'opération reste invisible sur son espace parent, qui
+    // ne lit que versements_eleves (pas le registre de caisse général).
+    if (!operationEnEdition && f.sens === "entree" && f.compteContrepartie === "706" && f.eleveLieId) {
+      const eleveLie = elevesState.find(e => String(e.id) === String(f.eleveLieId));
+      if (eleveLie) {
+        await supabase.from("versements_eleves").insert([{
+          eleve_id: eleveLie.id, eleve_nom: (eleveLie.prenom + " " + eleveLie.nomFamille).trim(),
+          montant: montantNum, mode: "Espèces", date: f.date,
+        }]);
+        chargerComptesPaiement();
+      }
     }
     setShowModalOperation(false);
     chargerOperationsCaisse();
@@ -3935,6 +3952,16 @@ export default function App() {
                                 {COMPTES_SYCEBNL.filter(c => operationForm.sens === "entree" ? c.classe === 7 : (c.classe === 6 || c.classe === 4)).map(c => <option key={c.code} value={c.code}>{c.code} — {c.libelle}</option>)}
                               </select>
                             </div>
+                            {!operationEnEdition && operationForm.sens === "entree" && operationForm.compteContrepartie === "706" && (
+                              <div>
+                                <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Élève concerné (pour que ça apparaisse sur son espace parent)</div>
+                                <select value={operationForm.eleveLieId} onChange={e => setOperationForm({ ...operationForm, eleveLieId: e.target.value })}
+                                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                                  <option value="">— Aucun (ne pas lier à un élève) —</option>
+                                  {elevesState.map(e => <option key={e.id} value={e.id}>{e.prenom} {e.nomFamille}</option>)}
+                                </select>
+                              </div>
+                            )}
                           </div>
                           <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
                             <Btn small onClick={() => setShowModalOperation(false)} style={{ background: C.grisClair, color: C.gris }}>Annuler</Btn>
