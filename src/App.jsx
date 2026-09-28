@@ -97,8 +97,10 @@ const NAV_PAR_ROLE = {
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
   // Accueil / secrétariat : essentiel pour recevoir les familles et inscrire
-  // les enfants, sans les données financières ou RH internes (Trésorerie,
-  // Heures équipe, Statistiques) réservées à Direction/Administration.
+  // les enfants, avec accès à la Trésorerie pour saisir les opérations (mais
+  // sans droit de suppression — voir role === "secretariat" dans le journal
+  // des opérations), sans les données RH internes (Heures équipe,
+  // Statistiques) réservées à Direction/Administration.
   secretariat: [
     { id: "dashboard", icon: "⬡", label: "Tableau de bord" },
     { id: "eleves", icon: "◈", label: "Élèves" },
@@ -107,6 +109,7 @@ const NAV_PAR_ROLE = {
     { id: "suivi_adhesions", icon: "🤝", label: "Adhésions" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "paiements", icon: "₦", label: "Paiements" },
+    { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
@@ -340,7 +343,7 @@ const COMPTES_SYCEBNL = [
   { code: "758", libelle: "Produits divers de gestion", classe: 7 },
 ];
 
-const PROJETS_TRESORERIE = ["Circo Bénin — fonctionnement", "Festival Cirque en Fusion", "Espoir Football Club", "Autre projet"];
+const PROJETS_TRESORERIE = ["Circo Bénin — fonctionnement", "Festival Cirque en Fusion", "Diffusion & événementiel", "Autre projet"];
 
 const PROJETS = [
   { id: 1, titre: "Cirque en Fusion 2026", type: "Festival", date: "25–28 Nov 2026", statut: "En préparation", public: true, formateurs: ["Jean-Luc", "Spéro", "Youssou", "Prime"] },
@@ -1491,6 +1494,22 @@ export default function App() {
 
   const supprimerOperation = async (id) => {
     await supabase.from("operations_caisse").delete().eq("id", id);
+    chargerOperationsCaisse();
+  };
+
+  // Annule une opération sans la supprimer : passe une écriture contraire
+  // (débit/crédit inversés, même montant), pour garder une trace complète —
+  // c'est la seule façon pour le Secrétariat de revenir sur une opération.
+  const annulerOperation = async (o) => {
+    if (!window.confirm("Passer une écriture contraire pour annuler « " + o.libelle + " » (" + o.montant.toLocaleString() + " F) ?")) return;
+    await supabase.from("operations_caisse").insert([{
+      date: new Date().toISOString().slice(0, 10), projet: o.projet,
+      sens: o.sens === "entree" ? "sortie" : "entree",
+      compte_caisse: o.compte_caisse, compte_contrepartie: o.compte_contrepartie,
+      compte_debit: o.compte_credit, compte_credit: o.compte_debit,
+      montant: o.montant, libelle: "Annulation — " + o.libelle,
+      saisi_par: nomIntervenant || role,
+    }]);
     chargerOperationsCaisse();
   };
 
@@ -3825,7 +3844,11 @@ export default function App() {
                               </span>
                               {o.piece_url && <a href={o.piece_url} target="_blank" rel="noreferrer" style={{ fontSize: 16 }}>📎</a>}
                               <span onClick={() => ouvrirEditionOperation(o)} style={{ cursor: "pointer", fontSize: 14 }} title="Modifier">✏️</span>
-                              <span onClick={() => supprimerOperation(o.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 16 }} title="Supprimer">✕</span>
+                              {role === "secretariat" ? (
+                                <span onClick={() => annulerOperation(o)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 15 }} title="Annuler (écriture contraire)">↩︎</span>
+                              ) : (
+                                <span onClick={() => supprimerOperation(o.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 16 }} title="Supprimer">✕</span>
+                              )}
                             </div>
                           ))}
                         </div>
