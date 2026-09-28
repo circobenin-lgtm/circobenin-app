@@ -46,6 +46,7 @@ const ROLES = {
   directeur: { label: "Direction", color: C.vert, initiale: "DI", nom: "Direction", pin: true },
   ca: { label: "Conseil d'Administration", color: C.bleu, initiale: "CA", nom: "Conseil d'Administration", pin: true },
   admin: { label: "Administration", color: C.orange, initiale: "AD", nom: "Administration", pin: true },
+  secretariat: { label: "Secrétariat", color: C.or, initiale: "SE", nom: "Secrétariat", pin: true },
   formateur: { label: "Intervenants", color: C.violet, initiale: "IN", nom: "Intervenants", pin: true },
   visiteurs: { label: "Visiteurs", color: C.gris, initiale: "VI", nom: "Visiteurs", pin: false },
   parent: { label: "Parents", color: C.magenta, initiale: "PA", nom: "Parents", pin: false },
@@ -92,6 +93,20 @@ const NAV_PAR_ROLE = {
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "compagnie", icon: "🎪", label: "Compagnie" },
+    { id: "tchat", icon: "◎", label: "Messagerie" },
+  ],
+  // Accueil / secrétariat : essentiel pour recevoir les familles et inscrire
+  // les enfants, sans les données financières ou RH internes (Trésorerie,
+  // Heures équipe, Statistiques) réservées à Direction/Administration.
+  secretariat: [
+    { id: "dashboard", icon: "⬡", label: "Tableau de bord" },
+    { id: "eleves", icon: "◈", label: "Élèves" },
+    { id: "preinscriptions", icon: "📋", label: "Inscriptions 26-27" },
+    { id: "suivi_stages", icon: "🏕", label: "Stages" },
+    { id: "suivi_adhesions", icon: "🤝", label: "Adhésions" },
+    { id: "planning", icon: "◫", label: "Planning" },
+    { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
@@ -1185,7 +1200,7 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
 }
 
 export default function App() {
-  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'formateur': 'Profcirc@531'};
+  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@531', 'secretariat': 'Secretcirc@531', 'formateur': 'Profcirc@531'};
   const CODES_INTERVENANTS = {'Jean-Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
   const [role, setRole] = useState(null);
   const [page, setPage] = useState("dashboard");
