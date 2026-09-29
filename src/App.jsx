@@ -1615,11 +1615,40 @@ export default function App() {
     if (!error) chargerDemandesEtMessagesEnfant(eleveActuel.id);
   };
 
+  // Applique réellement le changement de créneau demandé : ajoute ou retire
+  // le créneau sur la préinscription de l'élève (source utilisée par le
+  // planning et le calcul des inscrits) et met à jour sa "classe" affichée.
+  const appliquerChangementCreneau = async (demande) => {
+    try {
+      const eleve = elevesState.find(e => e.id === demande.eleve_id);
+      if (!eleve) return;
+      const p = preinscriptions.find(pp =>
+        (pp.email && eleve.email && normCreneau(pp.email) === normCreneau(eleve.email)) ||
+        (normCreneau(pp.prenom) === normCreneau(eleve.prenom) && normCreneau(pp.nom) === normCreneau(eleve.nomFamille))
+      );
+      if (!p) return;
+      let tokens = creneauxTokens(p.creneau);
+      if (demande.type === "ajout") {
+        if (!tokens.includes(demande.creneau_cle)) tokens.push(demande.creneau_cle);
+      } else {
+        tokens = tokens.filter(t => t !== demande.creneau_cle);
+      }
+      await supabase.from("preinscriptions").update({ creneau: tokens.join(" | ") }).eq("id", p.id);
+      const premierCours = COURS_RENTREE.find(c => tokens.includes(cleCreneauCours(c)));
+      const nouvelleClasse = premierCours ? `${premierCours.jour} ${premierCours.heure} - ${premierCours.fin}` : "";
+      await supabase.from("eleves").update({ classe: nouvelleClasse }).eq("id", eleve.id);
+    } catch (e) {}
+  };
+
   const traiterDemandeCreneau = async (demande, statut) => {
     const { error } = await supabase.from("demandes_creneau")
       .update({ statut, traite_par: role, traite_at: new Date().toISOString() })
       .eq("id", demande.id);
-    if (!error) chargerDemandesEtMessagesFamilles();
+    if (error) return;
+    if (statut === "validee") await appliquerChangementCreneau(demande);
+    chargerDemandesEtMessagesFamilles();
+    chargerPreinscriptions();
+    chargerEleves();
   };
 
   const envoyerMessageParent = async () => {
@@ -4284,7 +4313,7 @@ export default function App() {
               <Card style={{ marginBottom: 20 }}>
                 <SectionTitle>Demandes de changement de créneau</SectionTitle>
                 <p style={{ fontSize: 12, color: C.gris, margin: "-4px 0 12px" }}>
-                  Valider ne fait qu'informer la famille que sa demande est acceptée — pensez à mettre à jour vous-même le créneau de l'élève dans sa fiche (page Élèves) si vous validez.
+                  Valider applique automatiquement le changement sur la fiche de l'élève (créneau ajouté ou retiré) et en informe la famille.
                 </p>
                 {demandesCreneauToutes.length === 0 ? (
                   <p style={{ fontSize: 13, color: C.gris, textAlign: "center", padding: "20px 0" }}>Aucune demande pour le moment.</p>
