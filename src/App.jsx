@@ -242,6 +242,7 @@ const JOURS_LABELS = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi"
 // vacances de Noël → dernier jour de classe le vendredi 18 décembre 2026 ;
 // vacances de février/mars → dernier jour de classe le vendredi 19 février 2027.
 const FRAIS_INSCRIPTION = 10000;
+const MONTANT_ADHESION = 10000;
 const TRIMESTRES_2026_2027 = [
   { label: "2e trimestre — avant les vacances de décembre", debut: "2026-12-14", fin: "2026-12-18" },
   { label: "3e trimestre — avant les vacances de mars", debut: "2027-02-15", fin: "2027-02-19" },
@@ -496,11 +497,11 @@ const Card = ({ children, style = {}, onClick }) => (
   </div>
 );
 
-const StatCard = ({ label, value, icon, color }) => (
+const StatCard = ({ label, value, icon, color, sousLabel }) => (
   <Card style={{ borderTop: `4px solid ${color}` }}>
     <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
     <div style={{ fontSize: 36, fontWeight: 700, color, fontFamily: FT }}>{value}</div>
-    <div style={{ fontSize: 13, color: C.gris, marginTop: 4 }}>{label}</div>
+    <div style={{ fontSize: 13, color: C.gris, marginTop: 4 }}>{label}{sousLabel && <span style={{ color: C.gris, fontWeight: 400 }}> — {sousLabel}</span>}</div>
   </Card>
 );
 
@@ -525,7 +526,6 @@ function AdhesionForm() {
   const [error, setError] = useState(false);
   const [etapePaiement, setEtapePaiement] = useState(false);
   const [modePaiementAdhesion, setModePaiementAdhesion] = useState(null);
-  const MONTANT_ADHESION = 15000;
 
   const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14, background: "#f9fafb", outline: "none", fontFamily: "Inter,sans-serif", boxSizing: "border-box" };
   const labelStyle = { fontSize: 12, fontWeight: 700, color: "#6b7280", display: "block", marginBottom: 6 };
@@ -2006,7 +2006,7 @@ export default function App() {
       }
 
       const { code, erreur: errCode } = await genererCodeParentServeur(inserted.id, p.prenom, p.date_naissance);
-      const montantInscription = p.montant || (p.formule === "annee" ? 145000 : 55000);
+      const montantInscription = p.montant || (p.formule === "annee" ? 150000 : 50000);
       const { error: errCompte } = await supabase.from("comptes_paiement").upsert([{
         eleve_id: inserted.id,
         eleve_nom: p.prenom + " " + p.nom,
@@ -3517,10 +3517,16 @@ export default function App() {
               (p.email && e.email && norm(e.email) === norm(p.email)) ||
               (norm(e.prenom) === norm(p.prenom) && norm(e.nomFamille) === norm(p.nom))
             );
-            const montantDe = p => p.montant || (p.formule === "annee" ? 145000 : 55000);
-            const montantEnLigne = preinscriptions.filter(p => p.mode_paiement === "enligne").reduce((a, p) => a + montantDe(p), 0);
-            const montantAVenir = preinscriptions.filter(p => p.mode_paiement !== "enligne").reduce((a, p) => a + montantDe(p), 0);
+            const montantDe = p => p.montant || (p.formule === "annee" ? 150000 : 50000);
+            // "Encaissé" = ce qui a vraiment été reçu (versements_eleves), qu'il ait été
+            // payé en ligne ou en espèces/chèque saisi par la secrétaire en Trésorerie —
+            // pas seulement les inscriptions marquées "en ligne" au moment du formulaire.
+            const totalDu = preinscriptions.reduce((a, p) => a + montantDe(p), 0);
+            const idsElevesLies = preinscriptions.map(p => { const el = eleveDeLigne(p); return el ? el.id : null; }).filter(Boolean);
+            const montantEncaisse = versementsEleves.filter(v => idsElevesLies.includes(v.eleve_id)).reduce((a, v) => a + v.montant, 0);
+            const montantAVenir = Math.max(totalDu - montantEncaisse, 0);
             const nbAdherents = preinscriptions.filter(p => adhesionDe(p)).length;
+            const montantAdhesions = nbAdherents * MONTANT_ADHESION;
             const repartition = COURS_RENTREE.map(c => ({
               ...c,
               inscrits: preinscriptions.filter(p => creneauxTokens(p.creneau).includes(cleCreneauCours(c))),
@@ -3538,9 +3544,9 @@ export default function App() {
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 24 }}>
                 <StatCard label="Inscriptions reçues" value={preinscriptions.length} icon="📋" color={C.vert} />
-                <StatCard label="Encaissé en ligne" value={montantEnLigne.toLocaleString() + " F"} icon="💳" color={C.bleu} />
+                <StatCard label="Encaissé" value={montantEncaisse.toLocaleString() + " F"} icon="💳" color={C.bleu} />
                 <StatCard label="Montant à venir" value={montantAVenir.toLocaleString() + " F"} icon="⏳" color={C.orange} />
-                <StatCard label="Adhésions liées" value={nbAdherents + " / " + preinscriptions.length} icon="🤝" color={C.magenta} />
+                <StatCard label="Adhésions" value={montantAdhesions.toLocaleString() + " F"} sousLabel={"dont " + nbAdherents + " adhésion" + (nbAdherents > 1 ? "s" : "")} icon="🤝" color={C.magenta} />
               </div>
 
               <Card style={{ marginBottom: 24 }}>
@@ -3613,7 +3619,7 @@ export default function App() {
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                             <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
-                            <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 145000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 55000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
+                            <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 150000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 50000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
                             <Badge text={adh ? "🤝 Adhérent" : "Non adhérent"} bg={adh ? "#f3e5f5" : C.grisClair} color={adh ? C.magenta : C.gris} />
                             <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
                             {eleveLie ? (
@@ -3696,7 +3702,7 @@ export default function App() {
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                           <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
-                          <Badge text={(p.montant || 15000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
+                          <Badge text={(p.montant || MONTANT_ADHESION).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
                           <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
                         </div>
                       </div>
@@ -4874,7 +4880,7 @@ export default function App() {
             // Si l'administration n'a pas encore créé de compte de paiement (montantDu à 0),
             // on affiche le montant issu de la réinscription en ligne comme estimation "à venir".
             const montantEstime = reinscriptionEnfant && reinscriptionEnfant.mode_paiement !== "enligne"
-              ? totalAnnee(reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 145000 : 55000))
+              ? totalAnnee(reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 150000 : 50000))
               : 0;
             const enAttenteEstimee = montantDu === 0 && montantEstime > 0;
             // Même en mode "estimé" (compte de paiement pas encore créé par
