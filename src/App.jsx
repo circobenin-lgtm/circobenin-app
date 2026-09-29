@@ -2006,7 +2006,7 @@ export default function App() {
       }
 
       const { code, erreur: errCode } = await genererCodeParentServeur(inserted.id, p.prenom, p.date_naissance);
-      const montantInscription = p.montant || (p.formule === "annee" ? 150000 : 50000);
+      const montantInscription = p.montant || (p.formule === "annee" ? 160000 : 60000);
       const { error: errCompte } = await supabase.from("comptes_paiement").upsert([{
         eleve_id: inserted.id,
         eleve_nom: p.prenom + " " + p.nom,
@@ -3517,7 +3517,10 @@ export default function App() {
               (p.email && e.email && norm(e.email) === norm(p.email)) ||
               (norm(e.prenom) === norm(p.prenom) && norm(e.nomFamille) === norm(p.nom))
             );
-            const montantDe = p => p.montant || (p.formule === "annee" ? 150000 : 50000);
+            // Chaque enfant inscrit est adhérent d'office : le montant enregistré
+            // inclut toujours les 10 000 F d'adhésion en plus des ateliers
+            // (50 000/150 000) — soit 60 000 au trimestre ou 160 000 à l'année.
+            const montantDe = p => p.montant || (p.formule === "annee" ? 160000 : 60000);
             // "Encaissé" = ce qui a vraiment été reçu (versements_eleves), qu'il ait été
             // payé en ligne ou en espèces/chèque saisi par la secrétaire en Trésorerie —
             // pas seulement les inscriptions marquées "en ligne" au moment du formulaire.
@@ -3525,7 +3528,11 @@ export default function App() {
             const idsElevesLies = preinscriptions.map(p => { const el = eleveDeLigne(p); return el ? el.id : null; }).filter(Boolean);
             const montantEncaisse = versementsEleves.filter(v => idsElevesLies.includes(v.eleve_id)).reduce((a, v) => a + v.montant, 0);
             const montantAVenir = Math.max(totalDu - montantEncaisse, 0);
-            const nbAdherents = preinscriptions.filter(p => adhesionDe(p)).length;
+            // Tout enfant réellement inscrit (compte élève créé) est adhérent
+            // d'office — l'adhésion est incluse dans son paiement de cotisation,
+            // ce n'est pas un acte séparé (contrairement au formulaire "Adhésion"
+            // destiné aux membres qui ne sont pas des élèves).
+            const nbAdherents = idsElevesLies.length;
             const montantAdhesions = nbAdherents * MONTANT_ADHESION;
             const repartition = COURS_RENTREE.map(c => ({
               ...c,
@@ -3587,10 +3594,13 @@ export default function App() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {preinscriptions.map(p => {
                     const groupes = groupesDe(p);
-                    const adh = adhesionDe(p);
                     const age = p.date_naissance ? Math.floor((new Date() - new Date(p.date_naissance)) / (365.25 * 24 * 3600 * 1000)) : null;
                     const disciplines = (p.discipline || "").split(",").map(s => s.trim()).filter(Boolean);
                     const eleveLie = eleveDeLigne(p);
+                    // Tout enfant dont le compte élève est créé est adhérent d'office
+                    // (adhésion incluse dans sa cotisation) — pas besoin du formulaire
+                    // d'adhésion séparé, réservé aux membres non-élèves.
+                    const adh = !!eleveLie;
                     const codeParentLigne = eleveLie ? (codesParents.find(c => c.eleve_id === eleveLie.id) || {}).code : null;
                     return (
                       <Card key={p.id}>
@@ -3619,7 +3629,7 @@ export default function App() {
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                             <Badge text={p.mode_paiement === "enligne" ? "💳 Payé en ligne" : "🏫 Sur place"} bg={p.mode_paiement === "enligne" ? "#e8f5e9" : "#e3f2fd"} color={p.mode_paiement === "enligne" ? C.vert : "#1565C0"} />
-                            <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 150000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 50000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
+                            <Badge text={p.formule === "annee" ? "Année — " + (p.montant || 160000).toLocaleString() + " FCFA" : "Trimestre — " + (p.montant || 60000).toLocaleString() + " FCFA"} bg="#fff3e0" color="#e65100" />
                             <Badge text={adh ? "🤝 Adhérent" : "Non adhérent"} bg={adh ? "#f3e5f5" : C.grisClair} color={adh ? C.magenta : C.gris} />
                             <div style={{ fontSize: 11, color: C.gris }}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
                             {eleveLie ? (
@@ -4880,7 +4890,7 @@ export default function App() {
             // Si l'administration n'a pas encore créé de compte de paiement (montantDu à 0),
             // on affiche le montant issu de la réinscription en ligne comme estimation "à venir".
             const montantEstime = reinscriptionEnfant && reinscriptionEnfant.mode_paiement !== "enligne"
-              ? totalAnnee(reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 150000 : 50000))
+              ? totalAnnee(reinscriptionEnfant.montant || (reinscriptionEnfant.formule === "annee" ? 160000 : 60000))
               : 0;
             const enAttenteEstimee = montantDu === 0 && montantEstime > 0;
             // Même en mode "estimé" (compte de paiement pas encore créé par
