@@ -243,6 +243,10 @@ const JOURS_LABELS = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi"
 // vacances de février/mars → dernier jour de classe le vendredi 19 février 2027.
 const FRAIS_INSCRIPTION = 10000;
 const MONTANT_ADHESION = 10000;
+// Début de la collecte des paiements pour l'année scolaire 2026-2027 — tout
+// versement antérieur (année précédente, ou test) est ignoré des totaux
+// "Encaissé" de la rentrée en cours.
+const DEBUT_ENCAISSEMENTS_RENTREE = "2026-09-01";
 const TRIMESTRES_2026_2027 = [
   { label: "2e trimestre — avant les vacances de décembre", debut: "2026-12-14", fin: "2026-12-18" },
   { label: "3e trimestre — avant les vacances de mars", debut: "2027-02-15", fin: "2027-02-19" },
@@ -3526,7 +3530,12 @@ export default function App() {
             // pas seulement les inscriptions marquées "en ligne" au moment du formulaire.
             const totalDu = preinscriptions.reduce((a, p) => a + montantDe(p), 0);
             const idsElevesLies = preinscriptions.map(p => { const el = eleveDeLigne(p); return el ? el.id : null; }).filter(Boolean);
-            const montantEncaisse = versementsEleves.filter(v => idsElevesLies.includes(v.eleve_id)).reduce((a, v) => a + v.montant, 0);
+            // On ne compte que les versements de la rentrée en cours — un ancien
+            // versement (année précédente) resté lié au même élève ne doit pas
+            // gonfler l'"Encaissé" de cette année.
+            const montantEncaisse = versementsEleves
+              .filter(v => idsElevesLies.includes(v.eleve_id) && v.date >= DEBUT_ENCAISSEMENTS_RENTREE)
+              .reduce((a, v) => a + v.montant, 0);
             const montantAVenir = Math.max(totalDu - montantEncaisse, 0);
             // Tout enfant réellement inscrit (compte élève créé) est adhérent
             // d'office — l'adhésion est incluse dans son paiement de cotisation,
