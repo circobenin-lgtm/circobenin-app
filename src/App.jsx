@@ -70,6 +70,7 @@ const NAV_PAR_ROLE = {
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
     { id: "message_groupe", icon: "▦", label: "Msg parents" },
     { id: "public", icon: "◐", label: "Vue publique" },
@@ -93,6 +94,7 @@ const NAV_PAR_ROLE = {
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
@@ -110,6 +112,7 @@ const NAV_PAR_ROLE = {
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
   ],
@@ -136,6 +139,7 @@ const NAV_PAR_ROLE = {
     { id: "mon_enfant", icon: "◈", label: "Mon enfant" },
     { id: "planning_enfant", icon: "◫", label: "Planning" },
     { id: "paiements_enfant", icon: "₦", label: "Paiements" },
+    { id: "messages_enfant", icon: "✉", label: "Messages" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
   ],
   apprenant_pro: [
@@ -1561,6 +1565,118 @@ export default function App() {
   // (colonne "creneau" seule, sans nom/email/téléphone des autres familles)
   const [reinscriptionEnfant, setReinscriptionEnfant] = useState(null);
   const [creneauxRentreeLignes, setCreneauxRentreeLignes] = useState([]);
+  // Demandes de changement de créneau et messagerie parent ↔ direction,
+  // côté enfant (espace parent) et côté toutes-familles (espace direction).
+  const [demandesCreneauEnfant, setDemandesCreneauEnfant] = useState([]);
+  const [messagesFamilleEnfant, setMessagesFamilleEnfant] = useState([]);
+  const [nouveauMessageParent, setNouveauMessageParent] = useState("");
+  const [envoiMessageParent, setEnvoiMessageParent] = useState(false);
+  const [demandesCreneauToutes, setDemandesCreneauToutes] = useState([]);
+  const [messagesFamilleToutes, setMessagesFamilleToutes] = useState([]);
+  const [familleSelectionnee, setFamilleSelectionnee] = useState(null);
+  const [nouveauMessageDirection, setNouveauMessageDirection] = useState("");
+  const [envoiMessageDirection, setEnvoiMessageDirection] = useState(false);
+
+  const chargerDemandesEtMessagesEnfant = async (eleveId) => {
+    try {
+      const { data: dem } = await supabase.from("demandes_creneau").select("*").eq("eleve_id", eleveId).order("created_at", { ascending: false });
+      setDemandesCreneauEnfant(dem || []);
+      const { data: msgs } = await supabase.from("messages_famille").select("*").eq("eleve_id", eleveId).order("created_at", { ascending: true });
+      setMessagesFamilleEnfant(msgs || []);
+    } catch (e) {}
+  };
+
+  const chargerDemandesEtMessagesFamilles = async () => {
+    try {
+      const { data: dem } = await supabase.from("demandes_creneau").select("*").order("created_at", { ascending: false });
+      setDemandesCreneauToutes(dem || []);
+      const { data: msgs } = await supabase.from("messages_famille").select("*").order("created_at", { ascending: true });
+      setMessagesFamilleToutes(msgs || []);
+    } catch (e) {}
+  };
+
+  const envoyerDemandeCreneau = async (type, cours) => {
+    if (!eleveActuel) return;
+    const cle = cleCreneauCours(cours);
+    const label = `${cours.jour} ${cours.heure}–${cours.fin} (${cours.age})`;
+    const confirmMsg = type === "ajout"
+      ? `Demander l'ajout du créneau ${label} pour ${eleveActuel.prenom} ?`
+      : `Demander le retrait du créneau ${label} pour ${eleveActuel.prenom} ?`;
+    if (!window.confirm(confirmMsg)) return;
+    const { error } = await supabase.from("demandes_creneau").insert([{
+      eleve_id: eleveActuel.id,
+      eleve_nom: eleveActuel.prenom + " " + eleveActuel.nom,
+      type, creneau_cle: cle, creneau_label: label,
+    }]);
+    if (!error) chargerDemandesEtMessagesEnfant(eleveActuel.id);
+  };
+
+  const traiterDemandeCreneau = async (demande, statut) => {
+    const { error } = await supabase.from("demandes_creneau")
+      .update({ statut, traite_par: role, traite_at: new Date().toISOString() })
+      .eq("id", demande.id);
+    if (!error) chargerDemandesEtMessagesFamilles();
+  };
+
+  const envoyerMessageParent = async () => {
+    if (!eleveActuel || !nouveauMessageParent.trim()) return;
+    setEnvoiMessageParent(true);
+    try {
+      await supabase.from("messages_famille").insert([{
+        eleve_id: eleveActuel.id,
+        eleve_nom: eleveActuel.prenom + " " + eleveActuel.nom,
+        expediteur: "parent", auteur: eleveActuel.prenom + " " + eleveActuel.nom,
+        corps: nouveauMessageParent.trim(),
+      }]);
+      try {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "Circo Benin <accueil@circobenin.com>", to: "admin@circobenin.com",
+            subject: "Message de la famille de " + eleveActuel.prenom,
+            html: "<p>" + nouveauMessageParent.trim().split("\n").join("<br/>") + "</p>",
+          }),
+        });
+      } catch (e) {}
+      setNouveauMessageParent("");
+      chargerDemandesEtMessagesEnfant(eleveActuel.id);
+    } finally {
+      setEnvoiMessageParent(false);
+    }
+  };
+
+  const envoyerMessageDirection = async () => {
+    if (!familleSelectionnee || !nouveauMessageDirection.trim()) return;
+    setEnvoiMessageDirection(true);
+    try {
+      await supabase.from("messages_famille").insert([{
+        eleve_id: familleSelectionnee.eleve_id,
+        eleve_nom: familleSelectionnee.eleve_nom,
+        expediteur: "direction", auteur: role === "directeur" ? "Direction" : role === "admin" ? "Administration" : "Secrétariat",
+        corps: nouveauMessageDirection.trim(),
+      }]);
+      const eleveDest = elevesState.find(e => e.id === familleSelectionnee.eleve_id);
+      const emailDest = eleveDest && (eleveDest.emailParent || eleveDest.email);
+      if (emailDest) {
+        try {
+          await fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "Circo Benin <admin@circobenin.com>", to: emailDest,
+              subject: "Message de Circo Bénin — " + familleSelectionnee.eleve_nom,
+              html: "<p>" + nouveauMessageDirection.trim().split("\n").join("<br/>") + "</p>",
+            }),
+          });
+        } catch (e) {}
+      }
+      setNouveauMessageDirection("");
+      chargerDemandesEtMessagesFamilles();
+    } finally {
+      setEnvoiMessageDirection(false);
+    }
+  };
 
   const SESSION_DUREE_MS = 30 * 60 * 1000; // 30 minutes (assez pour remplir une inscription)
   const SESSION_KEY = "circobenin_session";
@@ -1586,6 +1702,7 @@ export default function App() {
       const { data: eleve } = await supabase.from("eleves").select("*").eq("id", lien.eleve_id).maybeSingle();
       if (!eleve) return false;
       setEleveActuel(eleve);
+      chargerDemandesEtMessagesEnfant(eleve.id);
       const { data: compte } = await supabase.from("comptes_paiement").select("*").eq("eleve_id", eleve.id).maybeSingle();
       setCompteEleveActuel(compte || null);
       const { data: vers } = await supabase.from("versements_eleves").select("*").eq("eleve_id", eleve.id).order("date", { ascending: false });
@@ -1683,6 +1800,7 @@ export default function App() {
 
   useEffect(() => {
     if (role === "directeur" || role === "admin") chargerMessages();
+    if (role === "directeur" || role === "admin" || role === "secretariat") chargerDemandesEtMessagesFamilles();
   }, [role]);
 
   const chargerPreinscriptions = async () => {
@@ -2278,6 +2396,25 @@ export default function App() {
                 }}>{MESSAGES.filter(m => !m.lu).length}</span>
               )}
             </div>
+            {(role === "directeur" || role === "admin" || role === "secretariat") && (() => {
+              const nbEnAttente = demandesCreneauToutes.filter(d => d.statut === "en_attente").length
+                + messagesFamilleToutes.filter(m => m.expediteur === "parent" && !m.lu).length;
+              return (
+                <div style={{
+                  background: C.fond, borderRadius: 20, padding: "8px 16px",
+                  fontSize: 13, color: C.gris, cursor: "pointer", position: "relative",
+                }} onClick={() => setPage("demandes_familles")}>
+                  🔔 {nbEnAttente} en attente
+                  {nbEnAttente > 0 && (
+                    <span style={{
+                      position: "absolute", top: -4, right: -4, background: C.rouge, color: "#fff",
+                      borderRadius: "50%", width: 16, height: 16, fontSize: 10,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>{nbEnAttente}</span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </header>
 
@@ -4111,6 +4248,99 @@ export default function App() {
             </div>
           )}
 
+          {/* ── DEMANDES DE CRÉNEAU + MESSAGES DES FAMILLES (direction / admin / secrétariat) ── */}
+          {page === "demandes_familles" && (
+            <div>
+              <Card style={{ marginBottom: 20 }}>
+                <SectionTitle>Demandes de changement de créneau</SectionTitle>
+                <p style={{ fontSize: 12, color: C.gris, margin: "-4px 0 12px" }}>
+                  Valider ne fait qu'informer la famille que sa demande est acceptée — pensez à mettre à jour vous-même le créneau de l'élève dans sa fiche (page Élèves) si vous validez.
+                </p>
+                {demandesCreneauToutes.length === 0 ? (
+                  <p style={{ fontSize: 13, color: C.gris, textAlign: "center", padding: "20px 0" }}>Aucune demande pour le moment.</p>
+                ) : demandesCreneauToutes.map(d => (
+                  <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${C.grisClair}`, gap: 10, flexWrap: "wrap" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>{d.eleve_nom}</div>
+                      <div style={{ fontSize: 13, color: C.gris }}>{d.type === "ajout" ? "Demande d'ajout" : "Demande de retrait"} — {d.creneau_label}</div>
+                      <div style={{ fontSize: 11, color: C.gris }}>{new Date(d.created_at).toLocaleDateString("fr-FR")}</div>
+                    </div>
+                    {d.statut === "en_attente" ? (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <div onClick={() => traiterDemandeCreneau(d, "validee")} style={{ background: C.vert, color: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✓ Valider</div>
+                        <div onClick={() => traiterDemandeCreneau(d, "refusee")} style={{ background: C.rouge, color: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✕ Refuser</div>
+                      </div>
+                    ) : (
+                      <Badge text={d.statut === "validee" ? "✓ Validée" : "✕ Refusée"} bg={d.statut === "validee" ? "#e8f5e9" : "#ffebee"} color={d.statut === "validee" ? C.vert : C.rouge} />
+                    )}
+                  </div>
+                ))}
+              </Card>
+
+              <Card>
+                <SectionTitle>Messages des familles</SectionTitle>
+                <div style={{ display: "flex", gap: 20, height: 480 }}>
+                  <div style={{ width: 260, overflow: "auto", borderRight: `1px solid ${C.grisClair}` }}>
+                    {(() => {
+                      const familles = [];
+                      const vus = new Set();
+                      [...messagesFamilleToutes].reverse().forEach(m => {
+                        if (!vus.has(m.eleve_id)) { vus.add(m.eleve_id); familles.push(m); }
+                      });
+                      if (familles.length === 0) return <p style={{ fontSize: 13, color: C.gris, padding: "16px 0", textAlign: "center" }}>Aucun message reçu.</p>;
+                      return familles.map(f => {
+                        const nonLus = messagesFamilleToutes.filter(m => m.eleve_id === f.eleve_id && m.expediteur === "parent" && !m.lu).length;
+                        return (
+                          <div key={f.eleve_id} onClick={() => {
+                            setFamilleSelectionnee({ eleve_id: f.eleve_id, eleve_nom: f.eleve_nom });
+                            const idsALire = messagesFamilleToutes.filter(m => m.eleve_id === f.eleve_id && m.expediteur === "parent" && !m.lu).map(m => m.id);
+                            if (idsALire.length > 0) {
+                              supabase.from("messages_famille").update({ lu: true }).in("id", idsALire).then(() => chargerDemandesEtMessagesFamilles());
+                            }
+                          }} style={{
+                            padding: "10px 12px", borderRadius: 8, cursor: "pointer", marginBottom: 4,
+                            background: familleSelectionnee && familleSelectionnee.eleve_id === f.eleve_id ? "#e8f5e9" : "transparent",
+                          }}>
+                            <div style={{ fontSize: 13, fontWeight: 600 }}>{f.eleve_nom}</div>
+                            <div style={{ fontSize: 11, color: C.gris }}>{f.corps.slice(0, 40)}{f.corps.length > 40 ? "…" : ""}</div>
+                            {nonLus > 0 && <Badge text={nonLus + " nouveau" + (nonLus > 1 ? "x" : "")} bg={C.rouge} color="#fff" />}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    {!familleSelectionnee ? (
+                      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.gris, fontSize: 13 }}>Sélectionnez une famille pour voir la conversation.</div>
+                    ) : (
+                      <>
+                        <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "4px 4px 10px" }}>
+                          {messagesFamilleToutes.filter(m => m.eleve_id === familleSelectionnee.eleve_id).map(m => (
+                            <div key={m.id} style={{
+                              alignSelf: m.expediteur === "direction" ? "flex-end" : "flex-start",
+                              maxWidth: "75%", background: m.expediteur === "direction" ? "#e8f5e9" : C.fond,
+                              borderRadius: 12, padding: "10px 14px",
+                            }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: m.expediteur === "direction" ? C.vert : C.gris, marginBottom: 4 }}>{m.expediteur === "direction" ? (m.auteur || "Vous") : m.eleve_nom}</div>
+                              <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{m.corps}</div>
+                              <div style={{ fontSize: 10, color: C.gris, marginTop: 4 }}>{new Date(m.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display: "flex", gap: 10, paddingTop: 12, borderTop: `1px solid ${C.grisClair}` }}>
+                          <textarea value={nouveauMessageDirection} onChange={e => setNouveauMessageDirection(e.target.value)}
+                            placeholder="Répondre..." rows={2}
+                            style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${C.grisClair}`, fontSize: 14, outline: "none", fontFamily: FB, resize: "none" }} />
+                          <Btn onClick={envoyerMessageDirection} color={envoiMessageDirection ? C.gris : C.vert}>{envoiMessageDirection ? "Envoi..." : "Envoyer →"}</Btn>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
           {page === "tchat" && (
             <div style={{ display: "flex", gap: 20, height: "calc(100vh - 180px)" }}>
               <div style={{ width: 280, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", flexShrink: 0 }}>
@@ -4512,6 +4742,7 @@ export default function App() {
                         <div style={{ fontFamily: FT, fontSize: 13, fontWeight: 700, color: cj.length ? C.vert : C.gris, marginBottom: 8 }}>{j}</div>
                         {cj.map(c => {
                           const estCelleDeLenfant = clesEnfant.includes(cleCreneauCours(c));
+                          const demandeEnCours = demandesCreneauEnfant.find(d => d.creneau_cle === cleCreneauCours(c) && d.statut === "en_attente");
                           return (
                             <div key={c.id} style={{
                               background: estCelleDeLenfant ? "#e8f5e9" : C.fond, borderRadius: 8, padding: "8px 10px", marginBottom: 6,
@@ -4522,6 +4753,13 @@ export default function App() {
                               <div style={{ fontSize: 11, color: C.gris }}>{c.fin}</div>
                               <div style={{ fontSize: 11, color: C.gris, marginTop: 2 }}>{c.inscrits} inscrit{c.inscrits > 1 ? "s" : ""}</div>
                               {estCelleDeLenfant && <div style={{ fontSize: 10, fontWeight: 700, color: C.vert, marginTop: 2 }}>✓ Place de {eleveActuel.prenom}</div>}
+                              {demandeEnCours ? (
+                                <div style={{ fontSize: 9, fontWeight: 700, color: "#e65100", marginTop: 4 }}>⏳ Demande en attente</div>
+                              ) : estCelleDeLenfant ? (
+                                <div onClick={() => envoyerDemandeCreneau("retrait", c)} style={{ fontSize: 9, fontWeight: 700, color: C.rouge, marginTop: 4, cursor: "pointer", textDecoration: "underline" }}>Demander le retrait</div>
+                              ) : (
+                                <div onClick={() => envoyerDemandeCreneau("ajout", c)} style={{ fontSize: 9, fontWeight: 700, color: C.vert, marginTop: 4, cursor: "pointer", textDecoration: "underline" }}>Demander ce créneau</div>
+                              )}
                             </div>
                           );
                         })}
@@ -4557,9 +4795,64 @@ export default function App() {
                   </Btn>
                 </Card>
               )}
+
+              {demandesCreneauEnfant.length > 0 && (
+                <Card style={{ marginTop: 20 }}>
+                  <SectionTitle>Vos demandes de changement de créneau</SectionTitle>
+                  {demandesCreneauEnfant.map(d => (
+                    <div key={d.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{d.type === "ajout" ? "Ajout" : "Retrait"} — {d.creneau_label}</div>
+                        <div style={{ fontSize: 11, color: C.gris }}>{new Date(d.created_at).toLocaleDateString("fr-FR")}</div>
+                      </div>
+                      <Badge text={d.statut === "en_attente" ? "⏳ En attente" : d.statut === "validee" ? "✓ Validée" : "✕ Refusée"}
+                        bg={d.statut === "en_attente" ? "#fff3e0" : d.statut === "validee" ? "#e8f5e9" : "#ffebee"}
+                        color={d.statut === "en_attente" ? "#e65100" : d.statut === "validee" ? C.vert : C.rouge} />
+                    </div>
+                  ))}
+                </Card>
+              )}
             </div>
             );
           })()}
+
+          {/* ── ESPACE PARENT : MESSAGES ── */}
+          {page === "messages_enfant" && eleveActuel && (
+            <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 180px)" }}>
+              <Card style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                <SectionTitle>Messages avec Circo Bénin</SectionTitle>
+                <div style={{ flex: 1, overflow: "auto", padding: "10px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+                  {messagesFamilleEnfant.length === 0 ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.gris, fontSize: 13 }}>
+                      Aucun message pour le moment. Écrivez-nous ci-dessous !
+                    </div>
+                  ) : (
+                    messagesFamilleEnfant.map(m => (
+                      <div key={m.id} style={{
+                        alignSelf: m.expediteur === "parent" ? "flex-end" : "flex-start",
+                        maxWidth: "75%", background: m.expediteur === "parent" ? "#e8f5e9" : C.fond,
+                        borderRadius: 12, padding: "10px 14px",
+                      }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: m.expediteur === "parent" ? C.vert : C.gris, marginBottom: 4 }}>
+                          {m.expediteur === "parent" ? "Vous" : (m.auteur || "Circo Bénin")}
+                        </div>
+                        <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}>{m.corps}</div>
+                        <div style={{ fontSize: 10, color: C.gris, marginTop: 4 }}>{new Date(m.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: 10, paddingTop: 12, borderTop: `1px solid ${C.grisClair}` }}>
+                  <textarea value={nouveauMessageParent} onChange={e => setNouveauMessageParent(e.target.value)}
+                    placeholder="Écrivez votre message..." rows={2}
+                    style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${C.grisClair}`, fontSize: 14, outline: "none", fontFamily: FB, resize: "none" }} />
+                  <Btn onClick={envoyerMessageParent} color={envoiMessageParent ? C.gris : C.vert}>
+                    {envoiMessageParent ? "Envoi..." : "Envoyer →"}
+                  </Btn>
+                </div>
+              </Card>
+            </div>
+          )}
 
           {/* ── ESPACE PARENT : PAIEMENTS ── */}
           {page === "paiements_enfant" && eleveActuel && (() => {
