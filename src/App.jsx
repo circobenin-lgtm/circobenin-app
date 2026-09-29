@@ -3537,11 +3537,16 @@ export default function App() {
               .filter(v => idsElevesLies.includes(v.eleve_id) && v.date >= DEBUT_ENCAISSEMENTS_RENTREE)
               .reduce((a, v) => a + v.montant, 0);
             const montantAVenir = Math.max(totalDu - montantEncaisse, 0);
-            // Tout enfant réellement inscrit (compte élève créé) est adhérent
-            // d'office — l'adhésion est incluse dans son paiement de cotisation,
-            // ce n'est pas un acte séparé (contrairement au formulaire "Adhésion"
-            // destiné aux membres qui ne sont pas des élèves).
-            const nbAdherents = idsElevesLies.length;
+            // L'adhésion n'est acquise qu'une fois le paiement réellement effectué
+            // (elle est incluse dedans, ce n'est pas un acte séparé) — donc on ne
+            // compte que les élèves ayant au moins un versement cette rentrée,
+            // pas tous les inscrits.
+            const idsEleveAyantPaye = [...new Set(
+              versementsEleves
+                .filter(v => idsElevesLies.includes(v.eleve_id) && v.date >= DEBUT_ENCAISSEMENTS_RENTREE)
+                .map(v => v.eleve_id)
+            )];
+            const nbAdherents = idsEleveAyantPaye.length;
             const montantAdhesions = nbAdherents * MONTANT_ADHESION;
             const repartition = COURS_RENTREE.map(c => ({
               ...c,
@@ -3606,10 +3611,10 @@ export default function App() {
                     const age = p.date_naissance ? Math.floor((new Date() - new Date(p.date_naissance)) / (365.25 * 24 * 3600 * 1000)) : null;
                     const disciplines = (p.discipline || "").split(",").map(s => s.trim()).filter(Boolean);
                     const eleveLie = eleveDeLigne(p);
-                    // Tout enfant dont le compte élève est créé est adhérent d'office
-                    // (adhésion incluse dans sa cotisation) — pas besoin du formulaire
-                    // d'adhésion séparé, réservé aux membres non-élèves.
-                    const adh = !!eleveLie;
+                    // L'adhésion (incluse dans la cotisation) n'est acquise qu'une
+                    // fois le paiement réellement effectué cette rentrée — pas à la
+                    // simple inscription.
+                    const adh = !!(eleveLie && versementsEleves.some(v => v.eleve_id === eleveLie.id && v.date >= DEBUT_ENCAISSEMENTS_RENTREE));
                     const codeParentLigne = eleveLie ? (codesParents.find(c => c.eleve_id === eleveLie.id) || {}).code : null;
                     return (
                       <Card key={p.id}>
