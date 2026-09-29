@@ -215,6 +215,7 @@ const COURS_RENTREE = [
   // JEUDI
   { id: 112, jour: "Jeu", heure: "16h00", fin: "17h00", duree: 1, classe: "Atelier Jeudi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "6 – 8 ans" },
   { id: 113, jour: "Jeu", heure: "17h15", fin: "19h15", duree: 2, classe: "Pratique libre Jeudi", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "Pratique libre" },
+  { id: 122, jour: "Jeu", heure: "17h30", fin: "18h30", duree: 1, classe: "Atelier Jeudi 17h30", formateurs: ["Jean-Luc", "Youssou"], salle: "Piste A", nb: 0, presences: [], age: "3 – 5 ans" },
   // VENDREDI
   { id: 114, jour: "Ven", heure: "16h00", fin: "17h30", duree: 1.5, classe: "Atelier Vendredi 16h", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste A", nb: 0, presences: [], age: "9 – 12 ans" },
   { id: 121, jour: "Ven", heure: "16h30", fin: "17h30", duree: 1, classe: "Atelier Vendredi 16h30", formateurs: ["Jean-Luc", "Spéro"], salle: "Piste B", nb: 0, presences: [], age: "6 – 8 ans" },
