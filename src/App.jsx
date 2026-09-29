@@ -1633,10 +1633,18 @@ export default function App() {
       } else {
         tokens = tokens.filter(t => t !== demande.creneau_cle);
       }
-      await supabase.from("preinscriptions").update({ creneau: tokens.join(" | ") }).eq("id", p.id);
+      // Le montant dû est recalculé automatiquement en fonction du nouveau
+      // nombre de créneaux (adhésion de 10 000 F toujours incluse d'office).
+      const formule = p.formule === "annee" ? "annee" : "trimestre";
+      const nouveauMontant = montantSuggere(tokens.length, formule);
+      await supabase.from("preinscriptions").update({ creneau: tokens.join(" | "), montant: nouveauMontant }).eq("id", p.id);
       const premierCours = COURS_RENTREE.find(c => tokens.includes(cleCreneauCours(c)));
       const nouvelleClasse = premierCours ? `${premierCours.jour} ${premierCours.heure} - ${premierCours.fin}` : "";
       await supabase.from("eleves").update({ classe: nouvelleClasse }).eq("id", eleve.id);
+      await supabase.from("comptes_paiement").upsert([{
+        eleve_id: eleve.id, eleve_nom: (eleve.prenom || "") + " " + (eleve.nomFamille || eleve.nom || ""),
+        montant_du: nouveauMontant, formule,
+      }], { onConflict: "eleve_id" });
     } catch (e) {}
   };
 
@@ -1648,6 +1656,7 @@ export default function App() {
     if (statut === "validee") await appliquerChangementCreneau(demande);
     chargerDemandesEtMessagesFamilles();
     chargerPreinscriptions();
+    chargerComptesPaiement();
     chargerEleves();
   };
 
@@ -2105,8 +2114,11 @@ export default function App() {
     }
   };
 
-  const GRILLE_TRIM = { 1: 50000, 2: 95000, 3: 140000 };
-  const GRILLE_AN = { 1: 150000, 2: 285000, 3: 420000 };
+  // Grille tarifaire des ateliers, adhésion de 10 000 F incluse d'office
+  // (tout élève inscrit à Circo Bénin est adhérent d'office dès son premier
+  // atelier) : 1 atelier = 50 000 (ateliers) + 10 000 (adhésion) = 60 000, etc.
+  const GRILLE_TRIM = { 1: 60000, 2: 105000, 3: 150000 };
+  const GRILLE_AN = { 1: 160000, 2: 295000, 3: 430000 };
 
   const enregistrerMontantDu = async (eleveId, eleveNom) => {
     const montant = parseFloat(montantDuForm);
@@ -2124,7 +2136,7 @@ export default function App() {
 
   const montantSuggere = (nbCreneaux, formule) => {
     const n = Math.min(Math.max(nbCreneaux, 1), 3);
-    return formule === "annee" ? (GRILLE_AN[n] || 420000) : (GRILLE_TRIM[n] || 140000);
+    return formule === "annee" ? (GRILLE_AN[n] || 430000) : (GRILLE_TRIM[n] || 150000);
   };
 
   const ajouterVersement = async (eleveId, eleveNom) => {
