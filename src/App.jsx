@@ -4781,9 +4781,12 @@ export default function App() {
 
           {/* ── ESPACE PARENT : PLANNING ── */}
           {page === "planning_enfant" && eleveActuel && (() => {
-            const coursEnfant = COURS.find(c => c.classe === eleveActuel.classe || eleveActuel.classe?.includes(c.heure));
             const groupesRentree = compterInscritsParCours(creneauxRentreeLignes);
             const clesEnfant = reinscriptionEnfant ? creneauxTokens(reinscriptionEnfant.creneau) : [];
+            // Le(s) créneau(x) réel(s) de l'enfant pour la rentrée 2026-2027 :
+            // on cherche dans COURS_RENTREE (et pas l'ancien planning COURS),
+            // pour que ça corresponde bien au créneau choisi à l'inscription.
+            const coursEnfantListe = groupesRentree.filter(c => clesEnfant.includes(cleCreneauCours(c)));
             // Prénoms des enfants inscrits sur un créneau donné (utilisé pour
             // afficher, uniquement sur le/les créneaux de l'enfant connecté,
             // la liste de ses camarades de groupe plutôt qu'un simple total).
@@ -4799,20 +4802,20 @@ export default function App() {
               {/* Créneau actuel de l'enfant */}
               <Card style={{ marginBottom: 20 }}>
                 <SectionTitle>Planning 2026–2027 — Créneau de {eleveActuel.prenom}</SectionTitle>
-                {!coursEnfant ? (
+                {coursEnfantListe.length === 0 ? (
                   <p style={{ fontSize: 13, color: C.gris, padding: "16px 0" }}>Aucun créneau enregistré pour le moment. Contactez Circo Bénin pour plus d'informations.</p>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0" }}>
-                    <Badge text={coursEnfant.jour} bg={C.vert} color="#fff" />
-                    <Badge text={coursEnfant.heure} bg={C.fond} color={C.vert} />
+                ) : coursEnfantListe.map(c => (
+                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderTop: `1px solid ${C.grisClair}` }}>
+                    <Badge text={c.jour} bg={C.vert} color="#fff" />
+                    <Badge text={c.heure} bg={C.fond} color={C.vert} />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>{coursEnfant.age}</div>
-                      <div style={{ fontSize: 12, color: C.gris }}>{coursEnfant.heure} – {coursEnfant.fin} · {coursEnfant.formateurs?.join(", ")}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>{c.age}</div>
+                      <div style={{ fontSize: 12, color: C.gris }}>{c.heure} – {c.fin} · {c.formateurs?.join(", ")}</div>
+                      <div style={{ fontSize: 12, color: C.gris, marginTop: 2 }}>Avec : {(prenomsParCreneau[cleCreneauCours(c)] || []).join(", ") || "—"}</div>
                     </div>
-                    <Badge text={coursEnfant.nb + " inscrit" + (coursEnfant.nb > 1 ? "s" : "")} bg="#fff3e0" color="#e65100" />
                     <Badge text="Inscrit ✓" bg="#e8f5e9" color={C.vert} />
                   </div>
-                )}
+                ))}
               </Card>
 
               {/* Planning rentrée prochaine — grille par jour, comme côté Direction */}
