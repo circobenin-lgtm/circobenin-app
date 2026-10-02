@@ -1327,6 +1327,33 @@ export default function App() {
     chargerPointagesHeures();
   };
 
+  // Déduit automatiquement les heures travaillées de la feuille de présence :
+  // dès qu'au moins un élève est coché présent sur un créneau/date donné, ce
+  // créneau compte comme "fait" (une ligne pointages_heures est créée/mise à
+  // jour avec la durée réelle du créneau) — plus besoin de pointage manuel
+  // "Je commence / Je termine" pour les cours. Si plus aucun élève n'est coché
+  // (erreur de manipulation), l'heure correspondante est retirée.
+  const synchroniserPointageDepuisPresences = async (cours, dateStr, auMoinsUnPresent) => {
+    if (!cours) return;
+    const intervenant = nomIntervenant || "Jean-Luc";
+    try {
+      if (auMoinsUnPresent) {
+        const [hH, hM] = cours.heure.replace("h", ":").split(":").map(s => parseInt(s, 10) || 0);
+        const [fH, fM] = cours.fin.replace("h", ":").split(":").map(s => parseInt(s, 10) || 0);
+        const debut = new Date(dateStr + "T00:00:00"); debut.setHours(hH, hM, 0, 0);
+        const fin = new Date(dateStr + "T00:00:00"); fin.setHours(fH, fM, 0, 0);
+        await supabase.from("pointages_heures").upsert([{
+          intervenant, lieu: "Circo Bénin", cours_id: cours.id, date: dateStr,
+          debut: debut.toISOString(), fin: fin.toISOString(), duree_h: cours.duree, source: "presence",
+        }], { onConflict: "intervenant,cours_id,date" });
+      } else {
+        await supabase.from("pointages_heures").delete()
+          .eq("intervenant", intervenant).eq("cours_id", cours.id).eq("date", dateStr);
+      }
+      chargerPointagesHeures();
+    } catch (e) {}
+  };
+
   const calculerHeuresMensuelles = (intervenant, moisOffset = 0) => {
     const today = new Date();
     const moisRef = new Date(today.getFullYear(), today.getMonth() - moisOffset, 1);
@@ -2689,10 +2716,19 @@ export default function App() {
             <div>
               {(() => {
                 const nomInter = nomIntervenant || "Jean-Luc";
-                const lieuxConnus = ["Circo Bénin", "École Montaigne", "Manoel Talon"];
+                // Les heures des cours Circo Bénin sont désormais comptées
+                // automatiquement dès qu'une présence est cochée (page
+                // Présences) — le pointage manuel ne sert plus qu'aux
+                // activités hors créneaux fixes (partenariats, réunions, prépa).
+                const lieuxConnus = ["École Montaigne", "Manoel Talon"];
                 const enCours = pointageEnCours;
                 return (
                   <div>
+                    <Card style={{ background: "#F3E8FF", borderLeft: `4px solid ${C.violet}`, marginBottom: 20 }}>
+                      <p style={{ fontSize: 13, color: C.noir, margin: 0 }}>
+                        ℹ️ Les heures de vos cours à Circo Bénin sont comptées automatiquement dès que vous cochez au moins un élève présent dans "Présences" — plus besoin de les pointer ici. Ce pointage sert pour vos autres activités (partenariats, réunions, préparation…).
+                      </p>
+                    </Card>
                     <Card style={{ textAlign: "center", padding: "40px 24px", marginBottom: 24 }}>
                       {!enCours ? (
                         <div>
@@ -2929,9 +2965,10 @@ export default function App() {
                                 <div key={cleEleve} onClick={() => {
                                   if (bloque) return;
                                   const nouvelEtat = !present;
+                                  const nouvellePres = { ...pres, [cleEleve]: nouvelEtat };
                                   setPresencesCours(prev => ({
                                     ...prev,
-                                    [activeCours]: { ...pres, [cleEleve]: nouvelEtat }
+                                    [activeCours]: nouvellePres
                                   }));
                                   const todayStr = new Date().toISOString().slice(0, 10);
                                   supabase.from("presences_seances").upsert([{
@@ -2941,6 +2978,14 @@ export default function App() {
                                     present: nouvelEtat,
                                     nom_eleve: e.nom,
                                   }], { onConflict: "eleve_id,cours_id,date" }).then(() => chargerHistoriquePresences());
+                                  // Les heures de l'intervenant sont désormais déduites de la
+                                  // présence : dès qu'au moins un élève est coché présent sur ce
+                                  // créneau/date, le créneau compte comme "fait" (plus de pointage
+                                  // manuel à faire). Si plus personne n'est coché, l'heure est retirée.
+                                  if (role === "formateur") {
+                                    const auMoinsUnPresent = Object.values(nouvellePres).some(Boolean);
+                                    synchroniserPointageDepuisPresences(cours, todayStr, auMoinsUnPresent);
+                                  }
                                 }} style={{
                                   display: "flex", alignItems: "center", gap: 12,
                                   padding: 14, borderRadius: 12, cursor: bloque ? "default" : "pointer",
