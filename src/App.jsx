@@ -1288,7 +1288,7 @@ export default function App() {
 
   const [pointagesHeures, setPointagesHeures] = useState([]);
   const [pointageEnCours, setPointageEnCours] = useState(null);
-  const [pointageLieu, setPointageLieu] = useState("Circo Bénin");
+  const [pointageLieu, setPointageLieu] = useState("École Montaigne");
   const [pointageLieuCustom, setPointageLieuCustom] = useState("");
 
   const chargerPointagesHeures = async () => {
