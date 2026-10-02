@@ -2765,6 +2765,19 @@ export default function App() {
                 const nomInter = nomIntervenant || "Jean-Luc";
                 const info = INTERVENANTS[nomInter] || {};
                 const semaines = 35;
+                // Heures Circo Bénin calculées sur les VRAIS créneaux de la
+                // rentrée 2026-2027 réellement assignés à cet intervenant
+                // (page "Assigner les cours"), plutôt qu'un chiffre fixe —
+                // un créneau pas encore assigné à personne ne compte pour
+                // personne tant que la direction ne l'a pas décidé.
+                const coursAssignes = COURS_RENTREE.filter(c => {
+                  const fe = formateursEffectifs(c.id);
+                  return fe && fe.includes(nomInter);
+                });
+                const heuresCircoReel = coursAssignes.reduce((a, c) => a + c.duree, 0);
+                const heuresPartenariats = (info.heures_montaigne || 0) + (info.heures_talon || 0);
+                const heuresPrepa = info.heures_prepa || 0;
+                const totalSemaineReel = heuresCircoReel + heuresPartenariats + heuresPrepa;
                 return (
                   <div>
                     <div style={{ background: "linear-gradient(135deg, #7c3aed, #5b21b6)", borderRadius: 20, padding: "36px 32px", color: "#fff", marginBottom: 24 }}>
@@ -2774,30 +2787,30 @@ export default function App() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
                       <Card style={{ textAlign: "center", borderTop: "4px solid #2d7a4f" }}>
                         <div style={{ fontSize: 28, marginBottom: 6 }}>🎪</div>
-                        <div style={{ fontWeight: 700, fontSize: 22, color: C.vert }}>{info.heures_circo || 0}h</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: C.vert }}>{heuresCircoReel}h</div>
                         <div style={{ fontSize: 12, color: C.gris }}>Circo Bénin / sem</div>
-                        <div style={{ fontSize: 11, color: C.vert, marginTop: 4 }}>= {((info.heures_circo || 0) * semaines).toFixed(0)}h / an</div>
+                        <div style={{ fontSize: 11, color: C.vert, marginTop: 4 }}>= {(heuresCircoReel * semaines).toFixed(0)}h / an</div>
                       </Card>
                       <Card style={{ textAlign: "center", borderTop: "4px solid #e91e8c" }}>
                         <div style={{ fontSize: 28, marginBottom: 6 }}>🏫</div>
-                        <div style={{ fontWeight: 700, fontSize: 22, color: C.magenta }}>{(info.heures_montaigne || 0) + (info.heures_talon || 0)}h</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: C.magenta }}>{heuresPartenariats}h</div>
                         <div style={{ fontSize: 12, color: C.gris }}>Partenariats / sem</div>
-                        <div style={{ fontSize: 11, color: C.magenta, marginTop: 4 }}>= {(((info.heures_montaigne || 0) + (info.heures_talon || 0)) * semaines).toFixed(0)}h / an</div>
+                        <div style={{ fontSize: 11, color: C.magenta, marginTop: 4 }}>= {(heuresPartenariats * semaines).toFixed(0)}h / an</div>
                       </Card>
                       <Card style={{ textAlign: "center", borderTop: "4px solid #7c3aed" }}>
                         <div style={{ fontSize: 28, marginBottom: 6 }}>⏱</div>
-                        <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{info.total_semaine || 0}h</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{totalSemaineReel}h</div>
                         <div style={{ fontSize: 12, color: C.gris }}>Total / sem</div>
-                        <div style={{ fontSize: 11, color: "#7c3aed", marginTop: 4 }}>= {((info.total_semaine || 0) * semaines).toFixed(0)}h / an</div>
+                        <div style={{ fontSize: 11, color: "#7c3aed", marginTop: 4 }}>= {(totalSemaineReel * semaines).toFixed(0)}h / an</div>
                       </Card>
                     </div>
                     <Card>
                       <SectionTitle>Détail hebdomadaire</SectionTitle>
                       {[
-                        { label: "Ateliers Circo Bénin", h: info.heures_circo, note: "10 créneaux hebdo" },
+                        { label: "Ateliers Circo Bénin", h: heuresCircoReel, note: coursAssignes.length + " créneau" + (coursAssignes.length > 1 ? "x" : "") + " hebdo (rentrée 2026-2027)" },
                         { label: "École Montaigne", h: info.heures_montaigne, note: "6 groupes × 1h" },
                         { label: "Manoel Talon", h: info.heures_talon, note: "Mardi 15h30-17h30" },
-                        { label: "Temps de préparation", h: info.heures_prepa, note: "Inclus dans le contrat" },
+                        { label: "Temps de préparation", h: heuresPrepa, note: "Inclus dans le contrat" },
                       ].filter(r => r.h > 0).map((r, i) => (
                         <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #eee" }}>
                           <div>
@@ -2812,7 +2825,7 @@ export default function App() {
                       ))}
                       <div style={{ marginTop: 16, padding: "16px", background: "#f3f4f6", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div style={{ fontWeight: 700, fontSize: 15 }}>TOTAL ANNUEL</div>
-                        <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{((info.total_semaine || 0) * semaines).toFixed(0)}h</div>
+                        <div style={{ fontWeight: 700, fontSize: 22, color: "#7c3aed" }}>{(totalSemaineReel * semaines).toFixed(0)}h</div>
                       </div>
                     </Card>
                     <Card style={{ marginTop: 20 }}>
