@@ -1879,6 +1879,11 @@ export default function App() {
       chargerSuiviStages();
       chargerSuiviAdhesions();
       chargerCodesParents();
+    } else if (role === "formateur") {
+      // Les intervenants ont aussi besoin des préinscriptions (la source qui
+      // fait foi pour "qui est inscrit cette année") pour voir leurs vrais
+      // effectifs/élèves par créneau, pas seulement les comptes élèves déjà créés.
+      chargerPreinscriptions();
     }
   }, [role]);
 
@@ -1975,6 +1980,28 @@ export default function App() {
       await supabase.from("assignations_cours").insert([{ cours_id: coursId, formateur }]);
     }
     chargerAssignationsCours();
+  };
+
+  // Élèves réellement inscrits sur un créneau pour la rentrée 2026-2027,
+  // d'après les PRÉINSCRIPTIONS (la source qui fait foi pour "qui est
+  // inscrit cette année" — pas l'ancien champ eleves.classe, qui ne compare
+  // que l'heure et mélangeait des créneaux de jours différents partageant
+  // la même heure). Quand un compte élève existe déjà, on le relie (id,
+  // taux de présence) ; sinon l'enfant apparaît quand même, avec aCompte:false
+  // (les présences ne peuvent pas encore être cochées pour lui).
+  const inscritsDuCreneau = (c) => {
+    const cle = cleCreneauCours(c);
+    return preinscriptions
+      .filter(p => creneauxTokens(p.creneau).includes(cle))
+      .map(p => {
+        const compte = elevesState.find(e =>
+          (p.email && e.email && normCreneau(e.email) === normCreneau(p.email)) ||
+          (normCreneau(e.prenom) === normCreneau(p.prenom) && normCreneau(e.nomFamille) === normCreneau(p.nom))
+        );
+        return compte
+          ? { ...compte, aCompte: true }
+          : { id: null, prenom: p.prenom, nom: (p.nom + " " + p.prenom).trim(), nomFamille: p.nom, age: null, aCompte: false };
+      });
   };
 
   const chargerComptesPaiement = async () => {
@@ -2580,7 +2607,7 @@ export default function App() {
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
                       {mesCours.length === 0 && <p style={{ color: C.gris, fontSize: 14 }}>Aucun créneau ne vous est encore assigné.</p>}
                       {mesCours.map(c => {
-                        const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                        const elevesduCours = inscritsDuCreneau(c);
                         const fe = formateursEffectifs(c.id);
                         return (
                           <Card key={c.id} style={{ borderLeft: `4px solid ${C.or}` }}>
@@ -2837,7 +2864,7 @@ export default function App() {
                       return fe === null || fe.includes(nomIntervenant);
                     }) : COURS_RENTREE).map(c => {
                       const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
-                      const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                      const elevesduCours = inscritsDuCreneau(c);
                       const fe = formateursEffectifs(c.id);
                       return (
                         <Card key={c.id} style={{ cursor: "pointer", borderLeft: `4px solid ${C.or}` }}
@@ -2861,7 +2888,7 @@ export default function App() {
                 <div>
                   {(() => {
                     const cours = COURS_RENTREE.find(c => c.id === activeCours) || COURS.find(c => c.id === activeCours);
-                    const elevesClasse = cours ? elevesState.filter(e => e.classe && (e.classe.includes(cours.heure) || e.classe.includes(cours.jour + " " + cours.heure))) : [];
+                    const elevesClasse = cours ? inscritsDuCreneau(cours) : [];
                     const nbEleves = elevesClasse.length || (cours ? cours.nb : 0);
                     const pres = presencesCours[activeCours] || {};
                     // Un intervenant ne peut cocher les présences que de ses propres cours ;
@@ -2882,14 +2909,16 @@ export default function App() {
                           {isReadOnly && <p style={{ fontSize: 12, color: C.gris, marginTop: -8, marginBottom: 16 }}>Seul l'intervenant assigné peut cocher les présences. Vous consultez ici l'état actuel.</p>}
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
                             {elevesClasse.map(e => {
-                              const present = pres[e.id];
+                              const cleEleve = e.id || ("tmp_" + normCreneau(e.prenom + " " + e.nom));
+                              const present = pres[cleEleve];
+                              const bloque = isReadOnly || !e.aCompte;
                               return (
-                                <div key={e.id} onClick={() => {
-                                  if (isReadOnly) return;
+                                <div key={cleEleve} onClick={() => {
+                                  if (bloque) return;
                                   const nouvelEtat = !present;
                                   setPresencesCours(prev => ({
                                     ...prev,
-                                    [activeCours]: { ...pres, [e.id]: nouvelEtat }
+                                    [activeCours]: { ...pres, [cleEleve]: nouvelEtat }
                                   }));
                                   const todayStr = new Date().toISOString().slice(0, 10);
                                   supabase.from("presences_seances").upsert([{
@@ -2901,7 +2930,7 @@ export default function App() {
                                   }], { onConflict: "eleve_id,cours_id,date" }).then(() => chargerHistoriquePresences());
                                 }} style={{
                                   display: "flex", alignItems: "center", gap: 12,
-                                  padding: 14, borderRadius: 12, cursor: isReadOnly ? "default" : "pointer",
+                                  padding: 14, borderRadius: 12, cursor: bloque ? "default" : "pointer",
                                   background: present ? "#E8F5E9" : C.grisClair,
                                   border: `2px solid ${present ? C.vert : "transparent"}`,
                                   opacity: isReadOnly ? 0.85 : 1,
@@ -2915,12 +2944,16 @@ export default function App() {
                                   }}>{e.nom[0]}</div>
                                   <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: 14, fontWeight: 600 }}>{e.nom}</div>
-                                    <div style={{ fontSize: 11, color: C.gris }}>{e.classe} · Taux: {(() => {
-                                      const t = calculerTauxPresence(e.id, "septembre");
-                                      return t.taux === null ? "—" : t.taux + "%";
-                                    })()}</div>
+                                    <div style={{ fontSize: 11, color: C.gris }}>
+                                      {e.aCompte ? (
+                                        <>{e.classe} · Taux: {(() => {
+                                          const t = calculerTauxPresence(e.id, "septembre");
+                                          return t.taux === null ? "—" : t.taux + "%";
+                                        })()}</>
+                                      ) : "Compte élève pas encore créé — contactez le secrétariat"}
+                                    </div>
                                   </div>
-                                  <div style={{ fontSize: 20 }}>{present ? "✅" : "⬜"}</div>
+                                  <div style={{ fontSize: 20 }}>{e.aCompte ? (present ? "✅" : "⬜") : "⏳"}</div>
                                 </div>
                               );
                             })}
@@ -3021,7 +3054,7 @@ export default function App() {
                 if (mesCours.length === 0) return <p style={{ color: C.gris, fontSize: 14 }}>Aucun cours ne vous est encore assigné.</p>;
                 const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
                 return mesCours.map(c => {
-                  const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                  const elevesduCours = inscritsDuCreneau(c);
                   const fe = formateursEffectifs(c.id);
                   return (
                     <Card key={c.id} style={{ marginBottom: 20 }}>
@@ -3036,13 +3069,16 @@ export default function App() {
                       ) : (
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                           {elevesduCours.map(e => {
-                            const t = calculerTauxPresence(e.id, "septembre");
+                            const cleEleve = e.id || ("tmp_" + normCreneau(e.prenom + " " + e.nom));
+                            const t = e.aCompte ? calculerTauxPresence(e.id, "septembre") : { taux: null };
                             return (
-                              <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, background: C.grisClair }}>
+                              <div key={cleEleve} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, background: C.grisClair }}>
                                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: C.violet, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{e.nom[0]}</div>
                                 <div>
                                   <div style={{ fontSize: 14, fontWeight: 600 }}>{e.nom}</div>
-                                  <div style={{ fontSize: 11, color: C.gris }}>{e.age ? e.age + " ans" : "—"} · Taux de présence : {t.taux === null ? "—" : t.taux + "%"}</div>
+                                  <div style={{ fontSize: 11, color: C.gris }}>
+                                    {e.aCompte ? (e.age ? e.age + " ans" : "—") + " · Taux de présence : " + (t.taux === null ? "—" : t.taux + "%") : "Compte élève pas encore créé"}
+                                  </div>
                                 </div>
                               </div>
                             );
