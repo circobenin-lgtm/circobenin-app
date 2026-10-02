@@ -2556,34 +2556,51 @@ export default function App() {
           {page === "mon_planning" && (
             <div>
               {(() => {
-                const intervenant = pendingRole === "formateur" ? null : null;
                 const nomInter = nomIntervenant || "Jean-Luc";
                 const infoInter = INTERVENANTS[nomInter] || {};
-                const mesCours = COURS.filter(c => c.formateurs && c.formateurs.includes(nomInter));
+                const joursComplets = { Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" };
+                // Planning réel de la rentrée 2026-2027 : créneaux assignés à
+                // cet intervenant (ou pas encore assignés, auquel cas ils
+                // restent visibles à tous), avec les vrais élèves inscrits.
+                const mesCours = COURS_RENTREE.filter(c => {
+                  const fe = formateursEffectifs(c.id);
+                  return fe === null || fe.includes(nomInter);
+                });
                 return (
                   <div>
                     <Card style={{ marginBottom: 24, background: C.vert, color: "#fff" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontFamily: FT, fontSize: 20 }}>Bonjour, {nomInter} 👋</div>
-                          <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>{mesCours.length} cours à Circo Bénin cette semaine</div>
+                          <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>{mesCours.length} créneau{mesCours.length > 1 ? "x" : ""} à Circo Bénin — rentrée 2026-2027</div>
                         </div>
                         <div style={{ fontSize: 40, opacity: 0.3 }}>◫</div>
                       </div>
                     </Card>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
-                      {mesCours.map(c => (
-                        <Card key={c.id} style={{ borderLeft: `4px solid ${C.or}` }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                            <Badge text={c.jour} bg={C.vert} color="#fff" />
-                            <Badge text={c.heure} bg={C.fond} color={C.vert} />
-                          </div>
-                          <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{c.classe}</div>
-                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>📍 {c.salle} · ⏱ {c.duree === 0.75 ? "45min" : c.duree + "h"}</div>
-                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 12 }}>👥 {c.nb} élèves</div>
-                          <Btn small onClick={() => { setActiveCours(c.id); setPage("presences"); }}>✓ Présences</Btn>
-                        </Card>
-                      ))}
+                      {mesCours.length === 0 && <p style={{ color: C.gris, fontSize: 14 }}>Aucun créneau ne vous est encore assigné.</p>}
+                      {mesCours.map(c => {
+                        const elevesduCours = elevesState.filter(e => e.classe && e.classe.includes(c.heure));
+                        const fe = formateursEffectifs(c.id);
+                        return (
+                          <Card key={c.id} style={{ borderLeft: `4px solid ${C.or}` }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
+                              <Badge text={joursComplets[c.jour]} bg={C.vert} color="#fff" />
+                              <Badge text={c.heure} bg={C.fond} color={C.vert} />
+                              {fe === null && <Badge text="Pas encore assigné" bg="#FFF8E1" color={C.orange} />}
+                            </div>
+                            <div style={{ fontFamily: FT, fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{c.age}</div>
+                            <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>📍 {c.salle} · ⏱ {c.duree === 0.75 ? "45min" : c.duree + "h"} · {c.heure} – {c.fin}</div>
+                            <div style={{ fontSize: 12, color: C.gris, marginBottom: 8 }}>👥 {elevesduCours.length} élève{elevesduCours.length > 1 ? "s" : ""}</div>
+                            {elevesduCours.length > 0 && (
+                              <div style={{ fontSize: 12, color: C.noir, marginBottom: 12, lineHeight: 1.5 }}>
+                                {elevesduCours.map(e => e.prenom || e.nom).join(", ")}
+                              </div>
+                            )}
+                            <Btn small onClick={() => { setActiveCours(c.id); setPage("presences"); }}>✓ Présences</Btn>
+                          </Card>
+                        );
+                      })}
                     </div>
                     {infoInter.extra && infoInter.extra.length > 0 && (
                       <Card style={{ borderTop: `4px solid ${C.magenta}` }}>
