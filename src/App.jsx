@@ -1896,7 +1896,11 @@ export default function App() {
         setReinscriptionEnfant(data && data[0] ? data[0] : null);
       } catch (e) {}
       try {
-        const { data } = await supabase.from("preinscriptions").select("creneau");
+        // On ne remonte que le créneau et le prénom (pas le nom de famille,
+        // l'email, etc.) : ça permet d'afficher aux parents les prénoms des
+        // enfants inscrits dans le MÊME groupe que le leur, sans exposer
+        // d'autres informations sur les autres familles.
+        const { data } = await supabase.from("preinscriptions").select("creneau, prenom");
         setCreneauxRentreeLignes(data || []);
       } catch (e) {}
     })();
@@ -4780,6 +4784,16 @@ export default function App() {
             const coursEnfant = COURS.find(c => c.classe === eleveActuel.classe || eleveActuel.classe?.includes(c.heure));
             const groupesRentree = compterInscritsParCours(creneauxRentreeLignes);
             const clesEnfant = reinscriptionEnfant ? creneauxTokens(reinscriptionEnfant.creneau) : [];
+            // Prénoms des enfants inscrits sur un créneau donné (utilisé pour
+            // afficher, uniquement sur le/les créneaux de l'enfant connecté,
+            // la liste de ses camarades de groupe plutôt qu'un simple total).
+            const prenomsParCreneau = {};
+            (creneauxRentreeLignes || []).forEach(l => {
+              creneauxTokens(l.creneau).forEach(t => {
+                if (!l.prenom) return;
+                (prenomsParCreneau[t] = prenomsParCreneau[t] || []).push(l.prenom);
+              });
+            });
             return (
             <div>
               {/* Créneau actuel de l'enfant */}
@@ -4822,7 +4836,13 @@ export default function App() {
                               <div style={{ fontSize: 12, fontWeight: 700, color: C.vert }}>{c.heure}</div>
                               <div style={{ fontSize: 12, fontWeight: 700, color: C.noir, margin: "3px 0" }}>{c.age}</div>
                               <div style={{ fontSize: 11, color: C.gris }}>{c.fin}</div>
-                              <div style={{ fontSize: 11, color: C.gris, marginTop: 2 }}>{c.inscrits} inscrit{c.inscrits > 1 ? "s" : ""}</div>
+                              {estCelleDeLenfant ? (
+                                <div style={{ fontSize: 11, color: C.gris, marginTop: 2 }}>
+                                  Avec : {(prenomsParCreneau[cleCreneauCours(c)] || []).join(", ") || "—"}
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: 11, color: C.gris, marginTop: 2 }}>{c.inscrits} inscrit{c.inscrits > 1 ? "s" : ""}</div>
+                              )}
                               {estCelleDeLenfant && <div style={{ fontSize: 10, fontWeight: 700, color: C.vert, marginTop: 2 }}>✓ Place de {eleveActuel.prenom}</div>}
                               {demandeEnCours ? (
                                 <div style={{ fontSize: 9, fontWeight: 700, color: "#e65100", marginTop: 4 }}>⏳ Demande en attente</div>
