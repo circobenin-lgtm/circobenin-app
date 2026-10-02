@@ -1221,6 +1221,10 @@ export default function App() {
   const [newMsg, setNewMsg] = useState("");
   const [presencesCours, setPresencesCours] = useState({});
   const [activeCours, setActiveCours] = useState(null);
+  // Date pour laquelle on saisit les présences — par défaut aujourd'hui, mais
+  // modifiable pour rattraper une feuille en retard (ex: on est vendredi et
+  // on n'a pas encore pointé lundi-jeudi). Jamais dans le futur.
+  const [datePresence, setDatePresence] = useState(() => new Date().toISOString().slice(0, 10));
   const [paiementStep, setPaiementStep] = useState(0);
   const [modePaiement, setModePaiement] = useState(null);
   const [searchEleve, setSearchEleve] = useState("");
@@ -2651,7 +2655,7 @@ export default function App() {
                                 {elevesduCours.map(e => e.prenom || e.nom).join(", ")}
                               </div>
                             )}
-                            <Btn small onClick={() => { setActiveCours(c.id); setPage("presences"); }}>✓ Présences</Btn>
+                            <Btn small onClick={() => { setActiveCours(c.id); setDatePresence(new Date().toISOString().slice(0, 10)); setPage("presences"); }}>✓ Présences</Btn>
                           </Card>
                         );
                       })}
@@ -2917,7 +2921,7 @@ export default function App() {
                       const fe = formateursEffectifs(c.id);
                       return (
                         <Card key={c.id} style={{ cursor: "pointer", borderLeft: `4px solid ${C.or}` }}
-                          onClick={() => setActiveCours(c.id)}>
+                          onClick={() => { setActiveCours(c.id); setDatePresence(new Date().toISOString().slice(0, 10)); }}>
                           <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                             <Badge text={joursComplets[c.jour]} bg={C.vert} color="#fff" />
                             <Badge text={c.heure} bg={C.fond} color={C.vert} />
@@ -2939,13 +2943,24 @@ export default function App() {
                     const cours = COURS_RENTREE.find(c => c.id === activeCours) || COURS.find(c => c.id === activeCours);
                     const elevesClasse = cours ? inscritsDuCreneau(cours) : [];
                     const nbEleves = elevesClasse.length || (cours ? cours.nb : 0);
-                    const pres = presencesCours[activeCours] || {};
+                    // État réel en base pour CE créneau et CETTE date (pas une date
+                    // fixe "aujourd'hui") — permet de rattraper une feuille en retard
+                    // sans écraser celle d'un autre jour. Un éventuel clic optimiste
+                    // de cette session (presencesCours) prend le dessus en attendant
+                    // le rechargement depuis la base.
+                    const presDB = {};
+                    historiquePresences
+                      .filter(p => p.cours_id === activeCours && p.date === datePresence)
+                      .forEach(p => { presDB[p.eleve_id] = p.present; });
+                    const cleOverlay = activeCours + "_" + datePresence;
+                    const pres = { ...presDB, ...(presencesCours[cleOverlay] || {}) };
                     // Un intervenant ne peut cocher les présences que de ses propres cours ;
                     // tant qu'un cours n'a pas d'assignation décidée par la direction, il
                     // reste ouvert à tous. Pour Direction/Admin, toujours en lecture seule.
                     const feCours = cours ? formateursEffectifs(cours.id) : null;
                     const estMonCours = feCours === null || feCours.includes(nomIntervenant);
                     const isReadOnly = role === "directeur" || role === "admin" || (role === "formateur" && !estMonCours);
+                    const aujourdhui = new Date().toISOString().slice(0, 10);
                     return (
                       <div>
                         <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
@@ -2953,6 +2968,15 @@ export default function App() {
                           <div style={{ fontFamily: FT, fontSize: 20, color: C.vert }}>{cours.age || cours.classe} — {{ Lun: "Lundi", Mar: "Mardi", Mer: "Mercredi", Jeu: "Jeudi", Ven: "Vendredi", Sam: "Samedi" }[cours.jour]} {cours.heure} – {cours.fin}</div>
                           {isReadOnly && <Badge text="👁 Lecture seule" bg="#FFF8E1" color={C.orange} />}
                         </div>
+                        {!isReadOnly && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                            <label style={{ fontSize: 13, color: C.gris }}>Date de la séance :</label>
+                            <input type="date" value={datePresence} max={aujourdhui}
+                              onChange={e => setDatePresence(e.target.value)}
+                              style={{ padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.grisClair}`, fontSize: 13, fontFamily: FB }} />
+                            {datePresence !== aujourdhui && <Badge text="Rattrapage" bg="#FFF3E0" color="#e65100" />}
+                          </div>
+                        )}
                         <Card>
                           <SectionTitle>Feuille de présence</SectionTitle>
                           {isReadOnly && <p style={{ fontSize: 12, color: C.gris, marginTop: -8, marginBottom: 16 }}>Seul l'intervenant assigné peut cocher les présences. Vous consultez ici l'état actuel.</p>}
@@ -2968,13 +2992,12 @@ export default function App() {
                                   const nouvellePres = { ...pres, [cleEleve]: nouvelEtat };
                                   setPresencesCours(prev => ({
                                     ...prev,
-                                    [activeCours]: nouvellePres
+                                    [cleOverlay]: nouvellePres
                                   }));
-                                  const todayStr = new Date().toISOString().slice(0, 10);
                                   supabase.from("presences_seances").upsert([{
                                     eleve_id: e.id,
                                     cours_id: activeCours,
-                                    date: todayStr,
+                                    date: datePresence,
                                     present: nouvelEtat,
                                     nom_eleve: e.nom,
                                   }], { onConflict: "eleve_id,cours_id,date" }).then(() => chargerHistoriquePresences());
@@ -2982,9 +3005,11 @@ export default function App() {
                                   // présence : dès qu'au moins un élève est coché présent sur ce
                                   // créneau/date, le créneau compte comme "fait" (plus de pointage
                                   // manuel à faire). Si plus personne n'est coché, l'heure est retirée.
+                                  // La date utilisée est celle choisie (datePresence), pas forcément
+                                  // aujourd'hui — pour que les heures rattrapées tombent au bon jour.
                                   if (role === "formateur") {
                                     const auMoinsUnPresent = Object.values(nouvellePres).some(Boolean);
-                                    synchroniserPointageDepuisPresences(cours, todayStr, auMoinsUnPresent);
+                                    synchroniserPointageDepuisPresences(cours, datePresence, auMoinsUnPresent);
                                   }
                                 }} style={{
                                   display: "flex", alignItems: "center", gap: 12,
