@@ -70,7 +70,7 @@ const NAV_PAR_ROLE = {
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
-    { id: "emprunts", icon: "🏦", label: "Emprunts" },
+    { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
     { id: "message_groupe", icon: "▦", label: "Msg parents" },
@@ -95,7 +95,7 @@ const NAV_PAR_ROLE = {
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
-    { id: "emprunts", icon: "🏦", label: "Emprunts" },
+    { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -1601,6 +1601,19 @@ export default function App() {
   });
   const [empruntRembourse, setEmpruntRembourse] = useState(null);
   const [remboursementForm, setRemboursementForm] = useState({ capital: "", interets: "", date: "", mode: "Espèces" });
+  const [echeancesDette, setEcheancesDette] = useState([]);
+  const [echeanceForm, setEcheanceForm] = useState({ detteId: null, date_prevue: "", montant: "", libelle: "" });
+
+  // Chaque nature de dette a son compte : un prêt reçu (168/162) n'est pas de
+  // même nature qu'un loyer impayé (401, dette fournisseur) ou qu'un salaire
+  // non versé (421, dette envers le personnel).
+  const TYPES_DETTE = {
+    particulier: { label: "Prêt d'un particulier", compte: "168", couleur: C.violet },
+    bancaire: { label: "Prêt bancaire", compte: "162", couleur: C.bleu },
+    fournisseur: { label: "Facture / loyer impayé", compte: "401", couleur: C.or },
+    personnel: { label: "Salaire dû", compte: "421", couleur: C.rouge },
+  };
+  const estUnPret = (e) => e.type === "particulier" || e.type === "bancaire";
 
   const chargerEmprunts = async () => {
     try {
@@ -1608,8 +1621,28 @@ export default function App() {
       if (data) setEmprunts(data);
       const { data: r } = await supabase.from("remboursements_emprunt").select("*").order("date", { ascending: true });
       if (r) setRemboursementsEmprunt(r);
+      const { data: ech } = await supabase.from("echeances_dette").select("*").order("date_prevue", { ascending: true });
+      if (ech) setEcheancesDette(ech);
     } catch (e) {}
   };
+
+  const ajouterEcheance = async () => {
+    const f = echeanceForm;
+    if (!f.detteId || !f.date_prevue || !f.montant) return;
+    await supabase.from("echeances_dette").insert([{
+      dette_id: f.detteId, date_prevue: f.date_prevue,
+      montant: parseFloat(f.montant), libelle: f.libelle || null,
+    }]);
+    setEcheanceForm({ detteId: null, date_prevue: "", montant: "", libelle: "" });
+    chargerEmprunts();
+  };
+
+  const supprimerEcheance = async (id) => {
+    await supabase.from("echeances_dette").delete().eq("id", id);
+    chargerEmprunts();
+  };
+
+  const echeancesDe = (detteId) => echeancesDette.filter(e => String(e.dette_id) === String(detteId));
 
   useEffect(() => {
     if (role === "directeur" || role === "admin") chargerEmprunts();
@@ -1660,7 +1693,9 @@ export default function App() {
       taux_annuel: parseFloat(f.taux_annuel) || 0,
       duree_mois: f.duree_mois ? parseInt(f.duree_mois, 10) : null,
       date_debut: f.date_debut,
-      compte: f.type === "bancaire" ? "162" : "168",
+      compte: (TYPES_DETTE[f.type] || TYPES_DETTE.particulier).compte,
+      compte_charge: f.compte_charge || null,
+      date_charge: f.date_charge || null,
       notes: f.notes || null,
     }]);
     setShowModalEmprunt(false);
@@ -1709,7 +1744,8 @@ export default function App() {
       date: f.date, projet: "Circo Bénin — fonctionnement", sens: "sortie",
       compte_caisse: "571", compte_contrepartie: e.compte,
       compte_debit: e.compte, compte_credit: "571",
-      montant: capital, libelle: `Remboursement capital — ${e.preteur}`,
+      montant: capital,
+      libelle: estUnPret(e) ? `Remboursement capital — ${e.preteur}` : `Paiement — ${e.preteur}`,
       saisi_par: nomIntervenant || role,
     });
     if (interets > 0) ecritures.push({
@@ -1721,12 +1757,17 @@ export default function App() {
     });
     if (ecritures.length > 0) await supabase.from("operations_caisse").insert(ecritures);
 
+    // Si ce paiement règle une échéance prévue, on la marque comme honorée.
+    if (f.echeanceId) {
+      await supabase.from("echeances_dette").update({ payee: true }).eq("id", f.echeanceId);
+    }
+
     // Le prêt est soldé dès que le capital est intégralement remboursé.
     if (capitalRembourse(e.id) + capital >= Number(e.montant) - 1) {
       await supabase.from("emprunts").update({ statut: "solde" }).eq("id", e.id);
     }
     setEmpruntRembourse(null);
-    setRemboursementForm({ capital: "", interets: "", date: "", mode: "Espèces" });
+    setRemboursementForm({ capital: "", interets: "", date: "", mode: "Espèces", echeanceId: null });
     chargerEmprunts();
     chargerOperationsCaisse();
   };
@@ -4582,37 +4623,71 @@ export default function App() {
           {page === "emprunts" && (role === "directeur" || role === "admin") && (() => {
             const enCours = emprunts.filter(e => e.statut !== "solde");
             const totalDu = enCours.reduce((a, e) => a + resteDuEmprunt(e), 0);
-            const totalEmprunte = emprunts.reduce((a, e) => a + Number(e.montant || 0), 0);
             const totalInterets = emprunts.reduce((a, e) => a + interetsPayes(e.id), 0);
+            const aujourdhuiISO = new Date().toISOString().slice(0, 10);
+            const dansTrenteJours = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+            const echeancesProches = echeancesDette
+              .filter(ec => !ec.payee && ec.date_prevue <= dansTrenteJours)
+              .sort((a, b) => a.date_prevue.localeCompare(b.date_prevue));
+            const totalProche = echeancesProches.reduce((a, ec) => a + Number(ec.montant || 0), 0);
+            const nomDette = (id) => {
+              const d = emprunts.find(x => String(x.id) === String(id));
+              return d ? d.preteur : "";
+            };
             return (
               <div>
                 <div className="grid-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
-                  <StatCard label="Capital restant dû" value={`${Math.round(totalDu).toLocaleString("fr-FR")} F`} icon="🏦" color={C.rouge} />
-                  <StatCard label="Total emprunté" value={`${Math.round(totalEmprunte).toLocaleString("fr-FR")} F`} icon="₦" color={C.bleu} />
-                  <StatCard label="Intérêts payés" value={`${Math.round(totalInterets).toLocaleString("fr-FR")} F`} icon="◉" color={C.or} />
+                  <StatCard label="Total restant dû" value={`${Math.round(totalDu).toLocaleString("fr-FR")} F`} icon="🏦" color={C.rouge} />
+                  <StatCard label="À payer sous 30 jours" value={`${Math.round(totalProche).toLocaleString("fr-FR")} F`} icon="⏳" color={C.or} />
+                  <StatCard label="Intérêts payés" value={`${Math.round(totalInterets).toLocaleString("fr-FR")} F`} icon="◉" color={C.bleu} />
                 </div>
+
+                {echeancesProches.length > 0 && (
+                  <Card style={{ marginBottom: 20, borderLeft: `4px solid ${C.or}` }}>
+                    <SectionTitle>Échéances des 30 prochains jours</SectionTitle>
+                    {echeancesProches.map(ec => {
+                      const enRetard = ec.date_prevue < aujourdhuiISO;
+                      return (
+                        <div key={ec.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${C.grisClair}` }}>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 600 }}>
+                              {nomDette(ec.dette_id)}{ec.libelle ? " · " + ec.libelle : ""}
+                            </div>
+                            <div style={{ fontSize: 12, color: enRetard ? C.rouge : C.gris }}>
+                              {new Date(ec.date_prevue + "T00:00:00").toLocaleDateString("fr-FR")}
+                              {enRetard && " · en retard"}
+                            </div>
+                          </div>
+                          <div style={{ fontWeight: 700, color: enRetard ? C.rouge : C.gris }}>
+                            {Number(ec.montant).toLocaleString("fr-FR")} F
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </Card>
+                )}
 
                 <Card style={{ marginBottom: 20, background: "#f3f0ff", border: "1px solid #ddd6fe" }}>
                   <div style={{ fontSize: 13, color: C.gris, lineHeight: 1.6 }}>
-                    <strong style={{ color: C.violet }}>Pourquoi une page à part ?</strong> Un prêt reçu n'est pas une recette :
-                    il augmente la trésorerie <em>et</em> la dette. Chaque remboursement enregistré ici génère
-                    automatiquement deux écritures dans la trésorerie — le capital (qui réduit la dette) et les
-                    intérêts (qui sont une charge). Les confondre gonflerait les dépenses tout en laissant la
-                    dette intacte dans les comptes.
+                    <strong style={{ color: C.violet }}>Pourquoi une page à part ?</strong> Un prêt reçu n'est pas une recette,
+                    et le rembourser n'est pas une dépense : seule la dette bouge. Un loyer ou un salaire impayé, lui,
+                    est bien une charge de sa période — même tant qu'il n'est pas réglé. Chaque paiement enregistré ici
+                    génère l'écriture correspondante dans la trésorerie, sur le bon compte de dette, et les intérêts
+                    éventuels partent seuls en charge.
                   </div>
                 </Card>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                  <SectionTitle>Prêts en cours</SectionTitle>
+                  <SectionTitle>Dettes en cours</SectionTitle>
                   <Btn onClick={() => {
                     setEmpruntForm({ type: "particulier", preteur: "", objet: "", montant: "", taux_annuel: "", duree_mois: "", date_debut: new Date().toISOString().slice(0, 10), notes: "" });
                     setShowModalEmprunt(true);
-                  }}>+ Nouveau prêt</Btn>
+                  }}>+ Nouvelle dette</Btn>
                 </div>
 
                 {emprunts.length === 0 && (
                   <Card><div style={{ color: C.gris, fontSize: 14, textAlign: "center", padding: "20px 0" }}>
-                    Aucun prêt enregistré pour le moment.
+                    Aucune dette enregistrée pour le moment.
                   </div></Card>
                 )}
 
@@ -4630,13 +4705,14 @@ export default function App() {
                         <div>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             <div style={{ fontSize: 16, fontWeight: 700 }}>{e.preteur}</div>
-                            <Badge text={e.type === "bancaire" ? "Banque" : "Particulier"} bg={C.fond} color={e.type === "bancaire" ? C.bleu : C.violet} />
+                            <Badge text={(TYPES_DETTE[e.type] || TYPES_DETTE.particulier).label} bg={C.fond} color={(TYPES_DETTE[e.type] || TYPES_DETTE.particulier).couleur} />
                             {estSolde && <Badge text="Soldé" bg="#e8f5e9" color={C.vert} />}
                           </div>
                           <div style={{ fontSize: 13, color: C.gris, marginTop: 4 }}>
                             {e.objet ? e.objet + " · " : ""}Compte {e.compte} · depuis le {new Date(e.date_debut + "T00:00:00").toLocaleDateString("fr-FR")}
-                            {Number(e.taux_annuel) > 0 ? ` · ${e.taux_annuel}% / an` : " · sans intérêts"}
-                            {e.duree_mois ? ` · ${e.duree_mois} mois` : " · remboursement libre"}
+                            {estUnPret(e) && (Number(e.taux_annuel) > 0 ? ` · ${e.taux_annuel}% / an` : " · sans intérêts")}
+                            {estUnPret(e) && (e.duree_mois ? ` · ${e.duree_mois} mois` : " · remboursement libre")}
+                            {!estUnPret(e) && e.compte_charge ? ` · charge ${e.compte_charge}` : ""}
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
@@ -4651,7 +4727,7 @@ export default function App() {
                         <div style={{ width: `${pct}%`, height: "100%", background: pct >= 100 ? C.vert : C.or, transition: "width .3s" }} />
                       </div>
                       <div style={{ fontSize: 12, color: C.gris, marginTop: 6 }}>
-                        {Math.round(rembourse).toLocaleString("fr-FR")} F remboursés ({Math.round(pct)}%)
+                        {Math.round(rembourse).toLocaleString("fr-FR")} F réglés ({Math.round(pct)}%)
                         {mens > 0 && ` · mensualité calculée : ${Math.round(mens).toLocaleString("fr-FR")} F`}
                       </div>
 
@@ -4668,16 +4744,68 @@ export default function App() {
                               date: new Date().toISOString().slice(0, 10),
                               mode: "Espèces",
                             });
-                          }}>₦ Enregistrer un remboursement</Btn>
+                          }}>{estUnPret(e) ? "₦ Enregistrer un remboursement" : "₦ Enregistrer un paiement"}</Btn>
                         )}
-                        <Btn small color={C.gris} disabled={empruntDejaEncaisse(e)} onClick={() => encaisserEmprunt(e)}>
-                          {empruntDejaEncaisse(e) ? "✓ Encaissement déjà passé en caisse" : "↑ Passer l'encaissement en caisse"}
+                        {estUnPret(e) && (
+                          <Btn small color={C.gris} disabled={empruntDejaEncaisse(e)} onClick={() => encaisserEmprunt(e)}>
+                            {empruntDejaEncaisse(e) ? "✓ Encaissement déjà passé en caisse" : "↑ Passer l'encaissement en caisse"}
+                          </Btn>
+                        )}
+                        <Btn small color={C.gris} onClick={() => setEcheanceForm({ detteId: e.id, date_prevue: "", montant: "", libelle: "" })}>
+                          + Ajouter une échéance
                         </Btn>
                       </div>
 
+                      {echeancesDe(e.id).length > 0 && (
+                        <div style={{ marginTop: 16 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", marginBottom: 6 }}>Échéances prévues</div>
+                          {echeancesDe(e.id).map(ec => (
+                            <div key={ec.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, padding: "6px 0", borderBottom: `1px solid ${C.grisClair}`, opacity: ec.payee ? 0.5 : 1 }}>
+                              <div>
+                                {new Date(ec.date_prevue + "T00:00:00").toLocaleDateString("fr-FR")}
+                                {ec.libelle ? " · " + ec.libelle : ""}
+                                {ec.payee && " · payée"}
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <span style={{ fontWeight: 600 }}>{Number(ec.montant).toLocaleString("fr-FR")} F</span>
+                                {!ec.payee && (
+                                  <span onClick={() => {
+                                    setEmpruntRembourse(e);
+                                    setRemboursementForm({
+                                      capital: String(Math.round(Number(ec.montant))), interets: "",
+                                      date: new Date().toISOString().slice(0, 10), mode: "Espèces", echeanceId: ec.id,
+                                    });
+                                  }} style={{ cursor: "pointer", color: C.vert, fontWeight: 600, fontSize: 12 }}>Payer</span>
+                                )}
+                                <span onClick={() => supprimerEcheance(ec.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 14 }} title="Supprimer">✕</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {echeanceForm.detteId === e.id && (
+                        <div style={{ marginTop: 14, padding: 12, background: C.fond, borderRadius: 10 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, marginBottom: 8 }}>Nouvelle échéance</div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            <input type="date" value={echeanceForm.date_prevue}
+                              onChange={ev => setEcheanceForm({ ...echeanceForm, date_prevue: ev.target.value })}
+                              style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13 }} />
+                            <input type="number" placeholder="Montant" value={echeanceForm.montant}
+                              onChange={ev => setEcheanceForm({ ...echeanceForm, montant: ev.target.value })}
+                              style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13, width: 120 }} />
+                            <input placeholder="Libellé (optionnel)" value={echeanceForm.libelle}
+                              onChange={ev => setEcheanceForm({ ...echeanceForm, libelle: ev.target.value })}
+                              style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 13, flex: 1, minWidth: 140 }} />
+                            <Btn small onClick={ajouterEcheance}>Ajouter</Btn>
+                            <Btn small color={C.gris} onClick={() => setEcheanceForm({ detteId: null, date_prevue: "", montant: "", libelle: "" })}>Annuler</Btn>
+                          </div>
+                        </div>
+                      )}
+
                       {historique.length > 0 && (
                         <div style={{ marginTop: 16 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", marginBottom: 6 }}>Remboursements effectués</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", marginBottom: 6 }}>{estUnPret(e) ? "Remboursements effectués" : "Paiements effectués"}</div>
                           {historique.map(r => (
                             <div key={r.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "6px 0", borderBottom: `1px solid ${C.grisClair}` }}>
                               <div>{new Date(r.date + "T00:00:00").toLocaleDateString("fr-FR")} · {r.mode}</div>
@@ -4728,35 +4856,47 @@ export default function App() {
                 {showModalEmprunt && (
                   <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
                     <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 440, maxWidth: "90%", maxHeight: "85vh", overflowY: "auto" }}>
-                      <SectionTitle>Nouveau prêt</SectionTitle>
+                      <SectionTitle>Nouvelle dette</SectionTitle>
                       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <div onClick={() => setEmpruntForm({ ...empruntForm, type: "particulier" })} style={{
-                            flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600,
-                            background: empruntForm.type === "particulier" ? C.violet : C.grisClair,
-                            color: empruntForm.type === "particulier" ? "#fff" : C.gris,
-                          }}>Particulier</div>
-                          <div onClick={() => setEmpruntForm({ ...empruntForm, type: "bancaire" })} style={{
-                            flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600,
-                            background: empruntForm.type === "bancaire" ? C.bleu : C.grisClair,
-                            color: empruntForm.type === "bancaire" ? "#fff" : C.gris,
-                          }}>Banque</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          {Object.entries(TYPES_DETTE).map(([cle, t]) => (
+                            <div key={cle} onClick={() => setEmpruntForm({ ...empruntForm, type: cle })} style={{
+                              textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                              background: empruntForm.type === cle ? t.couleur : C.grisClair,
+                              color: empruntForm.type === cle ? "#fff" : C.gris,
+                            }}>{t.label}</div>
+                          ))}
                         </div>
-                        <input placeholder="Nom du prêteur (ex: Banque Atlantique, M. Dossou)" value={empruntForm.preteur}
+                        <input placeholder="Nom du créancier (ex: Banque Atlantique, M. Dossou)" value={empruntForm.preteur}
                           onChange={ev => setEmpruntForm({ ...empruntForm, preteur: ev.target.value })}
                           style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
                         <input placeholder="Objet du prêt (ex: charges locatives de démarrage)" value={empruntForm.objet}
                           onChange={ev => setEmpruntForm({ ...empruntForm, objet: ev.target.value })}
                           style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
-                        <input type="number" placeholder="Montant emprunté (FCFA)" value={empruntForm.montant}
+                        <input type="number" placeholder={estUnPret(empruntForm) ? "Montant emprunté (FCFA)" : "Montant dû (FCFA)"} value={empruntForm.montant}
                           onChange={ev => setEmpruntForm({ ...empruntForm, montant: ev.target.value })}
                           style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
                         <div>
-                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Date de réception du prêt</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>{estUnPret(empruntForm) ? "Date de réception du prêt" : "Date d'origine de la dette (période concernée)"}</div>
                           <input type="date" value={empruntForm.date_debut}
                             onChange={ev => setEmpruntForm({ ...empruntForm, date_debut: ev.target.value })}
                             style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
                         </div>
+                        {!estUnPret(empruntForm) && (
+                          <div>
+                            <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Compte de charge correspondant</div>
+                            <select value={empruntForm.compte_charge || ""} onChange={ev => setEmpruntForm({ ...empruntForm, compte_charge: ev.target.value })}
+                              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                              <option value="">— À préciser —</option>
+                              {COMPTES_SYCEBNL.filter(c => c.classe === 6).map(c => <option key={c.code} value={c.code}>{c.code} — {c.libelle}</option>)}
+                            </select>
+                            <div style={{ fontSize: 12, color: C.gris, marginTop: 6 }}>
+                              Un loyer impayé reste une charge de la période concernée (622), un salaire non versé aussi (641) —
+                              même s'il n'a pas encore été payé.
+                            </div>
+                          </div>
+                        )}
+                        {estUnPret(empruntForm) && (
                         <div style={{ display: "flex", gap: 10 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Taux annuel (%)</div>
@@ -4771,10 +4911,13 @@ export default function App() {
                               style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
                           </div>
                         </div>
+                        )}
+                        {estUnPret(empruntForm) && (
                         <div style={{ fontSize: 12, color: C.gris, background: C.fond, padding: "10px 12px", borderRadius: 8 }}>
                           Laisse le taux à 0 et la durée vide pour un prêt amical remboursé quand c'est possible :
                           l'app suivra alors simplement le capital restant dû, sans échéancier.
                         </div>
+                        )}
                       </div>
                       <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
                         <Btn small color={C.gris} onClick={() => setShowModalEmprunt(false)}>Annuler</Btn>
@@ -4787,25 +4930,25 @@ export default function App() {
                 {empruntRembourse && (
                   <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
                     <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 420, maxWidth: "90%" }}>
-                      <SectionTitle>Remboursement — {empruntRembourse.preteur}</SectionTitle>
+                      <SectionTitle>Paiement — {empruntRembourse.preteur}</SectionTitle>
                       <div style={{ fontSize: 13, color: C.gris, marginTop: 6 }}>
                         Restant dû : {Math.round(resteDuEmprunt(empruntRembourse)).toLocaleString("fr-FR")} F
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
                         <div>
-                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Date du remboursement</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Date du paiement</div>
                           <input type="date" value={remboursementForm.date}
                             onChange={ev => setRemboursementForm({ ...remboursementForm, date: ev.target.value })}
                             style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
                         </div>
                         <div>
-                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Part capital (réduit la dette)</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Montant réglé (réduit la dette)</div>
                           <input type="number" value={remboursementForm.capital}
                             onChange={ev => setRemboursementForm({ ...remboursementForm, capital: ev.target.value })}
                             style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
                         </div>
                         <div>
-                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Part intérêts (charge — 0 si prêt amical)</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Part intérêts (0 si prêt amical ou facture)</div>
                           <input type="number" value={remboursementForm.interets}
                             onChange={ev => setRemboursementForm({ ...remboursementForm, interets: ev.target.value })}
                             style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
