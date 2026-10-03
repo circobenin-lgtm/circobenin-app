@@ -4362,24 +4362,38 @@ export default function App() {
           {page === "paiements" && (
             <div>
               {(() => {
-                const comptes = Object.values(comptesPaiement);
-                const totalEncaisse = versementsEleves.reduce((a, v) => a + v.montant, 0);
+                // La page ne montre que la rentrée 2026-2027 : les versements
+                // antérieurs au 1er septembre 2026 appartiennent à l'année
+                // écoulée et fausseraient les totaux. Rien n'est supprimé en
+                // base, c'est seulement l'affichage qui est borné.
+                const versementsRentree = versementsEleves.filter(v => v.date && v.date >= DEBUT_ENCAISSEMENTS_RENTREE);
+                // Et seuls les comptes des élèves réellement inscrits cette
+                // année sont pris en compte, sinon un montant dû de l'an passé
+                // viendrait gonfler le "en attente".
+                const idsRentree = new Set();
+                COURS_RENTREE.forEach(c => inscritsDuCreneau(c).forEach(e => { if (e.id) idsRentree.add(String(e.id)); }));
+                const comptes = Object.values(comptesPaiement).filter(c => idsRentree.has(String(c.eleve_id)));
+                const totalEncaisse = versementsRentree.reduce((a, v) => a + v.montant, 0);
                 const totalDu = comptes.reduce((a, c) => a + c.montant_du, 0);
                 const enAttente = Math.max(totalDu - totalEncaisse, 0);
                 const elevesAJour = comptes.filter(c => {
-                  const paye = versementsEleves.filter(v => v.eleve_id === c.eleve_id).reduce((a, v) => a + v.montant, 0);
+                  const paye = versementsRentree.filter(v => v.eleve_id === c.eleve_id).reduce((a, v) => a + v.montant, 0);
                   return paye >= c.montant_du;
                 }).length;
-                const versementsTries = [...versementsEleves].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const versementsTries = [...versementsRentree].sort((a, b) => new Date(b.date) - new Date(a.date));
                 return (
                   <div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
-                      <StatCard label="Total encaissé" value={totalEncaisse.toLocaleString() + " F"} icon="✓" color={C.vert} />
-                      <StatCard label="En attente" value={enAttente.toLocaleString() + " F"} icon="⏳" color={C.orange} />
+                      <StatCard label="Encaissé — rentrée 26-27" value={totalEncaisse.toLocaleString() + " F"} icon="✓" color={C.vert} />
+                      <StatCard label="En attente — rentrée 26-27" value={enAttente.toLocaleString() + " F"} icon="⏳" color={C.orange} />
                       <StatCard label="Élèves à jour" value={elevesAJour + " / " + comptes.length} icon="◈" color={C.bleu} />
                     </div>
                     <Card>
-                      <SectionTitle>Historique des paiements</SectionTitle>
+                      <SectionTitle>Paiements de la rentrée 2026-2027</SectionTitle>
+                      <p style={{ color: C.gris, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
+                        Depuis le 1er septembre 2026. Les versements de l'année écoulée restent enregistrés en base
+                        mais ne sont plus comptés ici.
+                      </p>
                       {versementsTries.length === 0 ? (
                         <p style={{ color: C.gris, fontSize: 13 }}>Aucun versement enregistré encore. Va dans la page Élèves pour en ajouter.</p>
                       ) : (
