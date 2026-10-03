@@ -337,18 +337,28 @@ const COMPTES_SYCEBNL = [
   { code: "421", libelle: "Personnel — rémunérations dues", classe: 4 },
   { code: "601", libelle: "Achats de matériel et fournitures", classe: 6 },
   { code: "605", libelle: "Achats de matériel pédagogique / artistique", classe: 6 },
+  { code: "6051", libelle: "Eau", classe: 6 },
+  { code: "6052", libelle: "Électricité", classe: 6 },
+  { code: "6053", libelle: "Carburant et gaz (groupe électrogène, déplacements)", classe: 6 },
   { code: "611", libelle: "Transports", classe: 6 },
   { code: "622", libelle: "Locations et charges locatives", classe: 6 },
   { code: "624", libelle: "Entretien, réparations", classe: 6 },
+  { code: "625", libelle: "Primes d'assurance (locaux, responsabilité civile, élèves)", classe: 6 },
+  { code: "627", libelle: "Publicité, impressions et supports de communication", classe: 6 },
   { code: "628", libelle: "Frais de communication (internet, téléphone)", classe: 6 },
+  { code: "631", libelle: "Frais bancaires et commissions (FedaPay, virements)", classe: 6 },
   { code: "632", libelle: "Rémunérations d'intervenants / cachets artistes", classe: 6 },
+  { code: "633", libelle: "Formation des intervenants", classe: 6 },
   { code: "641", libelle: "Charges de personnel — salaires", classe: 6 },
   { code: "646", libelle: "Charges sociales", classe: 6 },
   { code: "651", libelle: "Frais de mission et déplacement", classe: 6 },
   { code: "658", libelle: "Charges diverses de gestion", classe: 6 },
   { code: "706", libelle: "Cotisations et frais d'inscription des élèves", classe: 7 },
+  { code: "7061", libelle: "Stages et ateliers vacances", classe: 7 },
   { code: "707", libelle: "Ventes de prestations (ateliers, spectacles)", classe: 7 },
+  { code: "708", libelle: "Produits annexes (buvette, boutique, costumes)", classe: 7 },
   { code: "754", libelle: "Subventions d'exploitation (partenaires, institutions)", classe: 7 },
+  { code: "756", libelle: "Adhésions des membres de l'association", classe: 7 },
   { code: "757", libelle: "Dons et libéralités", classe: 7 },
   { code: "758", libelle: "Produits divers de gestion", classe: 7 },
 ];
@@ -1526,10 +1536,14 @@ export default function App() {
     const comptesValides = COMPTES_SYCEBNL
       .filter(c => f.sens === "entree" ? c.classe === 7 : (c.classe === 6 || c.classe === 4))
       .map(c => c.code);
-    let compteContrepartieFinal = comptesValides.includes(f.compteContrepartie)
+    // Le compte retenu est celui choisi, s'il est cohérent avec le sens de
+    // l'opération ; sinon on retombe sur le premier compte valide (706 pour
+    // une entrée). Lier un élève ne force plus "cotisation" : un stage (7061)
+    // ou une adhésion (756) doit garder son propre compte tout en apparaissant
+    // sur l'espace parent.
+    const compteContrepartieFinal = comptesValides.includes(f.compteContrepartie)
       ? f.compteContrepartie
       : comptesValides[0];
-    if (!operationEnEdition && f.sens === "entree" && f.eleveLieId) compteContrepartieFinal = "706";
     const debit = f.sens === "entree" ? f.compteCaisse : compteContrepartieFinal;
     const credit = f.sens === "entree" ? compteContrepartieFinal : f.compteCaisse;
     const payload = {
@@ -4355,11 +4369,8 @@ export default function App() {
                             </div>
                             {!operationEnEdition && operationForm.sens === "entree" && (
                               <div>
-                                <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Élève concerné (si c'est une cotisation — ça l'affichera sur son espace parent et basculera automatiquement sur le compte 706)</div>
-                                <select value={operationForm.eleveLieId} onChange={e => setOperationForm({
-                                  ...operationForm, eleveLieId: e.target.value,
-                                  compteContrepartie: e.target.value ? "706" : operationForm.compteContrepartie,
-                                })}
+                                <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Élève concerné (cotisation, stage, adhésion — le paiement apparaîtra sur son espace parent)</div>
+                                <select value={operationForm.eleveLieId} onChange={e => setOperationForm({ ...operationForm, eleveLieId: e.target.value })}
                                   style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
                                   <option value="">— Aucun (ne pas lier à un élève) —</option>
                                   {elevesState.map(e => <option key={e.id} value={e.id}>{e.prenom} {e.nomFamille}</option>)}
