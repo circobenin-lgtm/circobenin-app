@@ -70,6 +70,7 @@ const NAV_PAR_ROLE = {
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "emprunts", icon: "🏦", label: "Emprunts" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
     { id: "message_groupe", icon: "▦", label: "Msg parents" },
@@ -112,6 +113,7 @@ const NAV_PAR_ROLE = {
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "emprunts", icon: "🏦", label: "Emprunts" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -1582,6 +1584,150 @@ export default function App() {
       }
     }
     setShowModalOperation(false);
+    chargerOperationsCaisse();
+  };
+
+  // ── EMPRUNTS ──────────────────────────────────────────────────────────
+  // Un prêt reçu n'est pas une recette : il augmente la trésorerie et la
+  // dette. On garde donc les emprunts et leurs remboursements à part, et on
+  // génère les écritures de caisse à partir d'eux (capital sur 162/168,
+  // intérêts sur 671), pour que la dette diminue réellement dans les comptes.
+  const [emprunts, setEmprunts] = useState([]);
+  const [remboursementsEmprunt, setRemboursementsEmprunt] = useState([]);
+  const [showModalEmprunt, setShowModalEmprunt] = useState(false);
+  const [empruntForm, setEmpruntForm] = useState({
+    type: "particulier", preteur: "", objet: "", montant: "",
+    taux_annuel: "", duree_mois: "", date_debut: "", notes: "",
+  });
+  const [empruntRembourse, setEmpruntRembourse] = useState(null);
+  const [remboursementForm, setRemboursementForm] = useState({ capital: "", interets: "", date: "", mode: "Espèces" });
+
+  const chargerEmprunts = async () => {
+    try {
+      const { data } = await supabase.from("emprunts").select("*").order("date_debut", { ascending: false });
+      if (data) setEmprunts(data);
+      const { data: r } = await supabase.from("remboursements_emprunt").select("*").order("date", { ascending: true });
+      if (r) setRemboursementsEmprunt(r);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (role === "directeur" || role === "admin") chargerEmprunts();
+  }, [role]);
+
+  // Mensualité d'un prêt à taux fixe (formule classique d'amortissement).
+  // Sans taux ni durée, le remboursement est libre : pas de mensualité.
+  const mensualiteEmprunt = (e) => {
+    const C = Number(e.montant) || 0;
+    const n = Number(e.duree_mois) || 0;
+    const i = (Number(e.taux_annuel) || 0) / 100 / 12;
+    if (!C || !n) return 0;
+    if (i === 0) return C / n;
+    return (C * i) / (1 - Math.pow(1 + i, -n));
+  };
+
+  // Tableau d'amortissement prévisionnel, mois par mois.
+  const echeancierEmprunt = (e) => {
+    const n = Number(e.duree_mois) || 0;
+    if (!n) return [];
+    const i = (Number(e.taux_annuel) || 0) / 100 / 12;
+    const m = mensualiteEmprunt(e);
+    let restant = Number(e.montant) || 0;
+    const lignes = [];
+    const depart = new Date(e.date_debut + "T00:00:00");
+    for (let k = 1; k <= n; k++) {
+      const interets = restant * i;
+      const capital = Math.min(m - interets, restant);
+      restant = Math.max(restant - capital, 0);
+      const d = new Date(depart);
+      d.setMonth(d.getMonth() + k);
+      lignes.push({ numero: k, date: d.toISOString().slice(0, 10), capital, interets, mensualite: capital + interets, restant });
+    }
+    return lignes;
+  };
+
+  const rembourseDe = (empruntId) => remboursementsEmprunt.filter(r => String(r.emprunt_id) === String(empruntId));
+  const capitalRembourse = (empruntId) => rembourseDe(empruntId).reduce((a, r) => a + Number(r.capital || 0), 0);
+  const interetsPayes = (empruntId) => rembourseDe(empruntId).reduce((a, r) => a + Number(r.interets || 0), 0);
+  const resteDuEmprunt = (e) => Math.max(Number(e.montant) - capitalRembourse(e.id), 0);
+
+  const enregistrerEmprunt = async () => {
+    const f = empruntForm;
+    if (!f.preteur || !f.montant || !f.date_debut) return;
+    await supabase.from("emprunts").insert([{
+      type: f.type, preteur: f.preteur, objet: f.objet || null,
+      montant: parseFloat(f.montant),
+      taux_annuel: parseFloat(f.taux_annuel) || 0,
+      duree_mois: f.duree_mois ? parseInt(f.duree_mois, 10) : null,
+      date_debut: f.date_debut,
+      compte: f.type === "bancaire" ? "162" : "168",
+      notes: f.notes || null,
+    }]);
+    setShowModalEmprunt(false);
+    chargerEmprunts();
+  };
+
+  // Enregistre l'encaissement du prêt dans le journal de caisse : la
+  // trésorerie augmente, et en face la dette (162 ou 168) — jamais un produit.
+  // Vrai si l'encaissement du prêt a déjà été passé en caisse — sans ça, un
+  // second clic créerait une recette fantôme et fausserait le solde.
+  const empruntDejaEncaisse = (e) => operationsCaisse.some(o =>
+    o.sens === "entree" && String(o.compte_contrepartie) === String(e.compte) &&
+    Number(o.montant) === Number(e.montant) && o.date === e.date_debut
+  );
+
+  const encaisserEmprunt = async (e) => {
+    if (empruntDejaEncaisse(e)) return;
+    await supabase.from("operations_caisse").insert([{
+      date: e.date_debut, projet: "Circo Bénin — fonctionnement", sens: "entree",
+      compte_caisse: "571", compte_contrepartie: e.compte,
+      compte_debit: "571", compte_credit: e.compte,
+      montant: Number(e.montant),
+      libelle: `Encaissement prêt — ${e.preteur}${e.objet ? " (" + e.objet + ")" : ""}`,
+      saisi_par: nomIntervenant || role,
+    }]);
+    chargerOperationsCaisse();
+  };
+
+  // Un remboursement = deux écritures distinctes. Le capital éteint la dette
+  // (classe 1), les intérêts sont une charge (671). Les confondre fausserait
+  // à la fois le résultat de l'année et le montant restant dû.
+  const enregistrerRemboursement = async () => {
+    const e = empruntRembourse;
+    const f = remboursementForm;
+    if (!e || !f.date) return;
+    const capital = parseFloat(f.capital) || 0;
+    const interets = parseFloat(f.interets) || 0;
+    if (capital <= 0 && interets <= 0) return;
+
+    await supabase.from("remboursements_emprunt").insert([{
+      emprunt_id: e.id, date: f.date, capital, interets, mode: f.mode,
+    }]);
+
+    const ecritures = [];
+    if (capital > 0) ecritures.push({
+      date: f.date, projet: "Circo Bénin — fonctionnement", sens: "sortie",
+      compte_caisse: "571", compte_contrepartie: e.compte,
+      compte_debit: e.compte, compte_credit: "571",
+      montant: capital, libelle: `Remboursement capital — ${e.preteur}`,
+      saisi_par: nomIntervenant || role,
+    });
+    if (interets > 0) ecritures.push({
+      date: f.date, projet: "Circo Bénin — fonctionnement", sens: "sortie",
+      compte_caisse: "571", compte_contrepartie: "671",
+      compte_debit: "671", compte_credit: "571",
+      montant: interets, libelle: `Intérêts d'emprunt — ${e.preteur}`,
+      saisi_par: nomIntervenant || role,
+    });
+    if (ecritures.length > 0) await supabase.from("operations_caisse").insert(ecritures);
+
+    // Le prêt est soldé dès que le capital est intégralement remboursé.
+    if (capitalRembourse(e.id) + capital >= Number(e.montant) - 1) {
+      await supabase.from("emprunts").update({ statut: "solde" }).eq("id", e.id);
+    }
+    setEmpruntRembourse(null);
+    setRemboursementForm({ capital: "", interets: "", date: "", mode: "Espèces" });
+    chargerEmprunts();
     chargerOperationsCaisse();
   };
 
@@ -4397,6 +4543,262 @@ export default function App() {
               })()}
             </div>
           )}
+
+
+          {/* ── EMPRUNTS ── */}
+          {page === "emprunts" && (role === "directeur" || role === "admin") && (() => {
+            const enCours = emprunts.filter(e => e.statut !== "solde");
+            const totalDu = enCours.reduce((a, e) => a + resteDuEmprunt(e), 0);
+            const totalEmprunte = emprunts.reduce((a, e) => a + Number(e.montant || 0), 0);
+            const totalInterets = emprunts.reduce((a, e) => a + interetsPayes(e.id), 0);
+            return (
+              <div>
+                <div className="grid-stats-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
+                  <StatCard label="Capital restant dû" value={`${Math.round(totalDu).toLocaleString("fr-FR")} F`} icon="🏦" color={C.rouge} />
+                  <StatCard label="Total emprunté" value={`${Math.round(totalEmprunte).toLocaleString("fr-FR")} F`} icon="₦" color={C.bleu} />
+                  <StatCard label="Intérêts payés" value={`${Math.round(totalInterets).toLocaleString("fr-FR")} F`} icon="◉" color={C.or} />
+                </div>
+
+                <Card style={{ marginBottom: 20, background: "#f3f0ff", border: "1px solid #ddd6fe" }}>
+                  <div style={{ fontSize: 13, color: C.gris, lineHeight: 1.6 }}>
+                    <strong style={{ color: C.violet }}>Pourquoi une page à part ?</strong> Un prêt reçu n'est pas une recette :
+                    il augmente la trésorerie <em>et</em> la dette. Chaque remboursement enregistré ici génère
+                    automatiquement deux écritures dans la trésorerie — le capital (qui réduit la dette) et les
+                    intérêts (qui sont une charge). Les confondre gonflerait les dépenses tout en laissant la
+                    dette intacte dans les comptes.
+                  </div>
+                </Card>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <SectionTitle>Prêts en cours</SectionTitle>
+                  <Btn onClick={() => {
+                    setEmpruntForm({ type: "particulier", preteur: "", objet: "", montant: "", taux_annuel: "", duree_mois: "", date_debut: new Date().toISOString().slice(0, 10), notes: "" });
+                    setShowModalEmprunt(true);
+                  }}>+ Nouveau prêt</Btn>
+                </div>
+
+                {emprunts.length === 0 && (
+                  <Card><div style={{ color: C.gris, fontSize: 14, textAlign: "center", padding: "20px 0" }}>
+                    Aucun prêt enregistré pour le moment.
+                  </div></Card>
+                )}
+
+                {emprunts.map(e => {
+                  const reste = resteDuEmprunt(e);
+                  const rembourse = capitalRembourse(e.id);
+                  const pct = Number(e.montant) > 0 ? Math.min(100, (rembourse / Number(e.montant)) * 100) : 0;
+                  const echeancier = echeancierEmprunt(e);
+                  const mens = mensualiteEmprunt(e);
+                  const historique = rembourseDe(e.id);
+                  const estSolde = e.statut === "solde" || reste <= 0;
+                  return (
+                    <Card key={e.id} style={{ marginBottom: 16 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{e.preteur}</div>
+                            <Badge text={e.type === "bancaire" ? "Banque" : "Particulier"} bg={C.fond} color={e.type === "bancaire" ? C.bleu : C.violet} />
+                            {estSolde && <Badge text="Soldé" bg="#e8f5e9" color={C.vert} />}
+                          </div>
+                          <div style={{ fontSize: 13, color: C.gris, marginTop: 4 }}>
+                            {e.objet ? e.objet + " · " : ""}Compte {e.compte} · depuis le {new Date(e.date_debut + "T00:00:00").toLocaleDateString("fr-FR")}
+                            {Number(e.taux_annuel) > 0 ? ` · ${e.taux_annuel}% / an` : " · sans intérêts"}
+                            {e.duree_mois ? ` · ${e.duree_mois} mois` : " · remboursement libre"}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: estSolde ? C.vert : C.rouge }}>
+                            {Math.round(reste).toLocaleString("fr-FR")} F
+                          </div>
+                          <div style={{ fontSize: 12, color: C.gris }}>restant dû sur {Number(e.montant).toLocaleString("fr-FR")} F</div>
+                        </div>
+                      </div>
+
+                      <div style={{ height: 8, background: C.grisClair, borderRadius: 4, marginTop: 14, overflow: "hidden" }}>
+                        <div style={{ width: `${pct}%`, height: "100%", background: pct >= 100 ? C.vert : C.or, transition: "width .3s" }} />
+                      </div>
+                      <div style={{ fontSize: 12, color: C.gris, marginTop: 6 }}>
+                        {Math.round(rembourse).toLocaleString("fr-FR")} F remboursés ({Math.round(pct)}%)
+                        {mens > 0 && ` · mensualité calculée : ${Math.round(mens).toLocaleString("fr-FR")} F`}
+                      </div>
+
+                      <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+                        {!estSolde && (
+                          <Btn small onClick={() => {
+                            // Pré-remplit avec la prochaine échéance théorique quand il y en a une,
+                            // pour que la répartition capital/intérêts soit juste sans calcul manuel.
+                            const prochaine = echeancier[historique.length];
+                            setEmpruntRembourse(e);
+                            setRemboursementForm({
+                              capital: prochaine ? Math.round(Math.min(prochaine.capital, reste)).toString() : "",
+                              interets: prochaine ? Math.round(prochaine.interets).toString() : "",
+                              date: new Date().toISOString().slice(0, 10),
+                              mode: "Espèces",
+                            });
+                          }}>₦ Enregistrer un remboursement</Btn>
+                        )}
+                        <Btn small color={C.gris} disabled={empruntDejaEncaisse(e)} onClick={() => encaisserEmprunt(e)}>
+                          {empruntDejaEncaisse(e) ? "✓ Encaissement déjà passé en caisse" : "↑ Passer l'encaissement en caisse"}
+                        </Btn>
+                      </div>
+
+                      {historique.length > 0 && (
+                        <div style={{ marginTop: 16 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", marginBottom: 6 }}>Remboursements effectués</div>
+                          {historique.map(r => (
+                            <div key={r.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "6px 0", borderBottom: `1px solid ${C.grisClair}` }}>
+                              <div>{new Date(r.date + "T00:00:00").toLocaleDateString("fr-FR")} · {r.mode}</div>
+                              <div style={{ color: C.gris }}>
+                                capital {Math.round(Number(r.capital)).toLocaleString("fr-FR")} F
+                                {Number(r.interets) > 0 && ` · intérêts ${Math.round(Number(r.interets)).toLocaleString("fr-FR")} F`}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {echeancier.length > 0 && !estSolde && (
+                        <details style={{ marginTop: 14 }}>
+                          <summary style={{ cursor: "pointer", fontSize: 13, color: C.bleu, fontWeight: 600 }}>
+                            Voir le tableau d'amortissement ({echeancier.length} échéances)
+                          </summary>
+                          <div style={{ marginTop: 10, maxHeight: 280, overflowY: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                              <thead>
+                                <tr style={{ textAlign: "left", color: C.gris }}>
+                                  <th style={{ padding: "6px 4px" }}>N°</th>
+                                  <th style={{ padding: "6px 4px" }}>Date</th>
+                                  <th style={{ padding: "6px 4px", textAlign: "right" }}>Capital</th>
+                                  <th style={{ padding: "6px 4px", textAlign: "right" }}>Intérêts</th>
+                                  <th style={{ padding: "6px 4px", textAlign: "right" }}>Restant dû</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {echeancier.map(l => (
+                                  <tr key={l.numero} style={{ borderTop: `1px solid ${C.grisClair}`, opacity: l.numero <= historique.length ? 0.45 : 1 }}>
+                                    <td style={{ padding: "6px 4px" }}>{l.numero}</td>
+                                    <td style={{ padding: "6px 4px" }}>{new Date(l.date + "T00:00:00").toLocaleDateString("fr-FR")}</td>
+                                    <td style={{ padding: "6px 4px", textAlign: "right" }}>{Math.round(l.capital).toLocaleString("fr-FR")}</td>
+                                    <td style={{ padding: "6px 4px", textAlign: "right" }}>{Math.round(l.interets).toLocaleString("fr-FR")}</td>
+                                    <td style={{ padding: "6px 4px", textAlign: "right" }}>{Math.round(l.restant).toLocaleString("fr-FR")}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </details>
+                      )}
+                    </Card>
+                  );
+                })}
+
+                {showModalEmprunt && (
+                  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+                    <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 440, maxWidth: "90%", maxHeight: "85vh", overflowY: "auto" }}>
+                      <SectionTitle>Nouveau prêt</SectionTitle>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <div onClick={() => setEmpruntForm({ ...empruntForm, type: "particulier" })} style={{
+                            flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                            background: empruntForm.type === "particulier" ? C.violet : C.grisClair,
+                            color: empruntForm.type === "particulier" ? "#fff" : C.gris,
+                          }}>Particulier</div>
+                          <div onClick={() => setEmpruntForm({ ...empruntForm, type: "bancaire" })} style={{
+                            flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600,
+                            background: empruntForm.type === "bancaire" ? C.bleu : C.grisClair,
+                            color: empruntForm.type === "bancaire" ? "#fff" : C.gris,
+                          }}>Banque</div>
+                        </div>
+                        <input placeholder="Nom du prêteur (ex: Banque Atlantique, M. Dossou)" value={empruntForm.preteur}
+                          onChange={ev => setEmpruntForm({ ...empruntForm, preteur: ev.target.value })}
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        <input placeholder="Objet du prêt (ex: charges locatives de démarrage)" value={empruntForm.objet}
+                          onChange={ev => setEmpruntForm({ ...empruntForm, objet: ev.target.value })}
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        <input type="number" placeholder="Montant emprunté (FCFA)" value={empruntForm.montant}
+                          onChange={ev => setEmpruntForm({ ...empruntForm, montant: ev.target.value })}
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        <div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Date de réception du prêt</div>
+                          <input type="date" value={empruntForm.date_debut}
+                            onChange={ev => setEmpruntForm({ ...empruntForm, date_debut: ev.target.value })}
+                            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        </div>
+                        <div style={{ display: "flex", gap: 10 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Taux annuel (%)</div>
+                            <input type="number" placeholder="0 si sans intérêts" value={empruntForm.taux_annuel}
+                              onChange={ev => setEmpruntForm({ ...empruntForm, taux_annuel: ev.target.value })}
+                              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Durée (mois)</div>
+                            <input type="number" placeholder="vide = libre" value={empruntForm.duree_mois}
+                              onChange={ev => setEmpruntForm({ ...empruntForm, duree_mois: ev.target.value })}
+                              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 12, color: C.gris, background: C.fond, padding: "10px 12px", borderRadius: 8 }}>
+                          Laisse le taux à 0 et la durée vide pour un prêt amical remboursé quand c'est possible :
+                          l'app suivra alors simplement le capital restant dû, sans échéancier.
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+                        <Btn small color={C.gris} onClick={() => setShowModalEmprunt(false)}>Annuler</Btn>
+                        <Btn small onClick={enregistrerEmprunt}>Enregistrer</Btn>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {empruntRembourse && (
+                  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+                    <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 420, maxWidth: "90%" }}>
+                      <SectionTitle>Remboursement — {empruntRembourse.preteur}</SectionTitle>
+                      <div style={{ fontSize: 13, color: C.gris, marginTop: 6 }}>
+                        Restant dû : {Math.round(resteDuEmprunt(empruntRembourse)).toLocaleString("fr-FR")} F
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
+                        <div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Date du remboursement</div>
+                          <input type="date" value={remboursementForm.date}
+                            onChange={ev => setRemboursementForm({ ...remboursementForm, date: ev.target.value })}
+                            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Part capital (réduit la dette)</div>
+                          <input type="number" value={remboursementForm.capital}
+                            onChange={ev => setRemboursementForm({ ...remboursementForm, capital: ev.target.value })}
+                            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Part intérêts (charge — 0 si prêt amical)</div>
+                          <input type="number" value={remboursementForm.interets}
+                            onChange={ev => setRemboursementForm({ ...remboursementForm, interets: ev.target.value })}
+                            style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }} />
+                        </div>
+                        <select value={remboursementForm.mode} onChange={ev => setRemboursementForm({ ...remboursementForm, mode: ev.target.value })}
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
+                          <option>Espèces</option>
+                          <option>Virement</option>
+                          <option>Mobile Money</option>
+                          <option>Chèque</option>
+                        </select>
+                        <div style={{ fontSize: 12, color: C.gris, background: C.fond, padding: "10px 12px", borderRadius: 8 }}>
+                          Deux écritures seront créées automatiquement dans la trésorerie : le capital sur le compte
+                          {" " + empruntRembourse.compte} et les intérêts sur le 671.
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+                        <Btn small color={C.gris} onClick={() => setEmpruntRembourse(null)}>Annuler</Btn>
+                        <Btn small onClick={enregistrerRemboursement}>Enregistrer</Btn>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ── FINANCES CA ── */}
           {page === "finances" && (() => {
