@@ -1595,6 +1595,7 @@ export default function App() {
   const [emprunts, setEmprunts] = useState([]);
   const [remboursementsEmprunt, setRemboursementsEmprunt] = useState([]);
   const [showModalEmprunt, setShowModalEmprunt] = useState(false);
+  const [empruntEnEdition, setEmpruntEnEdition] = useState(null);
   const [empruntForm, setEmpruntForm] = useState({
     type: "particulier", preteur: "", objet: "", montant: "",
     taux_annuel: "", duree_mois: "", date_debut: "", notes: "",
@@ -1687,7 +1688,7 @@ export default function App() {
   const enregistrerEmprunt = async () => {
     const f = empruntForm;
     if (!f.preteur || !f.montant || !f.date_debut) return;
-    await supabase.from("emprunts").insert([{
+    const payload = {
       type: f.type, preteur: f.preteur, objet: f.objet || null,
       montant: parseFloat(f.montant),
       taux_annuel: parseFloat(f.taux_annuel) || 0,
@@ -1697,8 +1698,36 @@ export default function App() {
       compte_charge: f.compte_charge || null,
       date_charge: f.date_charge || null,
       notes: f.notes || null,
-    }]);
+    };
+    if (empruntEnEdition) {
+      await supabase.from("emprunts").update(payload).eq("id", empruntEnEdition);
+    } else {
+      await supabase.from("emprunts").insert([payload]);
+    }
     setShowModalEmprunt(false);
+    setEmpruntEnEdition(null);
+    chargerEmprunts();
+  };
+
+  const ouvrirEditionEmprunt = (e) => {
+    setEmpruntEnEdition(e.id);
+    setEmpruntForm({
+      type: e.type || "particulier", preteur: e.preteur || "", objet: e.objet || "",
+      montant: e.montant != null ? String(e.montant) : "",
+      taux_annuel: e.taux_annuel != null ? String(e.taux_annuel) : "",
+      duree_mois: e.duree_mois != null ? String(e.duree_mois) : "",
+      date_debut: e.date_debut || "", notes: e.notes || "",
+      compte_charge: e.compte_charge || "", date_charge: e.date_charge || "",
+    });
+    setShowModalEmprunt(true);
+  };
+
+  // Supprime la fiche de dette (et, en cascade, ses échéances et paiements
+  // enregistrés). Les écritures déjà passées dans le journal de caisse, elles,
+  // ne sont pas touchées : elles correspondent à de vrais mouvements d'argent
+  // et se corrigent depuis la Trésorerie.
+  const supprimerEmprunt = async (id) => {
+    await supabase.from("emprunts").delete().eq("id", id);
     chargerEmprunts();
   };
 
@@ -4680,7 +4709,8 @@ export default function App() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <SectionTitle>Dettes en cours</SectionTitle>
                   <Btn onClick={() => {
-                    setEmpruntForm({ type: "particulier", preteur: "", objet: "", montant: "", taux_annuel: "", duree_mois: "", date_debut: new Date().toISOString().slice(0, 10), notes: "" });
+                    setEmpruntEnEdition(null);
+                    setEmpruntForm({ type: "particulier", preteur: "", objet: "", montant: "", taux_annuel: "", duree_mois: "", date_debut: new Date().toISOString().slice(0, 10), notes: "", compte_charge: "", date_charge: "" });
                     setShowModalEmprunt(true);
                   }}>+ Nouvelle dette</Btn>
                 </div>
@@ -4716,8 +4746,12 @@ export default function App() {
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: estSolde ? C.vert : C.rouge }}>
-                            {Math.round(reste).toLocaleString("fr-FR")} F
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+                            <div style={{ fontSize: 20, fontWeight: 700, color: estSolde ? C.vert : C.rouge }}>
+                              {Math.round(reste).toLocaleString("fr-FR")} F
+                            </div>
+                            <span onClick={() => ouvrirEditionEmprunt(e)} style={{ cursor: "pointer", fontSize: 15 }} title="Modifier">✏️</span>
+                            <span onClick={() => supprimerEmprunt(e.id)} style={{ cursor: "pointer", color: "#d32f2f", fontSize: 16 }} title="Supprimer la fiche">✕</span>
                           </div>
                           <div style={{ fontSize: 12, color: C.gris }}>restant dû sur {Number(e.montant).toLocaleString("fr-FR")} F</div>
                         </div>
@@ -4856,7 +4890,7 @@ export default function App() {
                 {showModalEmprunt && (
                   <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
                     <div style={{ background: "#fff", borderRadius: 16, padding: 24, width: 440, maxWidth: "90%", maxHeight: "85vh", overflowY: "auto" }}>
-                      <SectionTitle>Nouvelle dette</SectionTitle>
+                      <SectionTitle>{empruntEnEdition ? "Modifier la dette" : "Nouvelle dette"}</SectionTitle>
                       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           {Object.entries(TYPES_DETTE).map(([cle, t]) => (
@@ -4920,7 +4954,7 @@ export default function App() {
                         )}
                       </div>
                       <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
-                        <Btn small color={C.gris} onClick={() => setShowModalEmprunt(false)}>Annuler</Btn>
+                        <Btn small color={C.gris} onClick={() => { setShowModalEmprunt(false); setEmpruntEnEdition(null); }}>Annuler</Btn>
                         <Btn small onClick={enregistrerEmprunt}>Enregistrer</Btn>
                       </div>
                     </div>
