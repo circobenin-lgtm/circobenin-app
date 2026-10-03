@@ -1515,11 +1515,17 @@ export default function App() {
     const f = operationForm;
     if (!f.date || !f.montant || !f.libelle) return;
     const montantNum = parseFloat(f.montant);
-    const debit = f.sens === "entree" ? f.compteCaisse : f.compteContrepartie;
-    const credit = f.sens === "entree" ? f.compteContrepartie : f.compteCaisse;
+    // Si un élève est lié à cette entrée, c'est forcément une cotisation :
+    // on force le compte 706, quoi qu'il y ait dans le menu déroulant — ça
+    // évite qu'une entrée reste accidentellement sur le compte par défaut
+    // (601) alors qu'un élève a bien été sélectionné.
+    const compteContrepartieFinal = (!operationEnEdition && f.sens === "entree" && f.eleveLieId)
+      ? "706" : f.compteContrepartie;
+    const debit = f.sens === "entree" ? f.compteCaisse : compteContrepartieFinal;
+    const credit = f.sens === "entree" ? compteContrepartieFinal : f.compteCaisse;
     const payload = {
       date: f.date, projet: f.projet, sens: f.sens,
-      compte_caisse: f.compteCaisse, compte_contrepartie: f.compteContrepartie,
+      compte_caisse: f.compteCaisse, compte_contrepartie: compteContrepartieFinal,
       compte_debit: debit, compte_credit: credit,
       montant: montantNum, libelle: f.libelle, piece_url: f.piece,
       saisi_par: nomIntervenant || role,
@@ -1535,7 +1541,7 @@ export default function App() {
     // qu'un élève a été sélectionné, on enregistre aussi le versement côté
     // élève — sinon l'opération reste invisible sur son espace parent, qui
     // ne lit que versements_eleves (pas le registre de caisse général).
-    if (!operationEnEdition && f.sens === "entree" && f.compteContrepartie === "706" && f.eleveLieId) {
+    if (!operationEnEdition && f.sens === "entree" && f.eleveLieId) {
       const eleveLie = elevesState.find(e => String(e.id) === String(f.eleveLieId));
       if (eleveLie) {
         await supabase.from("versements_eleves").insert([{
@@ -4301,10 +4307,13 @@ export default function App() {
                                 {COMPTES_SYCEBNL.filter(c => operationForm.sens === "entree" ? c.classe === 7 : (c.classe === 6 || c.classe === 4)).map(c => <option key={c.code} value={c.code}>{c.code} — {c.libelle}</option>)}
                               </select>
                             </div>
-                            {!operationEnEdition && operationForm.sens === "entree" && operationForm.compteContrepartie === "706" && (
+                            {!operationEnEdition && operationForm.sens === "entree" && (
                               <div>
-                                <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Élève concerné (pour que ça apparaisse sur son espace parent)</div>
-                                <select value={operationForm.eleveLieId} onChange={e => setOperationForm({ ...operationForm, eleveLieId: e.target.value })}
+                                <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>Élève concerné (si c'est une cotisation — ça l'affichera sur son espace parent et basculera automatiquement sur le compte 706)</div>
+                                <select value={operationForm.eleveLieId} onChange={e => setOperationForm({
+                                  ...operationForm, eleveLieId: e.target.value,
+                                  compteContrepartie: e.target.value ? "706" : operationForm.compteContrepartie,
+                                })}
                                   style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
                                   <option value="">— Aucun (ne pas lier à un élève) —</option>
                                   {elevesState.map(e => <option key={e.id} value={e.id}>{e.prenom} {e.nomFamille}</option>)}
