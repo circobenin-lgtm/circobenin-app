@@ -4351,13 +4351,28 @@ export default function App() {
                 const totalSorties = opsFiltrees.filter(o => o.sens === "sortie").reduce((a, o) => a + o.montant, 0);
                 const soldeCaisse = totalEntrees - totalSorties;
 
+                // Seules les classes 6 et 7 entrent dans le compte de résultat.
+                // Les comptes de dettes (classe 1 : emprunts) et de tiers
+                // (classe 4) sont des comptes de bilan : encaisser un prêt
+                // n'est pas un produit et en rembourser le capital n'est pas
+                // une charge. Les compter fausserait complètement le résultat.
+                const classeCompte = (code) => {
+                  const c = COMPTES_SYCEBNL.find(x => x.code === code);
+                  return c ? c.classe : null;
+                };
                 const chargesParCompte = {};
                 const produitsParCompte = {};
+                const dettesParCompte = {};
                 opsFiltrees.forEach(o => {
-                  const compteCharge = o.sens === "sortie" ? o.compte_contrepartie : null;
-                  const compteProduit = o.sens === "entree" ? o.compte_contrepartie : null;
-                  if (compteCharge) chargesParCompte[compteCharge] = (chargesParCompte[compteCharge] || 0) + o.montant;
-                  if (compteProduit) produitsParCompte[compteProduit] = (produitsParCompte[compteProduit] || 0) + o.montant;
+                  const cl = classeCompte(o.compte_contrepartie);
+                  if (cl === 1 || cl === 4) {
+                    const signe = o.sens === "entree" ? 1 : -1;
+                    dettesParCompte[o.compte_contrepartie] = (dettesParCompte[o.compte_contrepartie] || 0) + signe * o.montant;
+                  } else if (o.sens === "sortie" && cl === 6) {
+                    chargesParCompte[o.compte_contrepartie] = (chargesParCompte[o.compte_contrepartie] || 0) + o.montant;
+                  } else if (o.sens === "entree" && cl === 7) {
+                    produitsParCompte[o.compte_contrepartie] = (produitsParCompte[o.compte_contrepartie] || 0) + o.montant;
+                  }
                 });
                 const totalCharges = Object.values(chargesParCompte).reduce((a, b) => a + b, 0);
                 const totalProduits = Object.values(produitsParCompte).reduce((a, b) => a + b, 0);
@@ -4477,6 +4492,24 @@ export default function App() {
                         <div style={{ fontWeight: 700, fontSize: 15 }}>RÉSULTAT NET (estimatif)</div>
                         <div style={{ fontWeight: 700, fontSize: 22, color: resultatNet >= 0 ? C.vert : "#d32f2f" }}>{resultatNet.toLocaleString()} F</div>
                       </div>
+                      {Object.keys(dettesParCompte).length > 0 && (
+                        <div style={{ marginTop: 16, padding: "14px 16px", background: C.fond, borderRadius: 12 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>Hors résultat — mouvements de dettes et de tiers</div>
+                          <div style={{ fontSize: 12, color: C.gris, marginBottom: 10 }}>
+                            Ces sommes ont bien transité par la caisse, mais ce ne sont ni des produits ni des charges :
+                            un prêt encaissé reste à rembourser, et rembourser du capital ne coûte rien de plus que ce
+                            qui a été emprunté. Seuls les intérêts, eux, apparaissent en charges.
+                          </div>
+                          {Object.entries(dettesParCompte).map(([code, montant]) => (
+                            <div key={code} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "4px 0" }}>
+                              <span>{compteLibelle(code)}</span>
+                              <span style={{ fontWeight: 600, color: montant >= 0 ? C.bleu : C.gris }}>
+                                {montant >= 0 ? "+" : "−"}{Math.abs(montant).toLocaleString()} F
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </Card>
 
                     {showModalOperation && (
