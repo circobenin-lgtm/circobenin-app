@@ -4367,27 +4367,80 @@ export default function App() {
                 // écoulée et fausseraient les totaux. Rien n'est supprimé en
                 // base, c'est seulement l'affichage qui est borné.
                 const versementsRentree = versementsEleves.filter(v => v.date && v.date >= DEBUT_ENCAISSEMENTS_RENTREE);
-                // Et seuls les comptes des élèves réellement inscrits cette
-                // année sont pris en compte, sinon un montant dû de l'an passé
-                // viendrait gonfler le "en attente".
-                const idsRentree = new Set();
-                COURS_RENTREE.forEach(c => inscritsDuCreneau(c).forEach(e => { if (e.id) idsRentree.add(String(e.id)); }));
-                const comptes = Object.values(comptesPaiement).filter(c => idsRentree.has(String(c.eleve_id)));
-                const totalEncaisse = versementsRentree.reduce((a, v) => a + v.montant, 0);
-                const totalDu = comptes.reduce((a, c) => a + c.montant_du, 0);
-                const enAttente = Math.max(totalDu - totalEncaisse, 0);
-                const elevesAJour = comptes.filter(c => {
-                  const paye = versementsRentree.filter(v => v.eleve_id === c.eleve_id).reduce((a, v) => a + v.montant, 0);
-                  return paye >= c.montant_du;
-                }).length;
+                // La référence, c'est la liste des inscrits 26-27 — pas la table
+                // comptes_paiement, qui n'est alimentée que par certains
+                // parcours : beaucoup d'inscrits n'y ont aucune ligne et
+                // disparaissaient donc purement et simplement du suivi.
+                const eleveDeInscrit = p => elevesState.find(e =>
+                  (p.email && e.email && normCreneau(e.email) === normCreneau(p.email)) ||
+                  (normCreneau(e.prenom) === normCreneau(p.prenom) && normCreneau(e.nomFamille) === normCreneau(p.nom))
+                );
+                const situations = preinscriptions.map(p => {
+                  const el = eleveDeInscrit(p);
+                  const compte = el ? comptesPaiement[el.id] : null;
+                  // Le compte de paiement fait foi quand il existe (la direction
+                  // a pu ajuster le montant), sinon on retombe sur le montant
+                  // enregistré à l'inscription.
+                  const du = compte && compte.montant_du ? compte.montant_du : (p.montant || (p.formule === "annee" ? 160000 : 60000));
+                  const paye = el ? versementsRentree.filter(v => v.eleve_id === el.id).reduce((a, v) => a + v.montant, 0) : 0;
+                  return {
+                    cle: p.id || (p.prenom + p.nom),
+                    nom: (p.prenom + " " + p.nom).trim(),
+                    creneau: p.creneau || "",
+                    formule: (compte && compte.formule) || p.formule || "",
+                    du, paye,
+                    reste: Math.max(du - paye, 0),
+                    aCompteEleve: !!el,
+                  };
+                }).sort((a, b) => (b.reste - a.reste) || a.nom.localeCompare(b.nom));
+                const totalEncaisse = situations.reduce((a, x) => a + x.paye, 0);
+                const enAttente = situations.reduce((a, x) => a + x.reste, 0);
+                const elevesAJour = situations.filter(x => x.reste === 0).length;
                 const versementsTries = [...versementsRentree].sort((a, b) => new Date(b.date) - new Date(a.date));
                 return (
                   <div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20, marginBottom: 24 }}>
                       <StatCard label="Encaissé — rentrée 26-27" value={totalEncaisse.toLocaleString() + " F"} icon="✓" color={C.vert} />
                       <StatCard label="En attente — rentrée 26-27" value={enAttente.toLocaleString() + " F"} icon="⏳" color={C.orange} />
-                      <StatCard label="Élèves à jour" value={elevesAJour + " / " + comptes.length} icon="◈" color={C.bleu} />
+                      <StatCard label="Élèves à jour" value={elevesAJour + " / " + situations.length} icon="◈" color={C.bleu} />
                     </div>
+                    <Card style={{ marginBottom: 20 }}>
+                      <SectionTitle>Situation par élève — rentrée 2026-2027</SectionTitle>
+                      <p style={{ color: C.gris, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
+                        Les {situations.length} inscrits de la rentrée, classés par reste à payer décroissant.
+                      </p>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                          <thead>
+                            <tr style={{ background: C.fond }}>
+                              {["Élève", "Créneau", "Formule", "Dû", "Payé", "Reste"].map(h => (
+                                <th key={h} style={{ padding: "10px 12px", textAlign: h === "Élève" || h === "Créneau" || h === "Formule" ? "left" : "right", fontSize: 12, fontWeight: 700, color: C.gris, textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {situations.map((x, i) => (
+                              <tr key={x.cle} style={{ borderTop: `1px solid ${C.grisClair}`, background: i % 2 === 0 ? "#fff" : "#FAFFFE" }}>
+                                <td style={{ padding: "10px 12px", fontWeight: 600, fontSize: 14 }}>
+                                  {x.nom}
+                                  {!x.aCompteEleve && (
+                                    <span style={{ marginLeft: 8, fontSize: 11, color: C.or }}>compte élève à créer</span>
+                                  )}
+                                </td>
+                                <td style={{ padding: "10px 12px", fontSize: 13, color: C.gris }}>{x.creneau}</td>
+                                <td style={{ padding: "10px 12px", fontSize: 13, color: C.gris }}>{x.formule === "annee" ? "Année" : x.formule === "trimestre" ? "Trimestre" : x.formule}</td>
+                                <td style={{ padding: "10px 12px", fontSize: 13, textAlign: "right", whiteSpace: "nowrap" }}>{x.du.toLocaleString()} F</td>
+                                <td style={{ padding: "10px 12px", fontSize: 13, textAlign: "right", color: x.paye > 0 ? C.vert : C.gris, whiteSpace: "nowrap" }}>{x.paye.toLocaleString()} F</td>
+                                <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 700, textAlign: "right", color: x.reste === 0 ? C.vert : C.rouge, whiteSpace: "nowrap" }}>
+                                  {x.reste === 0 ? "à jour" : x.reste.toLocaleString() + " F"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Card>
+
                     <Card>
                       <SectionTitle>Paiements de la rentrée 2026-2027</SectionTitle>
                       <p style={{ color: C.gris, fontSize: 12, marginTop: -8, marginBottom: 12 }}>
