@@ -1920,7 +1920,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (role === "directeur" || role === "admin") {
+    if (role === "directeur" || role === "admin" || role === "secretariat") {
+      // Le secrétariat gère les inscriptions, les adhésions et les paiements
+      // au quotidien : sans ce chargement, ses pages "Inscriptions 26-27",
+      // "Adhésions" et "Stages" restaient désespérément vides alors que les
+      // données existaient bien en base.
       chargerPreinscriptions();
       chargerSuiviStages();
       chargerSuiviAdhesions();
@@ -2008,7 +2012,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (role === "directeur" || role === "admin" || role === "formateur") chargerAssignationsCours();
+    if (role === "directeur" || role === "admin" || role === "formateur" || role === "secretariat") chargerAssignationsCours();
   }, [role]);
 
   // Intervenant(s) réellement assigné(s) à un cours, ou null si ce n'est pas
@@ -2542,42 +2546,74 @@ export default function App() {
 
         <div className="main-content" style={{ flex: 1, padding: "28px 32px", overflow: "auto" }}>
 
-          {/* ── DASHBOARD (directeur / admin) ── */}
-          {page === "dashboard" && (role === "directeur" || role === "admin") && (
+          {/* ── DASHBOARD (directeur / admin / secrétariat) ── */}
+          {page === "dashboard" && (role === "directeur" || role === "admin" || role === "secretariat") && (() => {
+            // Tous les chiffres viennent des vraies données de la rentrée
+            // 26-27 (préinscriptions + versements), jamais de valeurs figées.
+            const nbInscrits = preinscriptions.length;
+            const encaisseRentree = versementsEleves
+              .filter(v => v.date && v.date >= DEBUT_ENCAISSEMENTS_RENTREE)
+              .reduce((a, v) => a + (v.montant || 0), 0);
+            const resteAEncaisser = elevesState.reduce((a, e) => a + calculerCompteEleve(e.id).reste, 0);
+            const nbEnAttente = elevesState.filter(e => calculerCompteEleve(e.id).reste > 0).length;
+            const messagesRecents = [...messagesFamilleToutes]
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .slice(0, 4);
+            const demandesEnAttente = demandesCreneauToutes.filter(d => d.statut === "en_attente").length;
+            return (
             <div>
               <div className="grid-stats-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 20, marginBottom: 24 }}>
-                <StatCard label="Élèves inscrits" value={32} icon="◈" color={C.vert} />
-                <StatCard label="Cours / semaine" value={10} icon="◫" color={C.or} />
-                <StatCard label="Paiements en attente" value={2} icon="₦" color={C.rouge} />
-                <StatCard label="Projets actifs" value={5} icon="◉" color={C.violet} />
+                <StatCard label="Inscrits 26-27" value={nbInscrits} icon="◈" color={C.vert} />
+                <StatCard label="Cours / semaine" value={COURS_RENTREE.length} icon="◫" color={C.or} />
+                <StatCard label="Encaissé 26-27" value={`${encaisseRentree.toLocaleString("fr-FR")} F`} icon="₦" color={C.bleu} />
+                <StatCard label={`Reste à encaisser (${nbEnAttente} famille${nbEnAttente > 1 ? "s" : ""})`} value={`${resteAEncaisser.toLocaleString("fr-FR")} F`} icon="⏳" color={C.rouge} />
               </div>
               <div className="grid-dash-main" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
                 <Card>
-                  <SectionTitle>Cours cette semaine</SectionTitle>
-                  {COURS.slice(0, 5).map(c => (
-                    <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
-                      <div style={{ background: C.fond, borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: C.vert }}>{c.jour}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>{c.classe}</div>
-                        <div style={{ fontSize: 12, color: C.gris }}>{c.heure} · {c.formateur}</div>
+                  <SectionTitle>Les cours de la semaine</SectionTitle>
+                  {COURS_RENTREE.map(c => {
+                    const inscrits = inscritsDuCreneau(c);
+                    const profs = formateursEffectifs(c.id);
+                    return (
+                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.grisClair}` }}>
+                        <div style={{ background: C.fond, borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: C.vert, minWidth: 64, textAlign: "center" }}>{c.jour}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>{c.classe}</div>
+                          <div style={{ fontSize: 12, color: C.gris }}>
+                            {c.heure} - {c.fin} · {profs && profs.length > 0 ? profs.join(", ") : "Pas encore assigné"}
+                          </div>
+                        </div>
+                        <Badge
+                          text={`${inscrits.length} élève${inscrits.length > 1 ? "s" : ""}`}
+                          bg={inscrits.length === 0 ? C.grisClair : C.fond}
+                          color={inscrits.length === 0 ? C.gris : C.vert}
+                        />
                       </div>
-                      <Badge text={`${c.nb} élèves`} bg={C.fond} color={C.vert} />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </Card>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   <Card>
-                    <SectionTitle>Messages récents</SectionTitle>
-                    {MESSAGES.slice(0, 3).map(m => (
+                    <SectionTitle>Messages des familles</SectionTitle>
+                    {messagesRecents.length === 0 ? (
+                      <div style={{ fontSize: 13, color: C.gris, padding: "8px 0" }}>Aucun message pour le moment.</div>
+                    ) : messagesRecents.map(m => (
                       <div key={m.id} style={{ padding: "8px 0", borderBottom: `1px solid ${C.grisClair}`, display: "flex", gap: 10 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 5, background: m.lu ? C.grisClair : C.or, flexShrink: 0 }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>{m.de}</div>
-                          <div style={{ fontSize: 12, color: C.gris }}>{m.texte}</div>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 5, background: (m.expediteur === "parent" && !m.lu) ? C.or : C.grisClair, flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{m.expediteur === "direction" ? (m.auteur || "Direction") : m.eleve_nom}</div>
+                          <div style={{ fontSize: 12, color: C.gris, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.corps}</div>
                         </div>
-                        <div style={{ fontSize: 11, color: C.gris }}>{m.heure}</div>
+                        <div style={{ fontSize: 11, color: C.gris, whiteSpace: "nowrap" }}>
+                          {m.created_at ? new Date(m.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }) : ""}
+                        </div>
                       </div>
                     ))}
+                    {demandesEnAttente > 0 && (
+                      <div style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: C.or }}>
+                        {demandesEnAttente} demande{demandesEnAttente > 1 ? "s" : ""} de changement de créneau en attente
+                      </div>
+                    )}
                   </Card>
                   <div style={{ background: C.vert, borderRadius: 16, padding: 24, color: "#fff" }}>
                     <div style={{ fontSize: 12, color: C.orClair, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" }}>Prochain événement</div>
@@ -2587,7 +2623,8 @@ export default function App() {
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* ── DASHBOARD CA ── */}
           {page === "dashboard" && role === "ca" && (
