@@ -332,6 +332,12 @@ const COURS_JEAN_LUC = COURS.filter(c => c.formateurs && c.formateurs.includes("
 const COMPTES_SYCEBNL = [
   { code: "521", libelle: "Banque", classe: 5 },
   { code: "571", libelle: "Caisse", classe: 5 },
+  // Classe 1 — dettes financières. Un prêt reçu n'est pas un produit : il
+  // augmente la trésorerie ET la dette. Il se rembourse ensuite en deux
+  // morceaux : le capital (qui éteint la dette, classe 1) et les intérêts
+  // (qui sont une vraie charge, compte 671).
+  { code: "162", libelle: "Emprunt bancaire", classe: 1 },
+  { code: "168", libelle: "Emprunt d'un particulier / avance remboursable", classe: 1 },
   { code: "411", libelle: "Adhérents / Élèves (créances)", classe: 4 },
   { code: "401", libelle: "Fournisseurs", classe: 4 },
   { code: "421", libelle: "Personnel — rémunérations dues", classe: 4 },
@@ -353,6 +359,7 @@ const COMPTES_SYCEBNL = [
   { code: "646", libelle: "Charges sociales", classe: 6 },
   { code: "651", libelle: "Frais de mission et déplacement", classe: 6 },
   { code: "658", libelle: "Charges diverses de gestion", classe: 6 },
+  { code: "671", libelle: "Intérêts d'emprunts", classe: 6 },
   { code: "706", libelle: "Cotisations et frais d'inscription des élèves", classe: 7 },
   { code: "7061", libelle: "Stages et ateliers vacances", classe: 7 },
   { code: "707", libelle: "Ventes de prestations (ateliers, spectacles)", classe: 7 },
@@ -1534,7 +1541,7 @@ export default function App() {
     // compte resté sélectionné après un changement de sens pouvait être
     // enregistré alors que la liste déroulante affichait autre chose.
     const comptesValides = COMPTES_SYCEBNL
-      .filter(c => f.sens === "entree" ? c.classe === 7 : (c.classe === 6 || c.classe === 4))
+      .filter(c => f.sens === "entree" ? (c.classe === 7 || c.classe === 1) : (c.classe === 6 || c.classe === 4 || c.classe === 1))
       .map(c => c.code);
     // Le compte retenu est celui choisi, s'il est cohérent avec le sens de
     // l'opération ; sinon on retombe sur le premier compte valide (706 pour
@@ -4361,10 +4368,10 @@ export default function App() {
                               </select>
                             </div>
                             <div>
-                              <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>{operationForm.sens === "entree" ? "Compte de produit (classe 7)" : "Compte de charge (classe 6)"}</div>
+                              <div style={{ fontSize: 12, color: C.gris, marginBottom: 4 }}>{operationForm.sens === "entree" ? "Compte de produit (classe 7) ou d'emprunt (classe 1)" : "Compte de charge (classe 6), de tiers (classe 4) ou d'emprunt (classe 1)"}</div>
                               <select value={operationForm.compteContrepartie} onChange={e => setOperationForm({ ...operationForm, compteContrepartie: e.target.value })}
                                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 14 }}>
-                                {COMPTES_SYCEBNL.filter(c => operationForm.sens === "entree" ? c.classe === 7 : (c.classe === 6 || c.classe === 4)).map(c => <option key={c.code} value={c.code}>{c.code} — {c.libelle}</option>)}
+                                {COMPTES_SYCEBNL.filter(c => operationForm.sens === "entree" ? (c.classe === 7 || c.classe === 1) : (c.classe === 6 || c.classe === 4 || c.classe === 1)).map(c => <option key={c.code} value={c.code}>{c.code} — {c.libelle}</option>)}
                               </select>
                             </div>
                             {!operationEnEdition && operationForm.sens === "entree" && (
