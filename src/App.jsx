@@ -1519,8 +1519,17 @@ export default function App() {
     // on force le compte 706, quoi qu'il y ait dans le menu déroulant — ça
     // évite qu'une entrée reste accidentellement sur le compte par défaut
     // (601) alors qu'un élève a bien été sélectionné.
-    const compteContrepartieFinal = (!operationEnEdition && f.sens === "entree" && f.eleveLieId)
-      ? "706" : f.compteContrepartie;
+    // Garde-fou : le compte de contrepartie doit appartenir à la bonne classe
+    // comptable (produits en entrée, charges/tiers en sortie). Sans ça, un
+    // compte resté sélectionné après un changement de sens pouvait être
+    // enregistré alors que la liste déroulante affichait autre chose.
+    const comptesValides = COMPTES_SYCEBNL
+      .filter(c => f.sens === "entree" ? c.classe === 7 : (c.classe === 6 || c.classe === 4))
+      .map(c => c.code);
+    let compteContrepartieFinal = comptesValides.includes(f.compteContrepartie)
+      ? f.compteContrepartie
+      : comptesValides[0];
+    if (!operationEnEdition && f.sens === "entree" && f.eleveLieId) compteContrepartieFinal = "706";
     const debit = f.sens === "entree" ? f.compteCaisse : compteContrepartieFinal;
     const credit = f.sens === "entree" ? compteContrepartieFinal : f.compteCaisse;
     const payload = {
@@ -4272,12 +4281,12 @@ export default function App() {
                           <SectionTitle>{operationEnEdition ? "Modifier l'opération" : "Nouvelle opération de caisse"}</SectionTitle>
                           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
                             <div style={{ display: "flex", gap: 8 }}>
-                              <div onClick={() => setOperationForm({ ...operationForm, sens: "entree" })} style={{
+                              <div onClick={() => setOperationForm({ ...operationForm, sens: "entree", compteContrepartie: "706" })} style={{
                                 flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer",
                                 background: operationForm.sens === "entree" ? C.vert : C.grisClair,
                                 color: operationForm.sens === "entree" ? "#fff" : C.gris, fontWeight: 600, fontSize: 13,
                               }}>↑ Entrée</div>
-                              <div onClick={() => setOperationForm({ ...operationForm, sens: "sortie" })} style={{
+                              <div onClick={() => setOperationForm({ ...operationForm, sens: "sortie", compteContrepartie: "601", eleveLieId: "" })} style={{
                                 flex: 1, textAlign: "center", padding: "10px", borderRadius: 8, cursor: "pointer",
                                 background: operationForm.sens === "sortie" ? "#d32f2f" : C.grisClair,
                                 color: operationForm.sens === "sortie" ? "#fff" : C.gris, fontWeight: 600, fontSize: 13,
