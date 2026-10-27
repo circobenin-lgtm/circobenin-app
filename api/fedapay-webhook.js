@@ -51,6 +51,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true, ignored: "statut non approuvé: " + transaction.status });
     }
 
+    // ── Billetterie Cirque en Fusion 2026 : valide la commande et génère les billets ──
+    const festivalOrderId = transaction.custom_metadata && transaction.custom_metadata.festival_order_id;
+    if (festivalOrderId) {
+      const { createClient: creerClientFestival } = require("@supabase/supabase-js");
+      const sbFestival = creerClientFestival(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      const { data: commandeFestival } = await sbFestival
+        .from("festival_orders").select("id, total_fcfa").eq("id", festivalOrderId).maybeSingle();
+      if (!commandeFestival || Number(commandeFestival.total_fcfa) !== Number(transaction.amount)) {
+        return res.status(200).json({ received: true, ignored: "commande festival introuvable ou montant différent" });
+      }
+      const { error: errFestival } = await sbFestival.rpc("mark_festival_order_paid", { p_order_id: festivalOrderId });
+      if (errFestival) throw errFestival;
+      return res.status(200).json({ received: true, festival: festivalOrderId });
+    }
+
     const eleveId = transaction.custom_metadata && transaction.custom_metadata.eleve_id;
     if (!eleveId) {
       // Paiement d'inscription publique — pas d'eleve_id, on accuse réception sans erreur

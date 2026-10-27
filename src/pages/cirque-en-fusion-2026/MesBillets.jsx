@@ -39,7 +39,11 @@ export default function MesBillets() {
       // on redemande aussi le statut directement à FedaPay
       if (data.status === 'pending' && essais < 20) {
         if (essais % 2 === 0) {
-          supabase.functions.invoke('festival-checkout', { body: { action: 'verifier', commande, cle } });
+          fetch('/api/festival-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verifier', commande, cle }),
+          }).catch(() => {});
         }
         essais += 1;
         minuteur = setTimeout(charger, 3000);

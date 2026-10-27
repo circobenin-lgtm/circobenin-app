@@ -48,19 +48,29 @@ export default function Billetterie() {
     if (!formulaireOk || envoi) return;
     setEnvoi(true);
     setErreur('');
-    const { data, error } = await supabase.functions.invoke('festival-checkout', {
-      body: {
-        festival: 'cef-2026',
-        items: lignes.map((l) => ({ slug: l.slug, quantite: l.quantite })),
-        acheteur: {
-          prenom: acheteur.prenom.trim(),
-          nom: acheteur.nom.trim(),
-          telephone: acheteur.telephone.trim(),
-          email: acheteur.email.trim() || null,
-        },
-      },
-    });
-    if (error || !data?.url) {
+    let data = {};
+    let ok = false;
+    try {
+      const rep = await fetch('/api/festival-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          festival: 'cef-2026',
+          items: lignes.map((l) => ({ slug: l.slug, quantite: l.quantite })),
+          acheteur: {
+            prenom: acheteur.prenom.trim(),
+            nom: acheteur.nom.trim(),
+            telephone: acheteur.telephone.trim(),
+            email: acheteur.email.trim() || null,
+          },
+        }),
+      });
+      data = await rep.json().catch(() => ({}));
+      ok = rep.ok;
+    } catch (e) {
+      ok = false;
+    }
+    if (!ok || !data?.url) {
       setErreur(data?.message || "Le paiement n'a pas pu démarrer. Réessayez dans un instant ou contactez-nous.");
       setEnvoi(false);
       return;
