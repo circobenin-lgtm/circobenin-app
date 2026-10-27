@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/cirque-en-fusion-2026",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/cirque-en-fusion-2026/:path*",
+      "destination": "/index.html"
+    }
+  ]
+}
