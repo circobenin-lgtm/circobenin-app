@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/cirque-en-fusion-2026",
-      "destination": "/index.html"
+      "destination": "/api/og-festival"
     },
     {
       "source": "/cirque-en-fusion-2026/:path*",
