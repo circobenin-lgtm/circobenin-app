@@ -1260,6 +1260,7 @@ export default function App() {
   const [versementsEleveActuel, setVersementsEleveActuel] = useState([]);
   const [montantPaiementChoisi, setMontantPaiementChoisi] = useState("");
   const [activeEvenement, setActiveEvenement] = useState(null);
+  useEffect(() => { if (page === "evenement_detail" && activeEvenement === 5) window.location.href = "/cirque-en-fusion-2026"; }, [page, activeEvenement]);
   const [showModalEleve, setShowModalEleve] = useState(false);
   const [showModalProjet, setShowModalProjet] = useState(false);
   const [showModalSpectacle, setShowModalSpectacle] = useState(false);
@@ -2863,7 +2864,7 @@ export default function App() {
                       </div>
                     )}
                   </Card>
-                  <div style={{ background: C.vert, borderRadius: 16, padding: 24, color: "#fff" }}>
+                  <div style={{ background: C.vert, borderRadius: 16, padding: 24, color: "#fff", cursor: "pointer" }} onClick={() => { window.location.href = "/cirque-en-fusion-2026"; }}>
                     <div style={{ fontSize: 12, color: C.orClair, fontWeight: 700, marginBottom: 8, textTransform: "uppercase" }}>Prochain événement</div>
                     <div style={{ fontFamily: FT, fontSize: 20, color: C.orClair, fontWeight: 700 }}>Cirque en Fusion 2026</div>
                     <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Festival annuel · 25-28 Nov 2026</div>
@@ -5444,7 +5445,7 @@ export default function App() {
                   </div>
                 </div>
                 {/* Badge Festival - grand, sur le côté, avec logo officiel */}
-                <div onClick={() => { setActiveEvenement(5); setPage("evenement_detail"); }} style={{
+                <div onClick={() => { window.location.href = "/cirque-en-fusion-2026"; }} style={{
                   display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", flexShrink: 0, width: 160,
                 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, textAlign: "center", marginBottom: 10, letterSpacing: 0.5 }}>🏆 Festival Cirque en Fusion</div>
@@ -5472,11 +5473,13 @@ export default function App() {
                   <div style={{ fontWeight: 700, fontSize: 22, color: C.magenta, fontFamily: FT }}>10</div>
                   <div style={{ fontSize: 13, color: C.gris }}>Cours par semaine</div>
                 </Card>
+                <a href="/cirque-en-fusion-2026" className="cef-carte-stat" style={{ textDecoration: "none", color: "inherit" }}>
                 <Card style={{ textAlign: "center", borderTop: "4px solid #1a5c38" }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>🏆</div>
                   <div style={{ fontWeight: 700, fontSize: 22, color: C.vertM, fontFamily: FT }}>2026</div>
                   <div style={{ fontSize: 13, color: C.gris }}>Festival Cirque en Fusion</div>
                 </Card>
+                </a>
               </div>
 
               {/* Calendrier événements */}
