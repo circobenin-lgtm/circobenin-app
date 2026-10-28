@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 const mobileCSS = `
 @media (max-width: 768px) {
   .sidebar-desktop { display: none !important; }
-  .main-content { padding: 12px 10px 80px !important; }
+  .main-content { padding: 12px 10px 96px !important; }
+  .boutons-defil { bottom: 88px !important; }
   .nav-mobile { display: flex !important; }
   .grid-stats-4 { grid-template-columns: repeat(2,1fr) !important; gap: 12px !important; }
   .grid-stats-3 { grid-template-columns: 1fr !important; gap: 12px !important; }
@@ -14,6 +15,7 @@ const mobileCSS = `
   .grid-stats-4 { grid-template-columns: 1fr !important; }
 }
 .nav-mobile { display: none; }
+.boutons-defil { bottom: 24px; }
 @keyframes festivalPulse {
   0% { box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 0 0 0 rgba(255,255,255,0.5); }
   70% { box-shadow: 0 6px 20px rgba(0,0,0,0.25), 0 0 0 14px rgba(255,255,255,0); }
@@ -282,7 +284,6 @@ const CRENEAUX_STAGE_ETE = [
 
 const INTERVENANTS = {
   "Jean-Luc": {
-    code: "JEAN531",
     couleur: "#2d7a4f",
     heures_circo: 10,
     heures_prepa: 2,
@@ -291,7 +292,6 @@ const INTERVENANTS = {
     extra: []
   },
   "Spéro": {
-    code: "SPER531",
     couleur: "#e91e8c",
     heures_circo: 10,
     heures_prepa: 2,
@@ -300,7 +300,6 @@ const INTERVENANTS = {
     extra: []
   },
   "Youssou": {
-    code: "YOUS531",
     couleur: "#ff9800",
     heures_circo: 6,
     heures_prepa: 1,
@@ -1466,8 +1465,8 @@ function BilletterieFestivalEquipe() {
 }
 
 export default function App() {
-  const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@741', 'secretariat': 'Secretcirc@531', 'formateur': 'Profcirc@531'};
-  const CODES_INTERVENANTS = {'Jean-Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
+  // Mots de passe de l'équipe : vérifiés côté serveur (api/verifier-acces.js), plus dans ce fichier
+  const CODES_ROLES = { directeur: true, ca: true, admin: true, secretariat: true, formateur: true };
   const [role, setRole] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [sidebar, setSidebar] = useState(true);
@@ -1487,6 +1486,10 @@ export default function App() {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
   const [equipeOuverte, setEquipeOuverte] = useState(false);
+  const [jetonEquipe, setJetonEquipe] = useState("");
+  const [pinVerif, setPinVerif] = useState(false);
+  const [pinMessage, setPinMessage] = useState("");
+  const [defil, setDefil] = useState({ haut: false, bas: false });
   const [nomIntervenant, setNomIntervenant] = useState("");
   const [parentCodeInput, setParentCodeInput] = useState("");
   const [eleveActuel, setEleveActuel] = useState(null);
@@ -2253,6 +2256,51 @@ export default function App() {
     try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
   };
 
+  const validerPin = async () => {
+    if (pinVerif || !pinInput) return;
+    setPinVerif(true);
+    setPinMessage("");
+    try {
+      const rep = await fetch("/api/verifier-acces", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: pendingRole, code: pinInput }),
+      });
+      const d = await rep.json().catch(() => ({}));
+      if (rep.ok && d.ok) {
+        setNomIntervenant(d.nomIntervenant || "");
+        setJetonEquipe(d.jeton);
+        setRole(pendingRole);
+        setPage(NAV_PAR_ROLE[pendingRole][0].id);
+        setPinInput("");
+        setPinError(false);
+        sauvegarderSession({ role: pendingRole, nomIntervenant: d.nomIntervenant || "", jeton: d.jeton });
+      } else {
+        setPinMessage(d.message || "");
+        setPinError(true);
+      }
+    } catch (e) {
+      setPinMessage("Connexion impossible. Vérifiez internet et réessayez.");
+      setPinError(true);
+    }
+    setPinVerif(false);
+  };
+
+  const zoneDefil = () => {
+    const m = document.getElementById("zone-principale");
+    if (!m) return null;
+    const c = m.querySelector(".main-content");
+    return c && c.scrollHeight > c.clientHeight + 2 ? c : m;
+  };
+  const majDefil = (el) => {
+    if (!el) return;
+    setDefil({ haut: el.scrollTop > 300, bas: el.scrollHeight - el.scrollTop - el.clientHeight > 300 });
+  };
+  const defiler = (versBas) => {
+    const z = zoneDefil();
+    if (z) z.scrollTo({ top: versBas ? z.scrollHeight : 0, behavior: "smooth" });
+  };
+
   const connecterParentAvecCode = async (codeSaisi) => {
     try {
       const { data: lien, error } = await supabase
@@ -2293,10 +2341,23 @@ export default function App() {
         if (session.role === "parent" && session.parentCode) {
           const ok = await connecterParentAvecCode(session.parentCode);
           if (ok) setPage("mon_enfant"); else effacerSession();
+        } else if (session.role && CODES_ROLES[session.role] && session.jeton) {
+          const rep = await fetch("/api/verifier-acces", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "session", jeton: session.jeton }),
+          }).catch(() => null);
+          const d = rep ? await rep.json().catch(() => ({})) : {};
+          if (rep && rep.ok && d.ok && d.role === session.role) {
+            setNomIntervenant(d.nomIntervenant || "");
+            setJetonEquipe(session.jeton);
+            setRole(session.role);
+            setPage(NAV_PAR_ROLE[session.role][0].id);
+          } else {
+            effacerSession();
+          }
         } else if (session.role && CODES_ROLES[session.role]) {
-          setNomIntervenant(session.nomIntervenant || "");
-          setRole(session.role);
-          setPage(NAV_PAR_ROLE[session.role][0].id);
+          effacerSession();
         }
       } catch (e) {
         effacerSession();
@@ -2309,7 +2370,15 @@ export default function App() {
   // Met à jour le timestamp de session à chaque changement de page (inactivité remise à zéro)
   useEffect(() => {
     if (!role || role.startsWith("__")) return;
-    sauvegarderSession({ role, parentCode: role === "parent" ? parentCode : undefined, nomIntervenant });
+    sauvegarderSession({ role, parentCode: role === "parent" ? parentCode : undefined, nomIntervenant, jeton: jetonEquipe || undefined });
+  }, [page]);
+
+  // Chaque nouvelle page s'ouvre en haut
+  useEffect(() => {
+    const m = document.getElementById("zone-principale");
+    if (m) { m.scrollTop = 0; const c = m.querySelector(".main-content"); if (c) c.scrollTop = 0; }
+    const t = setTimeout(() => majDefil(zoneDefil()), 400);
+    return () => clearTimeout(t);
   }, [page]);
 
   // Vérifie toutes les 30 secondes si la session a expiré (30 min sans activité)
@@ -2843,28 +2912,18 @@ export default function App() {
         <input
           type="password"
           value={pinInput}
-          onChange={e => { setPinInput(e.target.value); setPinError(false); }}
+          onChange={e => { setPinInput(e.target.value); setPinError(false); setPinMessage(""); }}
+          onKeyDown={e => { if (e.key === "Enter") validerPin(); }}
+          autoFocus
           placeholder="Mot de passe"
           style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: pinError ? "2px solid #e53935" : "2px solid #eee", fontSize: 15, marginBottom: 8, boxSizing: "border-box", outline: "none", textAlign: "center", fontFamily: FB }}
         />
-        {pinError && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>Mot de passe incorrect</div>}
+        {pinError && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 12 }}>{pinMessage || "Mot de passe incorrect"}</div>}
         {!pinError && <div style={{ marginBottom: 12 }}></div>}
-        <div onClick={() => {
-          const isIntervenantCode = pendingRole === "formateur" && Object.values(CODES_INTERVENANTS || {}).includes(pinInput);
-          if (pinInput === CODES_ROLES[pendingRole] || isIntervenantCode) {
-            const nom = Object.keys(CODES_INTERVENANTS || {}).find(n => CODES_INTERVENANTS[n] === pinInput) || "";
-            setNomIntervenant(nom);
-            setRole(pendingRole);
-            setPage(NAV_PAR_ROLE[pendingRole][0].id);
-            setPinInput("");
-            sauvegarderSession({ role: pendingRole, nomIntervenant: nom });
-          } else {
-            setPinError(true);
-          }
-        }} style={{ background: "#1A1A1A", color: "#fff", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14, marginBottom: 12 }}>
-          Accéder →
+        <div onClick={validerPin} style={{ opacity: pinVerif ? 0.6 : 1, background: "#1A1A1A", color: "#fff", borderRadius: 12, padding: "12px 20px", cursor: "pointer", fontWeight: 600, fontSize: 14, marginBottom: 12 }}>
+          {pinVerif ? "Vérification…" : "Accéder →"}
         </div>
-        <div onClick={() => { setRole(null); setPendingRole(null); setPinInput(""); setPinError(false); }} style={{ color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
+        <div onClick={() => { setRole(null); setPendingRole(null); setPinInput(""); setPinError(false); setPinMessage(""); }} style={{ color: C.gris, fontSize: 13, cursor: "pointer" }}>← Retour</div>
       </div>
     </div>
   );
@@ -2936,26 +2995,27 @@ export default function App() {
             </div>
           )}
         </div>
-        <nav style={{ flex: 1, padding: "10px 0" }}>
+        <nav style={{ flex: 1, padding: "10px 0", overflowY: "auto", minHeight: 0 }}>
           {nav.map(item => (
             <div key={item.id} onClick={() => setPage(item.id)} style={{
               display: "flex", alignItems: "center", gap: 14,
-              padding: sidebar ? "12px 20px" : "12px 0",
+              padding: sidebar ? "11px 20px" : "11px 0",
               justifyContent: sidebar ? "flex-start" : "center",
               cursor: "pointer",
-              background: page === item.id ? "rgba(255,255,255,0.15)" : "transparent",
-              borderLeft: page === item.id ? `3px solid ${C.magenta}` : "3px solid transparent",
-              color: page === item.id ? "#fff" : "rgba(255,255,255,0.65)",
+              background: page === item.id ? "rgba(233,30,140,0.22)" : "transparent",
+              borderLeft: page === item.id ? `4px solid ${C.magenta}` : "4px solid transparent",
+              color: page === item.id ? "#fff" : "rgba(255,255,255,0.88)",
               transition: "all 0.2s",
-            }}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
-              {sidebar && <span style={{ fontSize: 14, fontWeight: page === item.id ? 600 : 400 }}>{item.label}</span>}
+            }} title={item.label}>
+              <span style={{ fontSize: 20, flexShrink: 0, width: 24, textAlign: "center" }}>{item.icon}</span>
+              {sidebar && <span style={{ fontSize: 15, fontWeight: page === item.id ? 700 : 500 }}>{item.label}</span>}
             </div>
           ))}
         </nav>
         <div style={{
           padding: 16, borderTop: "1px solid rgba(255,255,255,0.15)",
-          display: "flex", alignItems: "center", gap: 10,
+          display: "flex", alignItems: "center", gap: 10, flexShrink: 0,
+          flexDirection: sidebar ? "row" : "column",
         }}>
           <div style={{
             width: 32, height: 32, borderRadius: "50%", background: r.color,
@@ -2965,14 +3025,24 @@ export default function App() {
           {sidebar && (
             <div style={{ flex: 1 }}>
               <div style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{r.nom}</div>
-              <div onClick={() => { setRole(null); effacerSession(); }} style={{ color: C.or, fontSize: 11, cursor: "pointer" }}>Déconnexion</div>
+              <div onClick={() => { setRole(null); setJetonEquipe(""); effacerSession(); }} style={{
+                display: "inline-flex", alignItems: "center", gap: 6, marginTop: 6,
+                background: "#e91e8c", color: "#fff", fontSize: 13, fontWeight: 700,
+                padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+              }}>⏻ Se déconnecter</div>
             </div>
+          )}
+          {!sidebar && (
+            <div onClick={() => { setRole(null); setJetonEquipe(""); effacerSession(); }} title="Se déconnecter" style={{
+              width: 32, height: 32, borderRadius: 8, background: "#e91e8c", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, cursor: "pointer",
+            }}>⏻</div>
           )}
         </div>
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+      <main id="zone-principale" onScrollCapture={e => { const t = e.target; if (t && (t.id === "zone-principale" || (t.classList && t.classList.contains("main-content")))) majDefil(t); }} style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
         <header className="app-header" style={{
           background: "#fff", borderBottom: `1px solid ${C.grisClair}`,
           padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0,
@@ -6702,11 +6772,29 @@ export default function App() {
         </div>
       )}
 
+      {(defil.haut || defil.bas) && (
+        <div className="boutons-defil" style={{ position: "fixed", right: 16, zIndex: 90, display: "flex", flexDirection: "column", gap: 10 }}>
+          {defil.haut && (
+            <div onClick={() => defiler(false)} title="Haut de page" style={{
+              width: 46, height: 46, borderRadius: "50%", background: "#1A1A1A", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700,
+              cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", border: "2px solid #fff",
+            }}>↑</div>
+          )}
+          {defil.bas && (
+            <div onClick={() => defiler(true)} title="Bas de page" style={{
+              width: 46, height: 46, borderRadius: "50%", background: "#1A1A1A", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700,
+              cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.3)", border: "2px solid #fff",
+            }}>↓</div>
+          )}
+        </div>
+      )}
+
       <nav className="nav-mobile" style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.1)",
-        zIndex: 100, height: 64,
-        display: "flex",
+        background: "#1A1A1A", borderTop: "1px solid rgba(255,255,255,0.15)",
+        zIndex: 100, height: 70,
         paddingBottom: "env(safe-area-inset-bottom)",
       }}>
         {/* Items scrollables */}
@@ -6714,26 +6802,25 @@ export default function App() {
           {nav.map(item => (
             <div key={item.id} onClick={() => setPage(item.id)} style={{
               display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 10px",
-              minWidth: 64, flexShrink: 0,
-              borderTop: page === item.id ? "2px solid #e91e8c" : "2px solid transparent",
+              justifyContent: "center", gap: 3, cursor: "pointer", padding: "6px 12px",
+              minWidth: 74, flexShrink: 0,
+              borderTop: page === item.id ? "3px solid #e91e8c" : "3px solid transparent",
+              background: page === item.id ? "rgba(233,30,140,0.18)" : "transparent",
             }}>
-              <span style={{ fontSize: 18 }}>{item.icon}</span>
-              <span style={{ fontSize: 9, whiteSpace: "nowrap", color: page === item.id ? "#fff" : "rgba(255,255,255,0.5)", fontWeight: page === item.id ? 700 : 400 }}>{item.label}</span>
+              <span style={{ fontSize: 21 }}>{item.icon}</span>
+              <span style={{ fontSize: 11, whiteSpace: "nowrap", color: page === item.id ? "#fff" : "rgba(255,255,255,0.85)", fontWeight: page === item.id ? 700 : 500 }}>{item.label}</span>
             </div>
           ))}
         </div>
         {/* Bouton Sortir — toujours visible, fixé à droite */}
-        <div onClick={() => { setRole(null); effacerSession(); }} style={{
+        <div onClick={() => { setRole(null); setJetonEquipe(""); effacerSession(); }} style={{
           display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: "center", gap: 2, cursor: "pointer", padding: "6px 14px",
+          justifyContent: "center", gap: 3, cursor: "pointer", padding: "6px 16px",
           flexShrink: 0,
-          borderTop: "2px solid transparent",
-          borderLeft: "1px solid rgba(255,255,255,0.2)",
-          background: "rgba(233,30,140,0.12)",
+          background: "#e91e8c",
         }}>
-          <span style={{ fontSize: 18 }}>⏻</span>
-          <span style={{ fontSize: 9, whiteSpace: "nowrap", color: "#e91e8c", fontWeight: 700 }}>Sortir</span>
+          <span style={{ fontSize: 20, color: "#fff" }}>⏻</span>
+          <span style={{ fontSize: 11, whiteSpace: "nowrap", color: "#fff", fontWeight: 700 }}>Sortir</span>
         </div>
       </nav>
     </div>
