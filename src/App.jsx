@@ -72,6 +72,7 @@ const NAV_PAR_ROLE = {
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
+    { id: "controle_entree", icon: "📷", label: "Contrôle entrée" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
@@ -98,6 +99,7 @@ const NAV_PAR_ROLE = {
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
+    { id: "controle_entree", icon: "📷", label: "Contrôle entrée" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
@@ -118,6 +120,7 @@ const NAV_PAR_ROLE = {
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "paiements", icon: "₦", label: "Paiements" },
     { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
+    { id: "controle_entree", icon: "📷", label: "Contrôle entrée" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
@@ -5562,6 +5565,18 @@ export default function App() {
           )}
 
           {page === "billetterie_festival" && ["directeur", "admin", "secretariat"].includes(role) && <BilletterieFestivalEquipe />}
+          {page === "controle_entree" && ["directeur", "admin", "secretariat"].includes(role) && (
+            <Card style={{ maxWidth: 560 }}>
+              <SectionTitle>📷 Contrôle des billets à l'entrée</SectionTitle>
+              <p style={{ fontSize: 14, color: C.gris, marginTop: 0 }}>
+                Scannez les QR codes des spectateurs avec la caméra du téléphone. Chaque billet ne peut entrer qu'une seule fois.
+              </p>
+              <Btn onClick={() => { window.location.href = "/cirque-en-fusion-2026/controle"; }}>Ouvrir le scanner →</Btn>
+              <p style={{ fontSize: 13, color: C.gris, marginTop: 16, marginBottom: 0 }}>
+                Adresse à donner aux portiers : <strong>app.circobenin.com/cirque-en-fusion-2026/controle</strong>
+              </p>
+            </Card>
+          )}
 
           {/* ── DEMANDES DE CRÉNEAU + MESSAGES DES FAMILLES (direction / admin / secrétariat) ── */}
           {page === "demandes_familles" && (
