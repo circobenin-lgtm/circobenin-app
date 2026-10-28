@@ -2511,6 +2511,17 @@ export default function App() {
           <p style={{ color: C.gris, fontSize: 14, margin: 0 }}>Choisissez votre espace de connexion</p>
         </div>
         {/* Bouton Inscription rapide */}
+        <a href="/cirque-en-fusion-2026" style={{
+          background: "linear-gradient(135deg, #4E2D7E, #E91E78)", color: "#fff", borderRadius: 12, padding: "14px 18px",
+          display: "flex", alignItems: "center", gap: 14, marginBottom: 8, textDecoration: "none",
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🎪</div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>Cirque en Fusion 2026</div>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>Festival · 25–28 nov. · Cotonou — programme et billetterie</div>
+          </div>
+          <div style={{ marginLeft: "auto", fontSize: 18 }}>→</div>
+        </a>
         <div onClick={() => { setRole("visiteurs"); setPage("inscription"); }} style={{
           background: "linear-gradient(135deg, #2d7a4f, #1a5c38)", color: "#fff",
           borderRadius: 12, padding: "14px 18px", cursor: "pointer",
