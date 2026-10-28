@@ -69,6 +69,7 @@ const NAV_PAR_ROLE = {
     { id: "projets", icon: "◉", label: "Projets" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "paiements", icon: "₦", label: "Paiements" },
+    { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
@@ -94,6 +95,7 @@ const NAV_PAR_ROLE = {
     { id: "statistiques", icon: "▦", label: "Statistiques" },
     { id: "heures_equipe", icon: "⏲", label: "Heures équipe" },
     { id: "paiements", icon: "₦", label: "Paiements" },
+    { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
@@ -113,6 +115,7 @@ const NAV_PAR_ROLE = {
     { id: "suivi_adhesions", icon: "🤝", label: "Adhésions" },
     { id: "planning", icon: "◫", label: "Planning" },
     { id: "paiements", icon: "₦", label: "Paiements" },
+    { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
@@ -1230,6 +1233,238 @@ function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   );
 }
 
+// ── BILLETTERIE FESTIVAL (Direction / Administration / Secrétariat) ──
+// Les données des acheteurs ne passent que par /api/festival-ventes, protégé par un
+// code équipe vérifié côté serveur (variable Vercel FESTIVAL_EQUIPE_CODE).
+const CEF_CLE_CODE = "cef_code_equipe";
+const cefFcfa = (n) => (Number(n) || 0).toLocaleString("fr-FR").replace(/ /g, " ") + " FCFA";
+const CEF_STATUTS = {
+  paid: { label: "Payée", bg: "#e6f4ea", color: "#1e7a3c" },
+  pending: { label: "En attente", bg: "#fff4d6", color: "#946200" },
+  expired: { label: "Expirée", bg: "#eeeeee", color: "#666666" },
+  cancelled: { label: "Annulée", bg: "#eeeeee", color: "#666666" },
+  failed: { label: "Échouée", bg: "#fdecea", color: "#b42318" },
+};
+
+function BilletterieFestivalEquipe() {
+  const lireCode = () => { try { return sessionStorage.getItem(CEF_CLE_CODE) || ""; } catch (e) { return ""; } };
+  const [code, setCode] = useState(lireCode);
+  const [saisie, setSaisie] = useState("");
+  const [donnees, setDonnees] = useState(null);
+  const [etat, setEtat] = useState("");
+  const [recherche, setRecherche] = useState("");
+  const [filtre, setFiltre] = useState("paid");
+  const [info, setInfo] = useState("");
+
+  const charger = async (c) => {
+    setEtat("chargement");
+    try {
+      const rep = await fetch("/api/festival-ventes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: c }),
+      });
+      const d = await rep.json().catch(() => ({}));
+      if (rep.status === 401) {
+        try { sessionStorage.removeItem(CEF_CLE_CODE); } catch (e) { /* ignore */ }
+        setCode(""); setDonnees(null); setEtat("code_faux");
+        return;
+      }
+      if (!rep.ok) { setEtat(d.message || "Impossible de charger les ventes."); return; }
+      try { sessionStorage.setItem(CEF_CLE_CODE, c); } catch (e) { /* ignore */ }
+      setCode(c); setDonnees(d); setEtat("");
+    } catch (e) {
+      setEtat("Connexion impossible. Vérifiez internet et réessayez.");
+    }
+  };
+
+  useEffect(() => {
+    if (!code) return undefined;
+    charger(code);
+    const t = setInterval(() => charger(code), 60000);
+    return () => clearInterval(t);
+  }, [code]);
+
+  const lienBillets = (o) => `${window.location.origin}/cirque-en-fusion-2026/billets?commande=${o.id}&cle=${o.access_key}`;
+  const copier = async (texte) => {
+    try { await navigator.clipboard.writeText(texte); setInfo("Lien copié"); }
+    catch (e) { window.prompt("Copiez ce lien :", texte); }
+    setTimeout(() => setInfo(""), 2500);
+  };
+  const verifier = async (o) => {
+    setInfo("Vérification auprès de FedaPay…");
+    try {
+      await fetch("/api/festival-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verifier", commande: o.id, cle: o.access_key }),
+      });
+    } catch (e) { /* ignore */ }
+    await charger(code);
+    setInfo("");
+  };
+
+  // ── Saisie du code équipe ──
+  if (!code) return (
+    <Card style={{ maxWidth: 440 }}>
+      <SectionTitle>🎟 Billetterie festival</SectionTitle>
+      <p style={{ fontSize: 14, color: C.gris, marginTop: 0 }}>
+        Les ventes contiennent les noms et téléphones des acheteurs : saisissez le code billetterie de l'équipe (fourni par la direction).
+      </p>
+      <input
+        type="password" value={saisie} placeholder="Code billetterie"
+        onChange={(e) => { setSaisie(e.target.value); if (etat) setEtat(""); }}
+        onKeyDown={(e) => { if (e.key === "Enter" && saisie) charger(saisie); }}
+        style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: etat === "code_faux" ? "2px solid #e53935" : "2px solid #eee", fontSize: 15, boxSizing: "border-box", fontFamily: FB, marginBottom: 10 }}
+      />
+      {etat === "code_faux" && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 10 }}>Code incorrect</div>}
+      {etat && etat !== "code_faux" && etat !== "chargement" && <div style={{ color: "#e53935", fontSize: 13, marginBottom: 10 }}>{etat}</div>}
+      <Btn onClick={() => saisie && charger(saisie)} disabled={!saisie || etat === "chargement"}>
+        {etat === "chargement" ? "Chargement…" : "Voir les ventes →"}
+      </Btn>
+    </Card>
+  );
+
+  if (!donnees) return <Card><div style={{ color: etat && etat !== "chargement" ? "#e53935" : C.gris }}>{etat && etat !== "chargement" ? etat : "Chargement des ventes…"}</div></Card>;
+
+  const { totaux, evenements, commandes, genere_le } = donnees;
+  const q = recherche.trim().toLowerCase();
+  const qChiffres = q.replace(/\D/g, "");
+  const liste = commandes.filter((o) => {
+    if (filtre !== "toutes" && o.statut !== filtre) return false;
+    if (!q) return true;
+    const nom = `${o.prenom} ${o.nom}`.toLowerCase();
+    return nom.includes(q) || (o.email || "").toLowerCase().includes(q) || (qChiffres.length >= 3 && (o.telephone || "").includes(qChiffres));
+  });
+
+  const th = { textAlign: "left", padding: "8px 10px", fontSize: 12, color: C.gris, fontWeight: 600, borderBottom: `2px solid ${C.grisClair}`, whiteSpace: "nowrap" };
+  const td = { padding: "10px", fontSize: 13, borderBottom: `1px solid ${C.grisClair}`, verticalAlign: "top" };
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
+        <div>
+          <h2 style={{ fontFamily: FT, fontSize: 22, color: C.vert, margin: 0 }}>🎟 Billetterie — Cirque en Fusion 2026</h2>
+          <div style={{ fontSize: 12, color: C.gris, marginTop: 4 }}>
+            Mis à jour à {new Date(genere_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · actualisation automatique chaque minute
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {info && <span style={{ fontSize: 13, color: "#1e7a3c", fontWeight: 600 }}>{info}</span>}
+          <Btn small onClick={() => charger(code)}>{etat === "chargement" ? "…" : "↻ Actualiser"}</Btn>
+          <Btn small color={C.gris} onClick={() => { try { sessionStorage.removeItem(CEF_CLE_CODE); } catch (e) { /* ignore */ } setCode(""); setDonnees(null); setSaisie(""); }}>Verrouiller</Btn>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginBottom: 22 }}>
+        <StatCard label="Encaissé" value={cefFcfa(totaux.encaisse)} icon="₦" color={C.vert} sousLabel="paiements validés" />
+        <StatCard label="Billets vendus" value={totaux.billets} icon="🎟" color={C.magenta} sousLabel={`${totaux.commandes_payees} commande(s)`} />
+        <StatCard label="En attente de paiement" value={totaux.commandes_attente} icon="⏳" color={C.or} sousLabel="places bloquées 30 min" />
+        <StatCard label="Places restantes" value={totaux.restantes} icon="🪑" color={C.bleu} sousLabel="tous spectacles" />
+      </div>
+
+      <Card style={{ marginBottom: 22 }}>
+        <SectionTitle>Par spectacle</SectionTitle>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
+            <thead><tr>
+              <th style={th}>Spectacle</th><th style={th}>Date</th><th style={th}>Prix</th>
+              <th style={th}>Vendus</th><th style={th}>Attente</th><th style={th}>Restants</th><th style={th}>Recette</th>
+            </tr></thead>
+            <tbody>
+              {evenements.map((e) => {
+                const pct = e.capacite ? Math.min(100, Math.round((e.vendus / e.capacite) * 100)) : 0;
+                return (
+                  <tr key={e.slug}>
+                    <td style={td}>
+                      <div style={{ fontWeight: 700 }}>{e.titre}</div>
+                      <div style={{ height: 6, background: C.grisClair, borderRadius: 3, marginTop: 6, width: 160 }}>
+                        <div style={{ height: 6, width: `${pct}%`, background: pct >= 90 ? C.rouge : C.magenta, borderRadius: 3 }} />
+                      </div>
+                    </td>
+                    <td style={{ ...td, whiteSpace: "nowrap" }}>{e.date_label}</td>
+                    <td style={{ ...td, whiteSpace: "nowrap" }}>{cefFcfa(e.prix_fcfa)}</td>
+                    <td style={{ ...td, fontWeight: 700 }}>{e.vendus} / {e.capacite}</td>
+                    <td style={td}>{e.attente || "—"}</td>
+                    <td style={{ ...td, color: e.restants <= 20 ? C.rouge : "inherit", fontWeight: e.restants <= 20 ? 700 : 400 }}>{e.restants}</td>
+                    <td style={{ ...td, whiteSpace: "nowrap" }}>{cefFcfa(e.recette)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card>
+        <SectionTitle>Commandes</SectionTitle>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+          <input
+            value={recherche} onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher un nom, un téléphone, un e-mail…"
+            style={{ flex: "1 1 240px", padding: "10px 12px", borderRadius: 10, border: `2px solid ${C.grisClair}`, fontSize: 14, fontFamily: FB }}
+          />
+          {[["paid", "Payées"], ["pending", "En attente"], ["toutes", "Toutes"]].map(([v, l]) => (
+            <div key={v} onClick={() => setFiltre(v)} style={{
+              padding: "9px 14px", borderRadius: 999, cursor: "pointer", fontSize: 13, fontWeight: 600,
+              background: filtre === v ? C.vert : C.grisClair, color: filtre === v ? "#fff" : C.noir,
+            }}>{l}</div>
+          ))}
+        </div>
+        {liste.length === 0 ? (
+          <div style={{ color: C.gris, fontSize: 14, padding: "16px 0" }}>Aucune commande{q ? " pour cette recherche" : ""}.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
+              <thead><tr>
+                <th style={th}>Date</th><th style={th}>Acheteur</th><th style={th}>Billets</th>
+                <th style={th}>Montant</th><th style={th}>Statut</th><th style={th}></th>
+              </tr></thead>
+              <tbody>
+                {liste.map((o) => {
+                  const st = CEF_STATUTS[o.statut] || CEF_STATUTS.pending;
+                  const msg = `Bonjour ${o.prenom}, voici vos billets pour Cirque en Fusion 2026 : ${lienBillets(o)}`;
+                  return (
+                    <tr key={o.id}>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        {new Date(o.cree_le).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}{" "}
+                        <span style={{ color: C.gris }}>{new Date(o.cree_le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                      </td>
+                      <td style={td}>
+                        <div style={{ fontWeight: 700 }}>{o.prenom} {o.nom}</div>
+                        <a href={`tel:+229${o.telephone}`} style={{ color: C.bleu, textDecoration: "none" }}>{o.telephone}</a>
+                        {o.email && <div style={{ color: C.gris, fontSize: 12 }}>{o.email}</div>}
+                      </td>
+                      <td style={td}>{o.lignes.map((l, i) => <div key={i}>{l.quantite} × {l.titre}</div>)}</td>
+                      <td style={{ ...td, whiteSpace: "nowrap", fontWeight: 700 }}>{cefFcfa(o.total)}</td>
+                      <td style={td}><span style={{ background: st.bg, color: st.color, padding: "3px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{st.label}</span></td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        {o.statut === "paid" && (
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <a href={`https://wa.me/229${o.telephone}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noreferrer"
+                              style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: "#25D366", padding: "6px 10px", borderRadius: 8, textDecoration: "none" }}>WhatsApp</a>
+                            <span onClick={() => copier(lienBillets(o))} style={{ fontSize: 12, fontWeight: 700, color: C.vert, background: C.grisClair, padding: "6px 10px", borderRadius: 8, cursor: "pointer" }}>Copier le lien</span>
+                          </div>
+                        )}
+                        {o.statut === "pending" && (
+                          <span onClick={() => verifier(o)} style={{ fontSize: 12, fontWeight: 700, color: "#946200", background: "#fff4d6", padding: "6px 10px", borderRadius: 8, cursor: "pointer" }}>Vérifier le paiement</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p style={{ fontSize: 12, color: C.gris, margin: "12px 0 0" }}>
+          « WhatsApp » renvoie ses billets à l'acheteur (utile s'il a perdu la page). « Vérifier le paiement » interroge FedaPay pour une commande restée en attente.
+        </p>
+      </Card>
+    </div>
+  );
+}
+
 export default function App() {
   const CODES_ROLES = {'directeur': 'CircoBenin2025!', 'ca': 'Cacirc@531', 'admin': 'Admincirc@741', 'secretariat': 'Secretcirc@531', 'formateur': 'Profcirc@531'};
   const CODES_INTERVENANTS = {'Jean-Luc': 'JEAN531', 'Spéro': 'SPER531', 'Youssou': 'YOUS531'};
@@ -1251,6 +1486,7 @@ export default function App() {
   const [pendingRole, setPendingRole] = useState(null);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [equipeOuverte, setEquipeOuverte] = useState(false);
   const [nomIntervenant, setNomIntervenant] = useState("");
   const [parentCodeInput, setParentCodeInput] = useState("");
   const [eleveActuel, setEleveActuel] = useState(null);
@@ -2536,7 +2772,8 @@ export default function App() {
           <div style={{ marginLeft: "auto", fontSize: 18 }}>→</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {Object.entries(ROLES).map(([key, r]) => (
+          {(() => {
+            const carteRole = ([key, r]) => (
             <div key={key} onClick={() => { if (key === "parent" || key === "apprenant_pro") { setRole("__parent_pending__"); setPendingRole(key); } else if (key === "visiteurs") { setRole(key); setPage(NAV_PAR_ROLE[key][0].id); } else { setRole("__pin_pending__"); setPendingRole(key); } }} style={{
               display: "flex", alignItems: "center", gap: 14,
               padding: "14px 18px", borderRadius: 12,
@@ -2557,7 +2794,37 @@ export default function App() {
               </div>
               <div style={{ marginLeft: "auto", color: C.gris, fontSize: 18 }}>→</div>
             </div>
-          ))}
+            );
+            const equipe = Object.entries(ROLES).filter(([, r]) => r.pin);
+            const autres = Object.entries(ROLES).filter(([, r]) => !r.pin);
+            return (
+              <>
+                <div onClick={() => setEquipeOuverte(o => !o)} style={{
+                  display: "flex", alignItems: "center", gap: 14,
+                  padding: "14px 18px", borderRadius: 12,
+                  border: `2px solid ${equipeOuverte ? C.vert : C.grisClair}`, cursor: "pointer",
+                  background: equipeOuverte ? "#f7f7f7" : "#fff", transition: "all 0.2s",
+                }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: "50%", background: C.vert,
+                    color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 13, fontWeight: 700, flexShrink: 0,
+                  }}>EC</div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: C.noir, fontSize: 14 }}>Équipe Circo</div>
+                    <div style={{ fontSize: 12, color: C.gris }}>Direction, CA, administration, secrétariat, intervenants</div>
+                  </div>
+                  <div style={{ marginLeft: "auto", color: C.gris, fontSize: 16, transform: equipeOuverte ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>→</div>
+                </div>
+                {equipeOuverte && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingLeft: 14, borderLeft: `3px solid ${C.grisClair}`, marginLeft: 18 }}>
+                    {equipe.map(carteRole)}
+                  </div>
+                )}
+                {autres.map(carteRole)}
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>
@@ -5222,6 +5489,8 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {page === "billetterie_festival" && ["directeur", "admin", "secretariat"].includes(role) && <BilletterieFestivalEquipe />}
 
           {/* ── DEMANDES DE CRÉNEAU + MESSAGES DES FAMILLES (direction / admin / secrétariat) ── */}
           {page === "demandes_familles" && (
