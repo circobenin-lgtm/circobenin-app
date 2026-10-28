@@ -39,6 +39,9 @@ function NavFestival() {
         {SECTIONS.map((s) => (
           <a key={s.id} href={`#${s.id}`} className={actif === s.id ? 'is-active' : ''}>{s.label}</a>
         ))}
+        <a href={FESTIVAL.contact.whatsapp} target="_blank" rel="noreferrer" className="cef-nav-wa">
+          <span className="cef-wa-long">Rejoindre notre chaîne WhatsApp</span><span className="cef-wa-court">WhatsApp</span>
+        </a>
         <a href="#billetterie" className="cef-nav-cta">Réserver</a>
       </div>
     </nav>

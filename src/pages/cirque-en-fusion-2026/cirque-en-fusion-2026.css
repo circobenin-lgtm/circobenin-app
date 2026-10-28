@@ -284,3 +284,13 @@
   .cef-infos dl { grid-template-columns: 1fr; } .cef-infos dt { border: 0; padding-bottom: 0; }
   .cef-nav a.cef-nav-cta { display: none; }
 }
+
+/* Bouton chaîne WhatsApp dans la barre */
+.cef-nav a.cef-nav-wa { margin-left: auto; background: #25D366; color: #0B2E1A; border-radius: 999px; padding: 8px 16px; border: 0; font-weight: 700; }
+.cef-nav a.cef-nav-wa + a.cef-nav-cta { margin-left: 8px; }
+.cef-wa-court { display: none; }
+@media (max-width: 600px) {
+  .cef-wa-long { display: none; }
+  .cef-wa-court { display: inline; }
+  .cef-nav a.cef-nav-wa { padding: 7px 12px; position: sticky; right: 0; flex: none; box-shadow: -14px 0 12px rgba(20,17,28,.96); }
+}
