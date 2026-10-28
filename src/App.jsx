@@ -2892,6 +2892,17 @@ export default function App() {
                 {equipeOuverte && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingLeft: 14, borderLeft: `3px solid ${C.grisClair}`, marginLeft: 18 }}>
                     {equipe.map(carteRole)}
+                    <a href="/cirque-en-fusion-2026/controle" style={{
+                      display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 12,
+                      border: "2px solid #E91E78", textDecoration: "none", background: "#fff",
+                    }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#E91E78", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>📷</div>
+                      <div>
+                        <div style={{ fontWeight: 700, color: C.noir, fontSize: 14 }}>Contrôle entrée festival</div>
+                        <div style={{ fontSize: 12, color: C.gris }}>Scanner les billets · code de contrôle</div>
+                      </div>
+                      <div style={{ marginLeft: "auto", color: C.gris, fontSize: 18 }}>→</div>
+                    </a>
                   </div>
                 )}
                 {autres.map(carteRole)}
