@@ -5,8 +5,10 @@ import App from './App.jsx';
 // Pages publiques du festival Cirque en Fusion 2026 (chargées uniquement à ces adresses)
 const CirqueEnFusion2026 = React.lazy(() => import('./pages/cirque-en-fusion-2026/CirqueEnFusion2026'));
 const MesBilletsCEF = React.lazy(() => import('./pages/cirque-en-fusion-2026/MesBillets'));
+const ControleCEF = React.lazy(() => import('./pages/cirque-en-fusion-2026/ControleEntree'));
 const chemin = window.location.pathname.replace(/\/+$/, '');
-const Page = chemin === '/cirque-en-fusion-2026/billets' ? MesBilletsCEF
+const Page = chemin === '/cirque-en-fusion-2026/controle' ? ControleCEF
+  : chemin === '/cirque-en-fusion-2026/billets' ? MesBilletsCEF
   : chemin === '/cirque-en-fusion-2026' ? CirqueEnFusion2026 : App;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

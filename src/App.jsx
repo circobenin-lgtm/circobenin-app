@@ -1350,6 +1350,7 @@ function BilletterieFestivalEquipe() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {info && <span style={{ fontSize: 13, color: "#1e7a3c", fontWeight: 600 }}>{info}</span>}
+          <Btn small color={C.magenta} onClick={() => window.open("/cirque-en-fusion-2026/controle", "_blank")}>📷 Contrôle entrée</Btn>
           <Btn small onClick={() => charger(code)}>{etat === "chargement" ? "…" : "↻ Actualiser"}</Btn>
           <Btn small color={C.gris} onClick={() => { try { sessionStorage.removeItem(CEF_CLE_CODE); } catch (e) { /* ignore */ } setCode(""); setDonnees(null); setSaisie(""); }}>Verrouiller</Btn>
         </div>
