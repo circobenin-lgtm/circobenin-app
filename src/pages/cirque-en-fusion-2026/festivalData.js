@@ -34,9 +34,9 @@ export const COMPAGNIES = [
   { nom: 'Cie Afuma', origine: 'Togo', artistes: 5, spectacles: ['La Roulotte', 'Afuma'] },
   { nom: 'Cie Ça Sent le Roussi', origine: 'Belgique', artistes: 2, spectacles: [] },
   { nom: 'Duo de jongleurs', origine: 'France', artistes: 2, spectacles: [] },
-  { nom: 'Circo Bénin', origine: 'Cotonou', artistes: 4, spectacles: [] },
+  { nom: 'Circo Bénin', origine: 'Cotonou', artistes: 4, spectacles: ['Entre 2'] },
   { nom: 'Cie All Circus', origine: 'Cotonou', artistes: 5, spectacles: ['Astres resplendissantes'] },
-  { nom: 'Cotonou Cirk Compagnie', origine: 'Cotonou', artistes: 8, spectacles: ['Jarre Sacré'] },
+  { nom: 'Cotonou Cirk Compagnie', origine: 'Cotonou', artistes: 8, spectacles: [] },
   { nom: "Les Monocyclistes d'Abomey", origine: 'Abomey', artistes: 5, spectacles: [] },
   { nom: 'Acroforce de Parakou', origine: 'Parakou', artistes: 6, spectacles: [] },
 ];
@@ -64,7 +64,7 @@ export const PROGRAMME = [
       { heure: '14h00', titre: 'Ouverture des stands', type: 'stands', lieu: 'Village' },
       { heure: '15h00', titre: 'Rencontres professionnelles', type: 'pro', lieu: 'Village' },
       { heure: '18h00', titre: 'Arrêt de bus', compagnie: 'Cie Dafra', type: 'spectacle', lieu: 'Village', acces: 'gratuit' },
-      { heure: '19h30', titre: 'Jarre Sacré', compagnie: 'Cotonou Cirk Compagnie', type: 'spectacle', lieu: 'Village', acces: 'payant', billet: 'jarre-sacre-26' },
+      { heure: '19h30', titre: 'Entre 2', compagnie: 'Cie Circo Bénin', type: 'spectacle', lieu: 'Village', acces: 'payant', billet: 'jarre-sacre-26' },
       { heure: '20h30', titre: 'Souffle', compagnie: 'Cie Dafra', type: 'spectacle', lieu: 'Village', acces: 'payant', billet: 'souffle-26' },
       { heure: '21h30', titre: 'Soirée DJ femmes', type: 'animation', lieu: 'Village', acces: 'gratuit' },
     ],
@@ -108,7 +108,7 @@ export const TYPES = {
 // ⚠️ Jauge du village (300) provisoire, à confirmer.
 export const BILLETS_SECOURS = [
   { slug: 'basketteuses-25', titre: 'Basketteuses de Bamako', compagnie: 'Cie Thomas Guérineau', date_label: 'Mer. 25 nov. · 20h00', lieu: 'Institut français de Cotonou', prix_fcfa: 3000, places_restantes: 400 },
-  { slug: 'jarre-sacre-26', titre: 'Jarre Sacré', compagnie: 'Cotonou Cirk Compagnie', date_label: 'Jeu. 26 nov. · 19h30', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
+  { slug: 'jarre-sacre-26', titre: 'Entre 2', compagnie: 'Cie Circo Bénin', date_label: 'Jeu. 26 nov. · 19h30', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
   { slug: 'souffle-26', titre: 'Souffle', compagnie: 'Cie Dafra', date_label: 'Jeu. 26 nov. · 20h30', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
   { slug: 'fabara-27', titre: 'Fabara', compagnie: 'Cie FABARA', date_label: 'Ven. 27 nov. · 18h00', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
   { slug: 'gala-feu-27', titre: 'Gala Feu', compagnie: null, date_label: 'Ven. 27 nov. · 20h30', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
@@ -140,7 +140,7 @@ export const PARCOURS = [
     titre: 'Soirées', couleur: 'pink',
     points: [
       'Mercredi 20h : Basketteuses de Bamako, à l’IFB',
-      'Jeudi 19h30 Jarre Sacré, 20h30 Souffle',
+      'Jeudi 19h30 Entre 2, 20h30 Souffle',
       'Vendredi 20h30 : Gala Feu',
       'Samedi 20h : Gala Show et remise de prix',
       'Chaque soir : DJ femmes, en accès libre',
