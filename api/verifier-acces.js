@@ -1,15 +1,16 @@
-// Vérification des mots de passe de l'équipe côté serveur (ils ne sont plus dans le code du site)
-// POST { role, code }            → { ok, jeton, nomIntervenant }
-// POST { action: "session", jeton } → { ok, role, nomIntervenant }   (reconnexion après rafraîchissement)
+// Vérification des mots de passe de l'équipe et des codes famille, côté serveur.
+// POST { role, code }                → { ok, jeton, nomIntervenant }   (équipe)
+// POST { role: "famille", code }     → { ok, jeton, eleve_id }          (parents / apprenants pro)
+// POST { action: "session", jeton }  → { ok, role, nomIntervenant }     (reconnexion après rafraîchissement)
 //
 // Variables Vercel (type Secret) :
 //   CODE_DIRECTEUR, CODE_CA, CODE_ADMIN, CODE_SECRETARIAT, CODE_INTERVENANTS
 //   CODES_INTERVENANTS_NOMMES   ex. :  Jean-Luc=xxxx;Spéro=yyyy;Youssou=zzzz   (facultatif)
-const crypto = require("crypto");
+const { createClient } = require("@supabase/supabase-js");
+const { secret, attendre, egal, signer, lireJeton } = require("./_securite");
 
-const DUREE_JETON_MS = 12 * 60 * 60 * 1000; // 12 h, puis reconnexion obligatoire
-const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
-const secret = () => process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const DUREE_EQUIPE_MS = 12 * 60 * 60 * 1000;   // 12 h
+const DUREE_FAMILLE_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours
 
 const codesRoles = () => ({
   directeur: process.env.CODE_DIRECTEUR,
@@ -30,33 +31,6 @@ const intervenantsNommes = () =>
     })
     .filter((x) => x.nom && x.code);
 
-// comparaison à temps constant
-const egal = (a, b) => {
-  const ha = crypto.createHash("sha256").update(String(a)).digest();
-  const hb = crypto.createHash("sha256").update(String(b)).digest();
-  return crypto.timingSafeEqual(ha, hb);
-};
-
-const signer = (payload) => {
-  const corps = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const sig = crypto.createHmac("sha256", secret()).update(corps).digest("base64url");
-  return `${corps}.${sig}`;
-};
-
-const lireJeton = (jeton) => {
-  const [corps, sig] = String(jeton || "").split(".");
-  if (!corps || !sig) return null;
-  const attendu = crypto.createHmac("sha256", secret()).update(corps).digest("base64url");
-  if (!egal(sig, attendu)) return null;
-  try {
-    const p = JSON.parse(Buffer.from(corps, "base64url").toString("utf8"));
-    if (!p.exp || Date.now() > p.exp) return null;
-    return p;
-  } catch (e) {
-    return null;
-  }
-};
-
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false });
   if (!secret()) return res.status(500).json({ ok: false, message: "Secret de session manquant sur Vercel." });
@@ -66,12 +40,24 @@ module.exports = async function handler(req, res) {
   // Reconnexion automatique (rafraîchissement de page)
   if (body.action === "session") {
     const p = lireJeton(body.jeton);
-    if (!p) return res.status(401).json({ ok: false });
+    if (!p || p.role === "famille") return res.status(401).json({ ok: false });
     return res.status(200).json({ ok: true, role: p.role, nomIntervenant: p.nom || "" });
   }
 
   const role = String(body.role || "");
-  const code = String(body.code || "");
+  const code = String(body.code || "").trim();
+
+  // ── Familles (parents, apprenants pro) : code personnel lié à un élève ──
+  if (role === "famille") {
+    if (code.length < 4 || code.length > 40) { await attendre(800); return res.status(401).json({ ok: false }); }
+    const sb = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+    const { data: lien } = await sb.from("codes_parents").select("eleve_id").eq("code", code.toUpperCase()).maybeSingle();
+    if (!lien) { await attendre(1000); return res.status(401).json({ ok: false }); }
+    const jeton = signer({ role: "famille", eleve_id: lien.eleve_id, exp: Date.now() + DUREE_FAMILLE_MS });
+    return res.status(200).json({ ok: true, jeton, eleve_id: lien.eleve_id });
+  }
+
+  // ── Équipe ──
   const codes = codesRoles();
   if (!(role in codes)) return res.status(400).json({ ok: false });
 
@@ -86,10 +72,10 @@ module.exports = async function handler(req, res) {
     if (!codes[role] && !(role === "formateur" && intervenantsNommes().length)) {
       return res.status(500).json({ ok: false, message: "Mot de passe de cet espace non configuré sur Vercel." });
     }
-    await attendre(1000); // freine les essais à la chaîne
+    await attendre(1000);
     return res.status(401).json({ ok: false });
   }
 
-  const jeton = signer({ role, nom, exp: Date.now() + DUREE_JETON_MS });
+  const jeton = signer({ role, nom, exp: Date.now() + DUREE_EQUIPE_MS });
   return res.status(200).json({ ok: true, jeton, nomIntervenant: nom });
 };

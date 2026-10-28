@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     }
 
     const { createClient } = require("@supabase/supabase-js");
-    const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_KEY);
+    const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
     // Évite le double-traitement si FedaPay renvoie le même webhook plusieurs fois
     const { data: dejaTraite } = await supabase
