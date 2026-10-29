@@ -294,3 +294,28 @@
   .cef-wa-court { display: inline; }
   .cef-nav a.cef-nav-wa { padding: 7px 12px; position: sticky; right: 0; flex: none; box-shadow: -14px 0 12px rgba(20,17,28,.96); }
 }
+
+/* Accréditations & influenceurs */
+.cef-acc { margin-top: 24px; }
+.cef-acc-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.cef-acc-type { font-family: inherit; text-align: left; background: #fff; border: 2px solid transparent; border-radius: 14px; padding: 18px; cursor: pointer; display: grid; gap: 6px; box-shadow: 0 1px 3px rgba(20,17,28,.07); color: var(--cef-ink); }
+.cef-acc-type strong { font-size: 17px; font-weight: 800; }
+.cef-acc-type span { font-size: 13.5px; color: var(--cef-muted); }
+.cef-acc-type.is-active { border-color: var(--cef-pink); background: #FFF0F6; }
+.cef-acc-champs { margin-top: 18px; background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 1px 3px rgba(20,17,28,.07); display: grid; gap: 14px; }
+.cef-acc-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cef-acc label { display: grid; gap: 5px; font-size: 13px; font-weight: 600; }
+.cef-acc input, .cef-acc textarea { font: inherit; font-weight: 400; font-size: 16px; padding: 10px 12px; border: 1.5px solid #D6CFBF; border-radius: 10px; background: var(--cef-paper); width: 100%; }
+.cef-acc input:focus, .cef-acc textarea:focus { outline: 2px solid var(--cef-blue); border-color: transparent; }
+.cef-acc-plein { grid-column: 1 / -1; }
+.cef-acc-q { font-size: 13px; font-weight: 600; margin: 4px 0 -6px !important; }
+.cef-acc-puces { display: flex; flex-wrap: wrap; gap: 8px; }
+.cef-acc-puces button { font-family: inherit; border: 1.5px solid #D6CFBF; background: #fff; border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--cef-ink); }
+.cef-acc-puces button.is-active { background: var(--cef-ink); color: #fff; border-color: var(--cef-ink); }
+.cef-acc-champs .cef-btn { justify-self: start; }
+.cef-acc-piege { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; opacity: 0; }
+.cef-acc-merci { margin-top: 24px; max-width: 560px; }
+@media (max-width: 700px) {
+  .cef-acc-types, .cef-acc-grille { grid-template-columns: 1fr; }
+  .cef-acc-champs .cef-btn { justify-self: stretch; }
+}

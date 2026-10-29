@@ -4,6 +4,7 @@ import Billetterie from './Billetterie';
 import {
   FESTIVAL, CHIFFRES, COMPAGNIES, PROGRAMME, TYPES, PARCOURS,
 } from './festivalData';
+import Accreditation from './Accreditation';
 import './cirque-en-fusion-2026.css';
 
 import heroCover from './assets/hero-cover.webp';
@@ -19,6 +20,7 @@ const SECTIONS = [
   { id: 'programme', label: 'Programme' },
   { id: 'village', label: 'Le village' },
   { id: 'billetterie', label: 'Billetterie' },
+  { id: 'accreditation', label: 'Accréditations' },
   { id: 'infos', label: 'Infos pratiques' },
 ];
 
@@ -276,13 +278,15 @@ export default function CirqueEnFusion2026() {
             <div className="cef-carte cef-bl-plum">
               <h4>Professionnels · accréditation</h4>
               <p>Accès à tous les spectacles payants, aux rencontres professionnelles du jeudi 26 à 15h (table ronde, speed-meetings, déjeuner de networking) et à un espace presse dédié.</p>
-              <a className="cef-btn cef-btn-dark" href={mail('Demande d’accréditation – Cirque en Fusion 2026')}>Demander une accréditation</a>
+              <a className="cef-btn cef-btn-dark" href="#accreditation">Demander une accréditation</a>
             </div>
           </div>
         </div>
       </section>
 
       {/* INFOS PRATIQUES */}
+      <Accreditation />
+
       <section id="infos" className="cef-section cef-section-dark">
         <div className="cef-wrap cef-infos">
           <div>

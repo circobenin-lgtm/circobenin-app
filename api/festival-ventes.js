@@ -68,5 +68,7 @@ module.exports = async function handler(req, res) {
   });
 
   res.setHeader("Cache-Control", "no-store");
-  return res.status(200).json({ genere_le: new Date().toISOString(), totaux, evenements, commandes });
+  const { data: accreditations } = await sb.from("festival_accreditations")
+    .select("*").eq("festival", "cef-2026").order("created_at", { ascending: false }).limit(1000);
+  return res.status(200).json({ genere_le: new Date().toISOString(), totaux, evenements, commandes, accreditations: accreditations || [] });
 };

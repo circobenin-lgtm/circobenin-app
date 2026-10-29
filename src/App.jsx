@@ -1462,6 +1462,40 @@ function BilletterieFestivalEquipe() {
           « WhatsApp » renvoie ses billets à l'acheteur (utile s'il a perdu la page). « Vérifier le paiement » interroge FedaPay pour une commande restée en attente.
         </p>
       </Card>
+
+      <Card style={{ marginTop: 22 }}>
+        <SectionTitle>Demandes d'accréditation ({(donnees.accreditations || []).length})</SectionTitle>
+        {(donnees.accreditations || []).length === 0 ? (
+          <div style={{ color: C.gris, fontSize: 14 }}>Aucune demande pour le moment.</div>
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            {donnees.accreditations.map((x) => (
+              <div key={x.id} style={{ border: `1px solid ${C.grisClair}`, borderRadius: 12, padding: "12px 14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <div>
+                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: x.type === "influenceur" ? C.magenta : x.type === "presse" ? C.bleu : C.vert }}>{x.type === "influenceur" ? "Influenceur" : x.type === "presse" ? "Presse / média" : "Professionnel"}</span>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{x.prenom} {x.nom}{x.structure ? " · " + x.structure : ""}</div>
+                    <div style={{ fontSize: 13, color: C.gris }}>{[x.fonction, x.ville, x.jours && "Présent : " + x.jours].filter(Boolean).join(" · ")}</div>
+                    {x.type === "influenceur" && (
+                      <div style={{ fontSize: 13, marginTop: 4 }}>
+                        {x.plateformes}{x.abonnes ? " · " + x.abonnes + " abonnés" : ""}{x.lien && <> · <a href={x.lien} target="_blank" rel="noreferrer" style={{ color: C.bleu }}>voir le compte</a></>}
+                      </div>
+                    )}
+                    {x.message && <div style={{ fontSize: 13, marginTop: 6, fontStyle: "italic" }}>« {x.message} »</div>}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+                    <a href={`https://wa.me/${String(x.telephone).replace(/\D/g, "").replace(/^(?!229)/, "229")}`} target="_blank" rel="noreferrer"
+                      style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: "#25D366", padding: "6px 10px", borderRadius: 8, textDecoration: "none" }}>WhatsApp</a>
+                    {x.email && <a href={`mailto:${x.email}?subject=${encodeURIComponent("Accréditation Cirque en Fusion 2026")}`}
+                      style={{ fontSize: 12, fontWeight: 700, color: C.vert, background: C.grisClair, padding: "6px 10px", borderRadius: 8, textDecoration: "none" }}>E-mail</a>}
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: C.gris, marginTop: 6 }}>Reçue le {new Date(x.created_at).toLocaleDateString("fr-FR")} · {x.telephone}{x.email ? " · " + x.email : ""}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
