@@ -248,8 +248,8 @@ export default function CirqueEnFusion2026() {
               <p>30 emplacements dans la zone à côté de la Grande Salle · 1 prise électrique incluse.</p>
             </div>
             <div className="cef-stands-prix">
-              <div><strong>150 000 FCFA</strong><span>Stand avec tente</span></div>
-              <div className="is-y"><strong>100 000 FCFA</strong><span>Espace vide</span></div>
+              <div><strong>Stand avec tente</strong><span>Tarif sur demande</span></div>
+              <div className="is-y"><strong>Espace vide</strong><span>Tarif sur demande</span></div>
             </div>
             <a className="cef-btn cef-btn-primary" href={mail('Réservation stand – Cirque en Fusion 2026')}>Réserver un stand</a>
           </div>
