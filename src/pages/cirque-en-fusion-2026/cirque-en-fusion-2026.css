@@ -319,3 +319,12 @@
   .cef-acc-types, .cef-acc-grille { grid-template-columns: 1fr; }
   .cef-acc-champs .cef-btn { justify-self: stretch; }
 }
+
+/* Bouton chaîne WhatsApp dans le haut de page (téléphone uniquement) */
+.cef-hero-wa { display: none; }
+@media (max-width: 600px) {
+  .cef-hero-actions { width: 100%; }
+  .cef-hero-actions .cef-btn { flex: 1 1 auto; }
+  .cef-hero-wa { display: flex; flex: 1 1 100% !important; background: #25D366; color: #0B2E1A !important; font-weight: 800; }
+  .cef-nav a.cef-nav-wa { display: none; }
+}
