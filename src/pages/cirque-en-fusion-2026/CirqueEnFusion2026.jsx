@@ -137,6 +137,7 @@ export default function CirqueEnFusion2026() {
           <div className="cef-hero-actions">
             <a href="#billetterie" className="cef-btn cef-btn-primary">Acheter des billets</a>
             <a href="#programme" className="cef-btn cef-btn-ghost">Voir le programme</a>
+            <a href="#accreditation" className="cef-btn cef-hero-accr">Demande d’accréditation</a>
             <a href={FESTIVAL.contact.whatsapp} target="_blank" rel="noreferrer" className="cef-btn cef-hero-wa">Rejoindre notre chaîne WhatsApp</a>
           </div>
         </div>

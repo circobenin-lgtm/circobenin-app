@@ -328,3 +328,7 @@
   .cef-hero-wa { display: flex; flex: 1 1 100% !important; background: #25D366; color: #0B2E1A !important; font-weight: 800; }
   .cef-nav a.cef-nav-wa { display: none; }
 }
+
+/* Bouton accréditation dans le haut de page */
+.cef-hero-accr { border-color: #F9C80E; color: #F9C80E !important; }
+.cef-hero-accr:hover { background: rgba(249,200,14,.12); }
