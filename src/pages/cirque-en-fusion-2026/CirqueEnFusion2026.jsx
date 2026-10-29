@@ -273,9 +273,9 @@ export default function CirqueEnFusion2026() {
               <img src={photoEnfants} alt="Enfants découvrant le cirque" loading="lazy" />
             </figure>
             <div className="cef-carte cef-bl-blue">
-              <h4>Écoles · séances scolaires de Rêverie</h4>
-              <p>Jeudi 26 et vendredi 27 novembre, 9h30 et 10h45, sur le site de Circo Bénin. Pour les 6–18 ans, avec introduction pédagogique et échange avec les artistes. <strong>3 000 FCFA par élève</strong>, transport en bus organisé depuis l'établissement, fiches pédagogiques remises en amont.</p>
-              <a className="cef-btn cef-btn-dark" href={mail('Réservation séance scolaire Rêverie – Cirque en Fusion 2026')}>Réserver pour une classe</a>
+              <h4>Écoles · séances scolaires</h4>
+              <p>À 9h30 et 10h45, sur le site de Circo Bénin : <strong>Rêverie</strong> (Cie Thomas Guérineau) le jeudi 26, <strong>La pluie et le beau temps</strong> (Loup Pinel) le vendredi 27. Pour les 6–18 ans, avec introduction pédagogique et échange avec les artistes. <strong>3 000 FCFA par élève</strong>, transport en bus organisé depuis l'établissement, fiches pédagogiques remises en amont.</p>
+              <a className="cef-btn cef-btn-dark" href={mail('Réservation séance scolaire – Cirque en Fusion 2026')}>Réserver pour une classe</a>
             </div>
             <div className="cef-carte cef-bl-plum">
               <h4>Professionnels · accréditation</h4>

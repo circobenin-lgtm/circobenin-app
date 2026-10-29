@@ -72,8 +72,8 @@ export const PROGRAMME = [
   {
     jour: '27', nomJour: 'Vendredi 27 novembre', sousTitre: 'Ateliers · spectacles · Gala Feu · fermeture à minuit', couleur: 'blue',
     items: [
-      { heure: '9h30', titre: 'Rêverie · séance scolaire n° 1 (reprise)', type: 'scolaire', lieu: 'Site de Circo Bénin', acces: 'payant' },
-      { heure: '10h45', titre: 'Rêverie · séance scolaire n° 2 (reprise)', type: 'scolaire', lieu: 'Site de Circo Bénin', acces: 'payant' },
+      { heure: '9h30', titre: 'La pluie et le beau temps · séance scolaire n° 1', compagnie: 'Loup Pinel', type: 'scolaire', lieu: 'Site de Circo Bénin', acces: 'payant' },
+      { heure: '10h45', titre: 'La pluie et le beau temps · séance scolaire n° 2', compagnie: 'Loup Pinel', type: 'scolaire', lieu: 'Site de Circo Bénin', acces: 'payant' },
       { heure: '14h00', titre: 'Ouverture des stands', type: 'stands', lieu: 'Village' },
       { heure: '16h00', titre: 'Atelier cirque', type: 'atelier', lieu: 'Village', acces: 'gratuit' },
       { heure: '17h00', titre: "Les Monocyclistes d'Abomey", type: 'spectacle', lieu: 'Village', acces: 'gratuit' },
