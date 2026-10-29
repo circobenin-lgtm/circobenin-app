@@ -1,9 +1,8 @@
 // Route : /cirque-en-fusion-2026 — fenêtre publique du festival dans app.circobenin.com
 import { useEffect, useState } from 'react';
 import Billetterie from './Billetterie';
-import PlanVillage from './PlanVillage';
 import {
-  FESTIVAL, CHIFFRES, COMPAGNIES, PROGRAMME, TYPES, ESPACES_VILLAGE, PARCOURS,
+  FESTIVAL, CHIFFRES, COMPAGNIES, PROGRAMME, TYPES, PARCOURS,
 } from './festivalData';
 import './cirque-en-fusion-2026.css';
 
@@ -109,27 +108,6 @@ function Programme() {
   );
 }
 
-function Village() {
-  const [actif, setActif] = useState(2);
-  return (
-    <div className="cef-village-grid">
-      <div className="cef-plan-wrap">
-        <PlanVillage actif={actif} onSelect={setActif} />
-        <p className="cef-mention">Plan schématique, non à l'échelle. Survolez ou touchez un repère.</p>
-      </div>
-      <ul className="cef-legende">
-        {ESPACES_VILLAGE.map((e) => (
-          <li key={e.n}>
-            <button type="button" className={actif === e.n ? 'is-active' : ''} onClick={() => setActif(e.n)}>
-              <span className={`cef-num cef-num-${e.n}`}>{e.n}</span>
-              <span><strong>{e.nom}</strong><span>{e.desc}</span></span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 export default function CirqueEnFusion2026() {
   useEffect(() => {
@@ -252,7 +230,6 @@ export default function CirqueEnFusion2026() {
             <div className="cef-carte cef-bt-plum"><h4>Soirées DJ femmes</h4><p>Chaque soir, des DJ femmes prennent les platines.</p></div>
           </div>
 
-          <Village />
 
           <h3 className="cef-h3">Que faire, selon vous ?</h3>
           <div className="cef-parcours">
