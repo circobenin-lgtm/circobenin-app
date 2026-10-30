@@ -23,7 +23,7 @@ const mobileCSS = `
 }
 .festival-pulse { animation: festivalPulse 2.5s infinite; }
 `;
-import { supabaseSecurise, definirJeton } from "./dbSecurise";
+import { supabaseSecurise, definirJeton, lireJeton } from "./dbSecurise";
 
 // Toutes les données internes passent par le guichet sécurisé /api/db (laissez-passer obligatoire)
 const supabase = supabaseSecurise;
@@ -1246,7 +1246,110 @@ const CEF_STATUTS = {
   failed: { label: "Échouée", bg: "#fdecea", color: "#b42318" },
 };
 
-function BilletterieFestivalEquipe() {
+// ── VENTE DE BILLETS SUR PLACE (espèces / Mobile Money direct) ──
+function VenteGuichetFestival({ evenements, onVendu }) {
+  const disponibles = evenements.filter((e) => e.restants > 0);
+  const [slug, setSlug] = useState("");
+  const [quantite, setQuantite] = useState(1);
+  const [acheteur, setAcheteur] = useState({ prenom: "", nom: "", telephone: "" });
+  const [mode, setMode] = useState("especes");
+  const [etat, setEtat] = useState({ envoi: false, erreur: "", vente: null });
+  const ev = evenements.find((e) => e.slug === slug);
+  const total = ev ? ev.prix_fcfa * quantite : 0;
+  const champ = { width: "100%", padding: "10px 12px", borderRadius: 10, border: `2px solid ${C.grisClair}`, fontSize: 15, fontFamily: FB, boxSizing: "border-box" };
+  const lab = { fontSize: 12, fontWeight: 700, color: C.gris, display: "block", marginBottom: 5 };
+
+  const vendre = async () => {
+    if (!ev || !acheteur.nom.trim() || etat.envoi) return;
+    setEtat({ envoi: true, erreur: "", vente: null });
+    try {
+      const jeton = lireJeton();
+      const rep = await fetch("/api/festival-vente-guichet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(jeton ? { Authorization: `Bearer ${jeton}` } : {}) },
+        body: JSON.stringify({ spectacle: slug, quantite, mode, ...acheteur }),
+      });
+      const d = await rep.json().catch(() => ({}));
+      if (!rep.ok) { setEtat({ envoi: false, erreur: d.message || "Vente impossible.", vente: null }); return; }
+      const lien = `${window.location.origin}/cirque-en-fusion-2026/billets?commande=${d.commande}&cle=${d.cle}`;
+      setEtat({ envoi: false, erreur: "", vente: { ...d, lien, titre: ev.titre, quantite, nom: [acheteur.prenom, acheteur.nom].join(" ").trim(), telephone: acheteur.telephone } });
+      onVendu && onVendu();
+    } catch (e) {
+      setEtat({ envoi: false, erreur: "Connexion impossible. Vérifiez internet et réessayez.", vente: null });
+    }
+  };
+
+  const nouvelle = () => {
+    setSlug(""); setQuantite(1); setAcheteur({ prenom: "", nom: "", telephone: "" }); setMode("especes");
+    setEtat({ envoi: false, erreur: "", vente: null });
+  };
+
+  if (etat.vente) {
+    const v = etat.vente;
+    const tel = String(v.telephone || "").replace(/\D/g, "");
+    const msg = `Bonjour ${v.nom}, voici vos billets pour Cirque en Fusion 2026 (${v.quantite} × ${v.titre}) : ${v.lien}`;
+    return (
+      <Card style={{ marginBottom: 22, borderTop: "4px solid #1e7a3c" }}>
+        <SectionTitle>✅ Billets émis</SectionTitle>
+        <p style={{ fontSize: 15, margin: "0 0 14px" }}>
+          <strong>{v.quantite} × {v.titre}</strong> pour <strong>{v.nom}</strong> · {cefFcfa(v.total)} encaissés.
+        </p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Btn onClick={() => window.open(v.lien, "_blank")}>🖨 Afficher / imprimer les billets</Btn>
+          {tel.length >= 8 && (
+            <a href={`https://wa.me/${tel.startsWith("229") ? tel : "229" + tel}?text=${encodeURIComponent(msg)}`} target="_blank" rel="noreferrer"
+              style={{ background: "#25D366", color: "#fff", borderRadius: 10, padding: "10px 16px", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>Envoyer par WhatsApp</a>
+          )}
+          <Btn color={C.gris} onClick={nouvelle}>+ Nouvelle vente</Btn>
+        </div>
+        <p style={{ fontSize: 12, color: C.gris, margin: "12px 0 0" }}>Chaque place a son QR code, valable au contrôle à l'entrée. La vente est inscrite en Trésorerie (projet Festival Cirque en Fusion).</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card style={{ marginBottom: 22, borderTop: `4px solid ${C.magenta}` }}>
+      <SectionTitle>💵 Vendre des billets sur place</SectionTitle>
+      <p style={{ fontSize: 13, color: C.gris, margin: "-4px 0 14px" }}>Pour les personnes qui paient en main propre. Les places sont déduites de la jauge et les billets (QR codes) sont créés immédiatement.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+        <div>
+          <label style={lab}>Spectacle *</label>
+          <select value={slug} onChange={(e) => setSlug(e.target.value)} style={champ}>
+            <option value="">Choisir…</option>
+            {disponibles.map((e) => <option key={e.slug} value={e.slug}>{e.titre} · {e.date_label} · {cefFcfa(e.prix_fcfa)} ({e.restants} restantes)</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={lab}>Nombre de places *</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Btn small color={C.gris} onClick={() => setQuantite((q) => Math.max(1, q - 1))}>−</Btn>
+            <strong style={{ fontSize: 20, minWidth: 28, textAlign: "center" }}>{quantite}</strong>
+            <Btn small color={C.gris} onClick={() => setQuantite((q) => Math.min(10, ev ? Math.min(ev.restants, q + 1) : q + 1))}>+</Btn>
+          </div>
+        </div>
+        <div><label style={lab}>Prénom</label><input value={acheteur.prenom} onChange={(e) => setAcheteur({ ...acheteur, prenom: e.target.value })} style={champ} /></div>
+        <div><label style={lab}>Nom *</label><input value={acheteur.nom} onChange={(e) => setAcheteur({ ...acheteur, nom: e.target.value })} style={champ} /></div>
+        <div><label style={lab}>Téléphone (pour envoyer les billets)</label><input type="tel" value={acheteur.telephone} onChange={(e) => setAcheteur({ ...acheteur, telephone: e.target.value })} style={champ} /></div>
+        <div>
+          <label style={lab}>Paiement reçu</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[["especes", "Espèces"], ["momo", "Mobile Money"]].map(([v, l]) => (
+              <div key={v} onClick={() => setMode(v)} style={{ padding: "9px 14px", borderRadius: 999, cursor: "pointer", fontSize: 14, fontWeight: 700, background: mode === v ? C.vert : C.grisClair, color: mode === v ? "#fff" : C.noir }}>{l}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {etat.erreur && <div style={{ color: "#e53935", fontSize: 14, marginTop: 12, fontWeight: 600 }}>{etat.erreur}</div>}
+      <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <Btn color={C.magenta} onClick={vendre} disabled={!ev || !acheteur.nom.trim() || etat.envoi}>
+          {etat.envoi ? "Émission…" : ev ? `Encaisser ${cefFcfa(total)} et émettre les billets` : "Encaisser et émettre les billets"}
+        </Btn>
+      </div>
+    </Card>
+  );
+}
+
+function BilletterieFestivalEquipe({ role }) {
   const lireCode = () => { try { return sessionStorage.getItem(CEF_CLE_CODE) || ""; } catch (e) { return ""; } };
   const [code, setCode] = useState(lireCode);
   const [saisie, setSaisie] = useState("");
@@ -1358,11 +1461,13 @@ function BilletterieFestivalEquipe() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14, marginBottom: 22 }}>
-        <StatCard label="Encaissé" value={cefFcfa(totaux.encaisse)} icon="₦" color={C.vert} sousLabel="paiements validés" />
+        <StatCard label="Encaissé" value={cefFcfa(totaux.encaisse)} icon="₦" color={C.vert} sousLabel={`en ligne ${cefFcfa(totaux.encaisse_en_ligne || 0)} · sur place ${cefFcfa(totaux.encaisse_sur_place || 0)}`} />
         <StatCard label="Billets vendus" value={totaux.billets} icon="🎟" color={C.magenta} sousLabel={`${totaux.commandes_payees} commande(s)`} />
         <StatCard label="En attente de paiement" value={totaux.commandes_attente} icon="⏳" color={C.or} sousLabel="places bloquées 30 min" />
         <StatCard label="Places restantes" value={totaux.restantes} icon="🪑" color={C.bleu} sousLabel="tous spectacles" />
       </div>
+
+      {["directeur", "admin", "secretariat"].includes(role) && <VenteGuichetFestival evenements={evenements} onVendu={() => charger(code)} />}
 
       <Card style={{ marginBottom: 22 }}>
         <SectionTitle>Par spectacle</SectionTitle>
@@ -1433,6 +1538,7 @@ function BilletterieFestivalEquipe() {
                       </td>
                       <td style={td}>
                         <div style={{ fontWeight: 700 }}>{o.prenom} {o.nom}</div>
+                        {o.mode_paiement && o.mode_paiement !== "fedapay" && <div style={{ fontSize: 11, fontWeight: 700, color: C.magenta }}>{o.mode_paiement === "momo" ? "Mobile Money direct" : "Espèces"}{o.vendu_par ? " · " + o.vendu_par : ""}</div>}
                         <a href={`tel:+229${o.telephone}`} style={{ color: C.bleu, textDecoration: "none" }}>{o.telephone}</a>
                         {o.email && <div style={{ color: C.gris, fontSize: 12 }}>{o.email}</div>}
                       </td>
@@ -5613,7 +5719,7 @@ export default function App() {
             </div>
           )}
 
-          {page === "billetterie_festival" && ["directeur", "admin", "secretariat"].includes(role) && <BilletterieFestivalEquipe />}
+          {page === "billetterie_festival" && ["directeur", "admin", "secretariat"].includes(role) && <BilletterieFestivalEquipe role={role} />}
           {page === "controle_entree" && ["directeur", "admin", "secretariat"].includes(role) && (
             <Card style={{ maxWidth: 560 }}>
               <SectionTitle>📷 Contrôle des billets à l'entrée</SectionTitle>

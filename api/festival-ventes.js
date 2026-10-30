@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
       .eq("festival", "cef-2026")
       .order("starts_at"),
     sb.from("festival_orders")
-      .select("id, access_key, created_at, paid_at, expires_at, buyer_firstname, buyer_lastname, buyer_phone, buyer_email, total_fcfa, status, festival_order_items(quantite, prix_unitaire, event_id)")
+      .select("id, access_key, created_at, paid_at, expires_at, buyer_firstname, buyer_lastname, buyer_phone, buyer_email, total_fcfa, status, mode_paiement, vendu_par, festival_order_items(quantite, prix_unitaire, event_id)")
       .eq("festival", "cef-2026")
       .order("created_at", { ascending: false })
       .limit(3000),
@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
 
   const maintenant = Date.now();
   const parId = Object.fromEntries(evts.map((e) => [e.id, { ...e, vendus: 0, attente: 0, recette: 0 }]));
-  const totaux = { encaisse: 0, billets: 0, commandes_payees: 0, commandes_attente: 0, restantes: 0 };
+  const totaux = { encaisse_en_ligne: 0, encaisse_sur_place: 0, encaisse: 0, billets: 0, commandes_payees: 0, commandes_attente: 0, restantes: 0 };
 
   const commandes = cmds.map((o) => {
     const enAttente = o.status === "pending" && new Date(o.expires_at).getTime() > maintenant;
@@ -51,12 +51,12 @@ module.exports = async function handler(req, res) {
       if (ev && statut === "pending") ev.attente += i.quantite;
       return { titre: ev ? ev.titre : "?", quantite: i.quantite };
     });
-    if (statut === "paid") { totaux.encaisse += o.total_fcfa; totaux.commandes_payees += 1; }
+    if (statut === "paid") { totaux.encaisse += o.total_fcfa; totaux.commandes_payees += 1; if (o.mode_paiement && o.mode_paiement !== "fedapay") totaux.encaisse_sur_place += o.total_fcfa; else totaux.encaisse_en_ligne += o.total_fcfa; }
     if (statut === "pending") totaux.commandes_attente += 1;
     return {
       id: o.id, access_key: o.access_key, cree_le: o.created_at, paye_le: o.paid_at,
       prenom: o.buyer_firstname, nom: o.buyer_lastname, telephone: o.buyer_phone, email: o.buyer_email,
-      total: o.total_fcfa, statut, lignes,
+      total: o.total_fcfa, statut, lignes, mode_paiement: o.mode_paiement, vendu_par: o.vendu_par,
     };
   });
 

@@ -5,6 +5,7 @@
 
 let jetonActuel = null;
 export const definirJeton = (jeton) => { jetonActuel = jeton || null; };
+export const lireJeton = () => jetonActuel;
 
 class Requete {
   constructor(table) {
