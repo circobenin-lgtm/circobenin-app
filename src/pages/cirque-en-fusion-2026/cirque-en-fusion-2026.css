@@ -332,3 +332,7 @@
 /* Bouton accréditation dans le haut de page */
 .cef-hero-accr { border-color: #F9C80E; color: #F9C80E !important; }
 .cef-hero-accr:hover { background: rgba(249,200,14,.12); }
+
+/* Retour vers l'app */
+.cef-nav a.cef-nav-retour { color: #F9C80E; font-weight: 700; border-right: 1px solid #3A3546; padding-right: 16px; margin-right: 4px; }
+@media (max-width: 1320px) { .cef-wa-long { display: none; } .cef-wa-court { display: inline; } }

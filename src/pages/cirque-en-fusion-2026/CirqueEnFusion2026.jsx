@@ -37,6 +37,7 @@ function NavFestival() {
   return (
     <nav className="cef-nav" aria-label="Sections du festival">
       <div className="cef-nav-inner">
+        <a href="/" className="cef-nav-retour" title="Retour à app.circobenin.com">← Circo Bénin</a>
         {SECTIONS.map((s) => (
           <a key={s.id} href={`#${s.id}`} className={actif === s.id ? 'is-active' : ''}>{s.label}</a>
         ))}

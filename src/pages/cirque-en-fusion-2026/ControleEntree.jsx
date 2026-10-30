@@ -207,6 +207,7 @@ export default function ControleEntree() {
           ))}
         </div>
         <button type="button" className="ce-lien" onClick={() => { ecrire(CLE_CODE, ''); setCode(''); setEvenements(null); }}>Se déconnecter</button>
+        <a className="ce-lien" href="/">← Retour à l'app Circo Bénin</a>
       </div>
     );
   }
