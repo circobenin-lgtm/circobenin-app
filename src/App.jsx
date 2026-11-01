@@ -812,6 +812,23 @@ function ContactForm() {
   );
 }
 
+// ── Liens directs depuis circobenin.com ──
+// ?inscription=<formule>  → ouvre le formulaire d'inscription, formule déjà choisie
+// ?page=<page publique>   → ouvre directement une page publique (adhésion, contact…)
+const FORMULES_LIEN = ["hebdo", "ete", "toussaint", "noel", "formation", "bebe", "formateurs"];
+const PAGES_LIEN = ["accueil", "programme", "compagnie", "inscription", "adhesion", "contact"];
+const LIEN_DIRECT = (() => {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const formule = (p.get("inscription") || "").toLowerCase();
+    const pg = (p.get("page") || "").toLowerCase();
+    if (FORMULES_LIEN.includes(formule)) return { page: "inscription", type: formule };
+    if (p.has("inscription")) return { page: "inscription", type: null };
+    if (PAGES_LIEN.includes(pg)) return { page: pg, type: null };
+  } catch (e) {}
+  return null;
+})();
+
 function InscriptionForm({ onPayer, onContact, preselect, onClearPreselect }) {
   const [step, setStep] = useState(preselect ? 1 : 0);
   const [typeInscription, setTypeInscription] = useState(preselect || null);
@@ -1609,8 +1626,8 @@ function BilletterieFestivalEquipe({ role }) {
 export default function App() {
   // Mots de passe de l'équipe : vérifiés côté serveur (api/verifier-acces.js), plus dans ce fichier
   const CODES_ROLES = { directeur: true, ca: true, admin: true, secretariat: true, formateur: true };
-  const [role, setRole] = useState(null);
-  const [page, setPage] = useState("dashboard");
+  const [role, setRole] = useState(LIEN_DIRECT ? "visiteurs" : null);
+  const [page, setPage] = useState(LIEN_DIRECT ? LIEN_DIRECT.page : "dashboard");
   const [sidebar, setSidebar] = useState(true);
   const [activeMsg, setActiveMsg] = useState(null);
   const [newMsg, setNewMsg] = useState("");
@@ -1655,7 +1672,7 @@ export default function App() {
   const [historiquePresences, setHistoriquePresences] = useState([]);
   const [statsEleveSelect, setStatsEleveSelect] = useState(null);
   const [statsPeriode, setStatsPeriode] = useState("septembre");
-  const [preselectType, setPreselectType] = useState(null);
+  const [preselectType, setPreselectType] = useState(LIEN_DIRECT ? LIEN_DIRECT.type : null);
   const [emailTo, setEmailTo] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
@@ -2477,6 +2494,12 @@ export default function App() {
   useEffect(() => {
     const restaurer = async () => {
       try {
+        if (LIEN_DIRECT) {
+          // lien direct (site public) : on ouvre la page demandée, sans restaurer de session
+          window.history.replaceState(null, "", window.location.pathname);
+          setSessionRestauree(true);
+          return;
+        }
         const raw = localStorage.getItem(SESSION_KEY);
         if (!raw) { setSessionRestauree(true); return; }
         const session = JSON.parse(raw);
