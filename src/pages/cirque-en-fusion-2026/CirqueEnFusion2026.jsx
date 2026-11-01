@@ -266,7 +266,7 @@ export default function CirqueEnFusion2026() {
         <div className="cef-wrap">
           <p className="cef-eyebrow">Billetterie</p>
           <h2 className="cef-h2">Réservez vos places</h2>
-          <p className="cef-lead">L'entrée du village est libre et gratuite, comme les spectacles extérieurs, les ateliers et les soirées DJ. Les billets ci-dessous concernent les spectacles payants : 3 000 FCFA la place, 15 000 FCFA en VIP pour le Gala Show.</p>
+          <p className="cef-lead">L'entrée du village est libre et gratuite, comme les spectacles extérieurs, les ateliers et les soirées DJ. Les billets ci-dessous concernent les spectacles payants : 3 000 FCFA la place (5 000 FCFA pour Basketteuses de Bamako à l'IFB), 15 000 FCFA en VIP pour le Gala Show.</p>
           <Billetterie />
 
           <div id="scolaires" className="cef-encarts">
@@ -297,9 +297,9 @@ export default function CirqueEnFusion2026() {
             <h2 className="cef-h2">À savoir avant de venir</h2>
             <dl>
               <dt>Dates</dt><dd>Du mercredi 25 au samedi 28 novembre 2026</dd>
-              <dt>Lieu</dt><dd>Village du festival, quartier d'Agla, Cotonou. Spectacle du 25 à 20h à l'Institut français de Cotonou (400 places) ; séances scolaires sur le site de Circo Bénin.</dd>
+              <dt>Lieu</dt><dd>Village du festival, quartier d'Agla, Cotonou. Spectacle du 25 à 18h30 à l'Institut français de Cotonou (400 places) ; séances scolaires sur le site de Circo Bénin.</dd>
               <dt>Accès libre</dt><dd>Entrée du village gratuite, comme les spectacles extérieurs, les ateliers et les soirées DJ.</dd>
-              <dt>Tarifs</dt><dd>Spectacles payants : 3 000 FCFA. Gala Show : 3 000 FCFA, ou 15 000 FCFA en VIP. Séances scolaires : 3 000 FCFA par élève.</dd>
+              <dt>Tarifs</dt><dd>Spectacles payants : 3 000 FCFA (Basketteuses de Bamako : 5 000 FCFA). Gala Show : 3 000 FCFA, ou 15 000 FCFA en VIP. Séances scolaires : 3 000 FCFA par élève.</dd>
               <dt>Fermeture</dt><dd>Minuit les 25, 26 et 27 novembre ; 1h le 28.</dd>
               <dt>Contact</dt>
               <dd>

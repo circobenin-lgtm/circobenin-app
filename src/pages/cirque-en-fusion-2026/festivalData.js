@@ -50,9 +50,9 @@ export const PROGRAMME = [
       { heure: '10h00', titre: 'Conférence de presse', type: 'pro', lieu: 'Village' },
       { heure: '15h00', titre: "Parade de cirque et cérémonie d'ouverture", type: 'parade', lieu: 'Village' },
       { heure: '16h30', titre: 'La Roulotte', compagnie: 'Cie Afuma', type: 'spectacle', lieu: 'Village', acces: 'gratuit', tempsFort: true },
-      { heure: '18h30', titre: 'Animation sur site', type: 'animation', lieu: 'Village', acces: 'gratuit' },
-      { heure: '20h00', titre: 'Basketteuses de Bamako', compagnie: 'Cie Thomas Guérineau', type: 'spectacle', lieu: 'Institut français de Cotonou', acces: 'payant', tempsFort: true, billet: 'basketteuses-25',
+      { heure: '18h30', titre: 'Basketteuses de Bamako', compagnie: 'Cie Thomas Guérineau', type: 'spectacle', lieu: 'Institut français de Cotonou', acces: 'payant', tempsFort: true, billet: 'basketteuses-25',
         note: "Première partie : 10 jeunes filles formées par Circo Bénin, en lien avec la Journée internationale pour l'élimination de la violence à l'égard des femmes." },
+      { heure: '18h30', titre: 'Animation sur site', type: 'animation', lieu: 'Village', acces: 'gratuit' },
       { heure: '22h00', titre: 'Scène acoustique et DJ femmes', type: 'animation', lieu: 'Village', acces: 'gratuit' },
     ],
   },
@@ -107,7 +107,7 @@ export const TYPES = {
 // Tarifs : 3 000 FCFA par spectacle ; Gala Show 3 000 FCFA (normal) ou 15 000 FCFA (VIP).
 // ⚠️ Jauge du village (300) provisoire, à confirmer.
 export const BILLETS_SECOURS = [
-  { slug: 'basketteuses-25', titre: 'Basketteuses de Bamako', compagnie: 'Cie Thomas Guérineau', date_label: 'Mer. 25 nov. · 20h00', lieu: 'Institut français de Cotonou', prix_fcfa: 3000, places_restantes: 400 },
+  { slug: 'basketteuses-25', titre: 'Basketteuses de Bamako', compagnie: 'Cie Thomas Guérineau', date_label: 'Mer. 25 nov. · 18h30', lieu: 'Institut français de Cotonou', prix_fcfa: 5000, places_restantes: 400 },
   { slug: 'jarre-sacre-26', titre: 'Entre 2', compagnie: 'Cie Circo Bénin', date_label: 'Jeu. 26 nov. · 19h30', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
   { slug: 'souffle-26', titre: 'Souffle', compagnie: 'Cie Dafra', date_label: 'Jeu. 26 nov. · 20h30', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
   { slug: 'fabara-27', titre: 'Fabara', compagnie: 'Cie FABARA', date_label: 'Ven. 27 nov. · 18h00', lieu: 'Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
@@ -139,7 +139,7 @@ export const PARCOURS = [
   {
     titre: 'Soirées', couleur: 'pink',
     points: [
-      'Mercredi 20h : Basketteuses de Bamako, à l’IFB',
+      'Mercredi 18h30 : Basketteuses de Bamako, à l’IFB (5 000 FCFA)',
       'Jeudi 19h30 Entre 2, 20h30 Souffle',
       'Vendredi 20h30 : Gala Feu',
       'Samedi 20h : Gala Show et remise de prix',
