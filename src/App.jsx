@@ -24,6 +24,7 @@ const mobileCSS = `
 .festival-pulse { animation: festivalPulse 2.5s infinite; }
 `;
 import { supabaseSecurise, definirJeton, lireJeton } from "./dbSecurise";
+import Facturation from "./Facturation";
 
 // Toutes les données internes passent par le guichet sécurisé /api/db (laissez-passer obligatoire)
 const supabase = supabaseSecurise;
@@ -72,6 +73,7 @@ const NAV_PAR_ROLE = {
     { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
     { id: "controle_entree", icon: "📷", label: "Contrôle entrée" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "facturation", icon: "🧾", label: "Facturation" },
     { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -99,6 +101,7 @@ const NAV_PAR_ROLE = {
     { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
     { id: "controle_entree", icon: "📷", label: "Contrôle entrée" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "facturation", icon: "🧾", label: "Facturation" },
     { id: "emprunts", icon: "🏦", label: "Dettes & échéances" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
@@ -120,6 +123,7 @@ const NAV_PAR_ROLE = {
     { id: "billetterie_festival", icon: "🎟", label: "Billetterie festival" },
     { id: "controle_entree", icon: "📷", label: "Contrôle entrée" },
     { id: "tresorerie", icon: "𝍖", label: "Trésorerie" },
+    { id: "facturation", icon: "🧾", label: "Facturation" },
     { id: "demandes_familles", icon: "🔔", label: "Demandes familles" },
     { id: "compagnie", icon: "🎪", label: "Compagnie" },
     { id: "tchat", icon: "◎", label: "Messagerie" },
@@ -5743,6 +5747,7 @@ export default function App() {
           )}
 
           {page === "billetterie_festival" && ["directeur", "admin", "secretariat"].includes(role) && <BilletterieFestivalEquipe role={role} />}
+          {page === "facturation" && ["directeur", "admin", "secretariat"].includes(role) && <Facturation role={role} utilisateur={nomIntervenant} logo={LOGO} />}
           {page === "controle_entree" && ["directeur", "admin", "secretariat"].includes(role) && (
             <Card style={{ maxWidth: 560 }}>
               <SectionTitle>📷 Contrôle des billets à l'entrée</SectionTitle>

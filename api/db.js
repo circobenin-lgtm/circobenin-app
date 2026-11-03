@@ -25,6 +25,7 @@ const REGLES_FAMILLE = {
   messages_famille: { colonne: "eleve_id", ops: ["select", "insert", "update"], champsModifiables: ["lu"] },
 };
 TABLES_EQUIPE.push("versements_eleves");
+TABLES_EQUIPE.push("documents_commerciaux", "facturation_parametres");
 
 const OPS = ["select", "insert", "update", "upsert", "delete"];
 const FILTRES = ["eq", "neq", "gt", "gte", "lt", "lte", "in", "is", "like", "ilike"];
