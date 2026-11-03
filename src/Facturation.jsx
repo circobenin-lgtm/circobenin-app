@@ -99,6 +99,26 @@ function prochainNumero(documents, type, date) {
   return prefixe + String(max + 1).padStart(3, "0");
 }
 
+function lireImage(fichier, largeurMax = 500) {
+  return new Promise((ok, ko) => {
+    const lecteur = new FileReader();
+    lecteur.onerror = () => ko(new Error("Lecture impossible"));
+    lecteur.onload = () => {
+      const img = new Image();
+      img.onerror = () => ko(new Error("Image illisible"));
+      img.onload = () => {
+        const r = Math.min(1, largeurMax / img.width);
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        ok(c.toDataURL("image/png"));
+      };
+      img.src = lecteur.result;
+    };
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
 function imprimer(doc, params, logo) {
   const t = TYPES[doc.type];
   const total = totalLignes(doc.lignes);
@@ -132,7 +152,10 @@ function imprimer(doc, params, logo) {
   .lettres { margin-top: 10px; font-style: italic; }
   .mentions { margin-top: 18px; font-size: 11px; color: #374151; }
   .signature { margin-top: 30px; display: flex; justify-content: flex-end; }
-  .signature div { width: 220px; text-align: center; border-top: 1px solid #9ca3af; padding-top: 6px; }
+  .bloc-sign { width: 240px; text-align: center; }
+  .visuels { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 20px; }
+  .visuels img { max-height: 80px; max-width: 150px; object-fit: contain; }
+  .trait { border-top: 1px solid #9ca3af; padding-top: 6px; }
   .pied { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 9px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 4px; }
   .annule { color: #E63946; font-weight: bold; font-size: 16px; border: 2px solid #E63946; display: inline-block; padding: 4px 10px; margin-top: 6px; }
 </style></head><body>
@@ -163,7 +186,8 @@ function imprimer(doc, params, logo) {
     ${params.conditions ? `<p>${echapper(params.conditions)}</p>` : ""}
     ${params.coordonnees_paiement ? `<p><b>Règlement :</b> ${echapper(params.coordonnees_paiement)}</p>` : ""}
     ${doc.notes ? `<p>${echapper(doc.notes)}</p>` : ""}</div>
-  <div class="signature"><div>${echapper(params.signataire) || "Pour Circo Bénin"}<br><br><br>Signature et cachet</div></div>
+  <div class="signature"><div class="bloc-sign"><div class="visuels">${params.signature ? `<img src="${params.signature}" alt="Signature">` : ""}${params.cachet ? `<img src="${params.cachet}" alt="Cachet">` : ""}</div>
+    <div class="trait">${echapper(params.signataire) || "Pour Circo Bénin"}${params.signature || params.cachet ? "" : "<br><br><br>Signature et cachet"}</div></div></div>
   <div class="pied">${echapper(params.raison_sociale)} · ${echapper(params.adresse)} · ${echapper(params.email)}</div>
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 300); };</script>
 </body></html>`;
@@ -344,6 +368,14 @@ export default function Facturation({ role, utilisateur, logo }) {
           {P("conditions", "Conditions de paiement")}
           {P("coordonnees_paiement", "Coordonnées de paiement", "Banque, IBAN / n° Mobile Money…")}
           {P("signataire", "Signataire", "Nom et fonction")}
+          {[["signature", "Signature (photo ou scan, fond blanc)"], ["cachet", "Cachet de l'association (facultatif)"]].map(([k, l]) => (
+            <div key={k} style={{ marginBottom: 12 }}>
+              <label style={etiquette}>{l}</label>
+              {params[k] && <div style={{ marginBottom: 6 }}><img src={params[k]} alt={l} style={{ maxHeight: 70, maxWidth: 200, border: "1px solid #e5e7eb", borderRadius: 6, background: "#fff" }} />
+                <button style={{ ...bouton("#E63946", true), marginLeft: 8, padding: "4px 10px" }} onClick={() => setParams({ ...params, [k]: "" })}>Retirer</button></div>}
+              <input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; try { const url = await lireImage(f); setParams((x) => ({ ...x, [k]: url })); } catch (err) { alert(err.message); } }} />
+            </div>
+          ))}
           <div style={{ display: "flex", gap: 8 }}>
             <button style={bouton()} disabled={occupe} onClick={enregistrerParams}>Enregistrer</button>
             <button style={bouton(VERT, true)} onClick={() => setVue("liste")}>Retour</button>
