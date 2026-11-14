@@ -24,7 +24,7 @@ export const CHIFFRES = [
   { valeur: '6', label: 'pays et régions' },
   { valeur: '54', label: 'artistes sur scène' },
   { valeur: '10', label: 'compagnies invitées' },
-  { valeur: '10', label: 'jeunes filles en première partie' },
+  { valeur: '30', label: 'places au workshop de Thomas Guérineau' },
 ];
 
 export const COMPAGNIES = [
@@ -49,8 +49,7 @@ export const PROGRAMME = [
       { heure: '15h00', titre: "Parade de cirque et cérémonie d'ouverture", type: 'parade', lieu: "Quartier d'Agla", acces: 'gratuit' },
       { heure: '16h30', titre: 'La Roulotte', compagnie: 'Cie Afuma', type: 'spectacle', lieu: 'Scène extérieure', acces: 'gratuit' },
       { heure: '17h15', titre: 'Arrêt de bus', compagnie: 'Cie Dafra', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', billet: 'arret-de-bus-25' },
-      { heure: '18h30', titre: 'Basketteuses de Bamako', compagnie: 'Cie Thomas Guérineau', type: 'spectacle', lieu: 'Institut français de Cotonou', acces: 'payant', tempsFort: true, billet: 'basketteuses-25',
-        note: "Première partie : 10 jeunes filles formées par Circo Bénin, en lien avec la Journée internationale pour l'élimination de la violence à l'égard des femmes." },
+      { heure: '18h30', titre: 'Basketteuses de Bamako', compagnie: 'Cie Thomas Guérineau', type: 'spectacle', lieu: 'Institut français de Cotonou', acces: 'payant', tempsFort: true, billet: 'basketteuses-25' },
       { heure: '20h30', titre: 'Feu', compagnie: 'Duo Lucas Devillers & Loup Pinel (France)', type: 'spectacle', lieu: 'Esplanade', acces: 'gratuit', tempsFort: true },
       { heure: '22h00', titre: 'Animation du village', type: 'animation', lieu: 'Village', acces: 'gratuit' },
     ],

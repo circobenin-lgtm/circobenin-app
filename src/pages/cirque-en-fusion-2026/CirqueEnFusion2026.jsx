@@ -5,6 +5,7 @@ import {
   FESTIVAL, CHIFFRES, COMPAGNIES, PROGRAMME, TYPES, PARCOURS,
 } from './festivalData';
 import Accreditation from './Accreditation';
+import Workshop from './Workshop';
 import './cirque-en-fusion-2026.css';
 
 import heroCover from './assets/hero-cover.webp';
@@ -18,6 +19,7 @@ import photoEnfants from './assets/photo-enfants.webp';
 const SECTIONS = [
   { id: 'edition', label: "L'édition" },
   { id: 'programme', label: 'Programme' },
+  { id: 'workshop', label: 'Workshop' },
   { id: 'village', label: 'Le village' },
   { id: 'billetterie', label: 'Billetterie' },
   { id: 'accreditation', label: 'Accréditations' },
@@ -204,9 +206,9 @@ export default function CirqueEnFusion2026() {
           <div className="cef-femmes">
             <img src={photoBalais} alt="Artiste du festival avec des balais traditionnels" loading="lazy" />
             <div>
-              <p className="cef-eyebrow cef-eyebrow-y">Les femmes à l'honneur</p>
-              <p><strong>En première partie :</strong> 10 jeunes filles formées par Circo Bénin du 21 au 25 novembre ouvrent la soirée du 25, en lien avec la Journée internationale pour l'élimination de la violence à l'égard des femmes.</p>
-              <p><strong>Aux platines :</strong> chaque soir, des DJ femmes animent le village, parce que promouvoir les femmes dans ce milieu est un axe fort du festival.</p>
+              <p className="cef-eyebrow cef-eyebrow-y">Workshop · 23 et 24 novembre</p>
+              <p><strong>Rythmes, corporalités et jonglerie musicale :</strong> Thomas Guérineau ouvre un workshop aux interprètes en danse, théâtre et cirque. Deux séances de 2 heures, gratuites, limitées à 30 places.</p>
+              <p><a className="cef-btn cef-btn-primary" href="#workshop">S'inscrire au workshop</a></p>
             </div>
           </div>
         </div>
@@ -288,6 +290,8 @@ export default function CirqueEnFusion2026() {
       </section>
 
       {/* INFOS PRATIQUES */}
+      <Workshop />
+
       <Accreditation />
 
       <section id="infos" className="cef-section cef-section-dark">

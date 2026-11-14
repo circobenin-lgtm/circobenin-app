@@ -336,3 +336,11 @@
 /* Retour vers l'app */
 .cef-nav a.cef-nav-retour { color: #F9C80E; font-weight: 700; border-right: 1px solid #3A3546; padding-right: 16px; margin-right: 4px; }
 @media (max-width: 1320px) { .cef-wa-long { display: none; } .cef-wa-court { display: inline; } }
+
+/* Workshop Thomas Guérineau */
+.cef-ws-infos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0; }
+.cef-ws-compteur { font-size: 32px; font-weight: 900; letter-spacing: -.03em; color: var(--cef-pink); margin-right: 4px; }
+.cef-ws-engage { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 6px; font-size: 15px; cursor: pointer; }
+.cef-ws-engage input { width: 18px; height: 18px; margin-top: 2px; flex: none; }
+@media (max-width: 860px) { .cef-ws-infos { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .cef-ws-infos { grid-template-columns: 1fr; } }
