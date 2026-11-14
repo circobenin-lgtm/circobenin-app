@@ -98,7 +98,7 @@ export const PROGRAMME = [
       { heure: '16h00', titre: 'Fabara', compagnie: 'Cie FABARA', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', billet: 'fabara-28' },
       { heure: '16h30', titre: 'La Roulotte', compagnie: 'Cie Afuma', type: 'spectacle', lieu: 'Scène extérieure', acces: 'gratuit' },
       { heure: '17h30', titre: 'Astres resplendissantes', compagnie: 'Cie All Circus', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', billet: 'astres-28' },
-      { heure: '20h00', titre: 'Gala et remise de prix', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', tempsFort: true, billet: 'gala-show-28',
+      { heure: '20h00', titre: 'Gala et remise de prix', sansPrefixe: true, type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', tempsFort: true, billet: 'gala-show-28',
         note: 'Place normale 3 000 FCFA · place VIP 15 000 FCFA.' },
       { heure: '22h00', titre: 'Soirée de clôture', type: 'animation', lieu: 'Village', acces: 'gratuit' },
     ],

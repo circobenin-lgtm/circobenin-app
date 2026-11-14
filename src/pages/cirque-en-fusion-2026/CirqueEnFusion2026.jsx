@@ -89,7 +89,7 @@ function Programme() {
             <div className="cef-item">
               <div className="cef-item-main">
                 {it.tempsFort && <p className="cef-fort">★ Temps fort</p>}
-                <h4>{it.type === 'spectacle' ? `Spectacle ${it.titre}` : it.titre}</h4>
+                <h4>{it.type === 'spectacle' && !it.sansPrefixe ? `Spectacle ${it.titre}` : it.titre}</h4>
                 <p className="cef-item-meta">
                   <span className="cef-type">{TYPES[it.type]}</span>
                   {it.compagnie && <span>{it.compagnie}</span>}
