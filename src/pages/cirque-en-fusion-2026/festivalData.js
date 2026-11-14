@@ -98,7 +98,7 @@ export const PROGRAMME = [
       { heure: '16h00', titre: 'Fabara', compagnie: 'Cie FABARA', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', billet: 'fabara-28' },
       { heure: '16h30', titre: 'La Roulotte', compagnie: 'Cie Afuma', type: 'spectacle', lieu: 'Scène extérieure', acces: 'gratuit' },
       { heure: '17h30', titre: 'Astres resplendissantes', compagnie: 'Cie All Circus', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', billet: 'astres-28' },
-      { heure: '20h00', titre: 'Gala Show et remise de prix', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', tempsFort: true, billet: 'gala-show-28',
+      { heure: '20h00', titre: 'Gala et remise de prix', type: 'spectacle', lieu: 'Grande Salle', acces: 'payant', tempsFort: true, billet: 'gala-show-28',
         note: 'Place normale 3 000 FCFA · place VIP 15 000 FCFA.' },
       { heure: '22h00', titre: 'Soirée de clôture', type: 'animation', lieu: 'Village', acces: 'gratuit' },
     ],
@@ -111,7 +111,7 @@ export const TYPES = {
 };
 
 // Valeurs de secours — LA SOURCE DE VÉRITÉ EST LA TABLE festival_events.
-// Tarifs : 3 000 FCFA par spectacle ; Gala Show 3 000 FCFA (normal) ou 15 000 FCFA (VIP).
+// Tarifs : 3 000 FCFA par spectacle ; Gala 3 000 FCFA (normal) ou 15 000 FCFA (VIP).
 // ⚠️ Jauge du village (300) provisoire, à confirmer.
 export const BILLETS_SECOURS = [
   { slug: 'arret-de-bus-25', titre: 'Arrêt de bus', compagnie: 'Cie Dafra', date_label: 'Mer. 25 nov. · 17h15', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
@@ -125,8 +125,8 @@ export const BILLETS_SECOURS = [
   { slug: 'souffle-28', titre: 'Souffle', compagnie: 'Cie Dafra', date_label: 'Sam. 28 nov. · 14h30', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
   { slug: 'fabara-28', titre: 'Fabara', compagnie: 'Cie FABARA', date_label: 'Sam. 28 nov. · 16h00', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
   { slug: 'astres-28', titre: 'Astres resplendissantes', compagnie: 'Cie All Circus', date_label: 'Sam. 28 nov. · 17h30', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
-  { slug: 'gala-show-28', titre: 'Gala Show · place normale', compagnie: null, date_label: 'Sam. 28 nov. · 20h00', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
-  { slug: 'gala-show-vip-28', titre: 'Gala Show · place VIP', compagnie: 'Remise de prix VIP', date_label: 'Sam. 28 nov. · 20h00', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 15000, places_restantes: 50 },
+  { slug: 'gala-show-28', titre: 'Gala · place normale', compagnie: null, date_label: 'Sam. 28 nov. · 20h00', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 3000, places_restantes: 300 },
+  { slug: 'gala-show-vip-28', titre: 'Gala · place VIP', compagnie: 'Remise de prix VIP', date_label: 'Sam. 28 nov. · 20h00', lieu: 'Grande Salle · Village du festival, Agla', prix_fcfa: 15000, places_restantes: 50 },
 ];
 
 export const ESPACES_VILLAGE = [
@@ -156,7 +156,7 @@ export const PARCOURS = [
       'Mercredi 18h30 : Basketteuses de Bamako, à l’IFB (5 000 FCFA)',
       'Jeudi 19h30 Astres resplendissantes, 20h30 Souffle',
       'Vendredi 17h45 Jarre Sacré, 18h45 Arrêt de bus, 20h Spectacle Feu, 21h Fabara',
-      'Samedi 20h : Gala Show et remise de prix',
+      'Samedi 20h : Gala et remise de prix',
       'Chaque soir : animation du village, en accès libre',
     ],
   },
