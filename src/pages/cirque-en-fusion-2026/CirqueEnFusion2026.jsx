@@ -185,9 +185,9 @@ export default function CirqueEnFusion2026() {
           <div className="cef-artistes-tete">
             <div>
               <p className="cef-eyebrow">Les artistes</p>
-              <h2 className="cef-h2">56 artistes, 7 pays et régions</h2>
+              <h2 className="cef-h2">54 artistes, 6 pays et régions</h2>
             </div>
-            <p>Onze compagnies du Bénin, d'Afrique de l'Ouest et d'Europe : le plus large plateau jamais réuni par le festival.</p>
+            <p>Dix compagnies du Bénin, d'Afrique de l'Ouest et d'Europe : le plus large plateau jamais réuni par le festival.</p>
           </div>
           <ul className="cef-compagnies">
             {COMPAGNIES.map((c) => (
@@ -231,7 +231,7 @@ export default function CirqueEnFusion2026() {
           <div className="cef-cartes4">
             <div className="cef-carte cef-bt-pink"><h4>Spectacles en plein air</h4><p>Une scène extérieure avec gradins. Les spectacles extérieurs sont en accès libre et gratuit.</p></div>
             <div className="cef-carte cef-bt-blue"><h4>Ateliers gratuits</h4><p>Jonglerie, acrobatie, équilibre, tissu aérien : ouverts à tous les âges les 27 et 28 novembre.</p></div>
-            <div className="cef-carte cef-bt-yellow"><h4>Stands et exposants</h4><p>30 emplacements, ouverts dès 14h les 26 et 27 novembre, dès 10h le 28.</p></div>
+            <div className="cef-carte cef-bt-yellow"><h4>Stands et exposants</h4><p>30 emplacements, ouverts dès 9h30 du 26 au 28 novembre.</p></div>
             <div className="cef-carte cef-bt-plum"><h4>Soirées DJ femmes</h4><p>Chaque soir, des DJ femmes prennent les platines.</p></div>
           </div>
 
@@ -275,7 +275,7 @@ export default function CirqueEnFusion2026() {
             </figure>
             <div className="cef-carte cef-bl-blue">
               <h4>Écoles · séances scolaires</h4>
-              <p>À 9h30 et 10h45, sur le site de Circo Bénin : <strong>Rêverie</strong> (Cie Thomas Guérineau) le jeudi 26, <strong>La pluie et le beau temps</strong> (Loup Pinel) le vendredi 27. Pour les 6–18 ans, avec introduction pédagogique et échange avec les artistes. <strong>3 000 FCFA par élève</strong>, transport en bus organisé depuis l'établissement, fiches pédagogiques remises en amont.</p>
+              <p>À 9h30 et 10h45, au village du festival : <strong>Petite Rêverie</strong> (Cie Thomas Guérineau) le jeudi 26, <strong>La pluie et le beau temps</strong> (Loup Pinel) le vendredi 27. Pour les 6–18 ans, avec introduction pédagogique et échange avec les artistes. <strong>3 000 FCFA par élève</strong>, transport en bus organisé depuis l'établissement, fiches pédagogiques remises en amont.</p>
               <a className="cef-btn cef-btn-dark" href={mail('Réservation séance scolaire – Cirque en Fusion 2026')}>Réserver pour une classe</a>
             </div>
             <div className="cef-carte cef-bl-plum">
@@ -297,7 +297,7 @@ export default function CirqueEnFusion2026() {
             <h2 className="cef-h2">À savoir avant de venir</h2>
             <dl>
               <dt>Dates</dt><dd>Du mercredi 25 au samedi 28 novembre 2026</dd>
-              <dt>Lieu</dt><dd>Village du festival, quartier d'Agla, Cotonou. Spectacle du 25 à 18h30 à l'Institut français de Cotonou (400 places) ; séances scolaires sur le site de Circo Bénin.</dd>
+              <dt>Lieu</dt><dd>Village du festival, quartier d'Agla, Cotonou. Spectacle du 25 à 18h30 à l'Institut français de Cotonou (400 places) ; spectacles payants en Grande Salle ; séances scolaires au village du festival.</dd>
               <dt>Accès libre</dt><dd>Entrée du village gratuite, comme les spectacles extérieurs, les ateliers et les soirées DJ.</dd>
               <dt>Tarifs</dt><dd>Spectacles payants : 3 000 FCFA (Basketteuses de Bamako : 5 000 FCFA). Gala Show : 3 000 FCFA, ou 15 000 FCFA en VIP. Séances scolaires : 3 000 FCFA par élève.</dd>
               <dt>Fermeture</dt><dd>Minuit les 25, 26 et 27 novembre ; 1h le 28.</dd>
