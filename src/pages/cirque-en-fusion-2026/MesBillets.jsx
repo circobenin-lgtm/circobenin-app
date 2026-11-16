@@ -6,13 +6,14 @@ import QRCode from 'qrcode';
 import { supabase } from '../../supabase';
 import { formatFcfa } from './festivalData';
 import './cirque-en-fusion-2026.css';
+import logoCef from './assets/logo-cef.webp';
 
 function BilletQR({ code }) {
   const [src, setSrc] = useState('');
   useEffect(() => {
     QRCode.toDataURL(code, { margin: 1, width: 220, color: { dark: '#14111C', light: '#FFFFFF' } }).then(setSrc);
   }, [code]);
-  return src ? <img src={src} alt={`QR code du billet ${code}`} width="160" height="160" /> : <div className="cef-qr-vide" />;
+  return src ? <img className="cef-tk-qr" src={src} alt={`QR code du billet ${code}`} width="132" height="132" /> : <div className="cef-qr-vide" />;
 }
 
 export default function MesBillets() {
@@ -85,18 +86,38 @@ export default function MesBillets() {
             <p>Présentez chaque QR code à l'entrée (sur votre téléphone ou imprimé). Une place = un QR code.</p>
           </div>
           <div className="cef-tickets">
-            {data.tickets.map((t) => (
-              <article key={t.code} className="cef-ticket">
-                <div className="cef-ticket-txt">
-                  <p className="cef-ticket-kicker">Cirque en Fusion · 3ᵉ édition</p>
-                  <h3>{t.titre}</h3>
-                  <p>{t.date_label}</p>
-                  <p>{t.lieu}</p>
-                  <p className="cef-ticket-code">{t.code}</p>
-                </div>
-                <BilletQR code={t.code} />
-              </article>
-            ))}
+            {data.tickets.map((t, i) => {
+              const vip = /vip/i.test(t.titre || '');
+              const nom = [data.buyer_firstname, data.buyer_lastname].filter(Boolean).join(' ');
+              return (
+                <article key={t.code} className="cef-tk">
+                  <div className="cef-tk-main">
+                    <p className="cef-tk-kicker">Festival international des arts du cirque · 3ᵉ édition</p>
+                    <p className="cef-tk-festival">CIRQUE EN FUSION 2026 · Cotonou</p>
+                    <h3 className="cef-tk-titre">{t.titre}</h3>
+                    <div className="cef-tk-infos">
+                      <div className="cef-tk-date"><span>Date</span><strong>{t.date_label}</strong></div>
+                      <div><span>Lieu</span><strong>{t.lieu}</strong></div>
+                      {nom && <div><span>Au nom de</span><strong>{nom}</strong></div>}
+                    </div>
+                    <div className="cef-tk-bas">
+                      <p className="cef-tk-theme">Rythmes et Corporalités</p>
+                      {vip && <span className="cef-tk-vip">VIP</span>}
+                    </div>
+                  </div>
+                  <div className="cef-tk-stub">
+                    <img className="cef-tk-logo" src={logoCef} alt="Cirque en Fusion" />
+                    <BilletQR code={t.code} />
+                    <p className="cef-tk-code">{t.code}</p>
+                    <p className="cef-tk-num">Billet {i + 1} / {data.tickets.length}</p>
+                  </div>
+                  <div className="cef-tk-pied">
+                    <span><b>Admission unique</b> · QR code scanné à l'entrée · ne pas photocopier</span>
+                    <span>circobenin.com · +229 01 52 76 33 33</span>
+                  </div>
+                </article>
+              );
+            })}
           </div>
           <button type="button" className="cef-btn cef-btn-dark" onClick={() => window.print()}>Imprimer mes billets</button>
         </>

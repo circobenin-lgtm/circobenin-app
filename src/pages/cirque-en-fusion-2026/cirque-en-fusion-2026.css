@@ -344,3 +344,55 @@
 .cef-ws-engage input { width: 18px; height: 18px; margin-top: 2px; flex: none; }
 @media (max-width: 860px) { .cef-ws-infos { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .cef-ws-infos { grid-template-columns: 1fr; } }
+
+/* ===== Billets aux couleurs du festival ===== */
+.cef-tickets { gap: 18px; }
+.cef-tk { display: grid; grid-template-columns: 1fr 210px; grid-template-rows: 1fr auto; border-radius: 18px; overflow: hidden; background: #fff;
+  box-shadow: 0 10px 30px rgba(20,17,28,.14); break-inside: avoid; page-break-inside: avoid; position: relative; }
+.cef-tk-main { position: relative; color: #fff; padding: 22px 26px 20px 30px; overflow: hidden;
+  background: radial-gradient(120% 140% at 100% 0%, #9C1E63 0%, rgba(156,30,99,0) 55%), linear-gradient(135deg, #4E2D7E 0%, #3A1F61 100%); }
+.cef-tk-main::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 10px;
+  background: linear-gradient(180deg, #E91E78 0 33%, #F9C80E 33% 66%, #1E78C2 66% 100%); }
+.cef-tk-main::after { content: ''; position: absolute; right: -60px; bottom: -70px; width: 220px; height: 220px; border-radius: 50%;
+  border: 18px solid rgba(249,200,14,.18); box-shadow: 0 0 0 26px rgba(233,30,120,.12); }
+.cef-tk-kicker { font-size: 10.5px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: #F9C80E; margin: 0 0 6px !important; }
+.cef-tk-festival { font-size: 13px; font-weight: 700; letter-spacing: .02em; opacity: .9; margin: 0 0 14px !important; }
+.cef-tk-titre { font-size: 26px; line-height: 1.08; font-weight: 900; letter-spacing: -.02em; margin: 0 0 14px !important; max-width: 18ch; position: relative; z-index: 1; }
+.cef-tk-infos { display: flex; flex-wrap: wrap; gap: 8px 22px; position: relative; z-index: 1; }
+.cef-tk-infos div { min-width: 0; }
+.cef-tk-infos span { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.62); }
+.cef-tk-infos strong { display: block; font-size: 14.5px; font-weight: 800; }
+.cef-tk-date strong { color: #F9C80E; }
+.cef-tk-bas { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin-top: 16px; position: relative; z-index: 1; }
+.cef-tk-theme { font-family: 'Literata', Georgia, serif; font-style: italic; font-size: 13px; color: rgba(255,255,255,.78); margin: 0 !important; }
+.cef-tk-vip { background: #F9C80E; color: #14111C; font-size: 11px; font-weight: 900; letter-spacing: .14em; padding: 5px 10px; border-radius: 999px; }
+.cef-tk-stub { grid-column: 2; grid-row: 1 / 3; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 14px 12px;
+  border-left: 2px dashed #D9CFE8; background: #fff; color: #14111C; text-align: center; }
+.cef-tk-stub::before, .cef-tk-stub::after { content: ''; position: absolute; left: -13px; width: 24px; height: 24px; border-radius: 50%; background: var(--cef-cream); }
+.cef-tk-stub::before { top: -12px; } .cef-tk-stub::after { bottom: -12px; }
+.cef-tk-logo { width: 62px; height: 62px; object-fit: contain; }
+.cef-tk-stub img.cef-tk-qr { width: 132px; height: 132px; }
+.cef-tk-stub .cef-qr-vide { width: 132px; height: 132px; }
+.cef-tk-code { font-family: ui-monospace, Menlo, monospace; font-weight: 800; font-size: 12.5px; letter-spacing: .12em; margin: 0 !important; }
+.cef-tk-num { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #9C1E63; margin: 0 !important; }
+.cef-tk-pied { grid-column: 1; grid-row: 2; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: #14111C; color: rgba(255,255,255,.75);
+  font-size: 10.5px; padding: 7px 18px 7px 30px; letter-spacing: .02em; }
+.cef-tk-pied b { color: #F9C80E; font-weight: 800; }
+@media (max-width: 620px) {
+  .cef-tk { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .cef-tk-stub { grid-column: 1; grid-row: 2; }
+  .cef-tk-pied { grid-row: 3; }
+  .cef-tk-stub { border-left: 0; border-top: 2px dashed #D9CFE8; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .cef-tk-stub::before, .cef-tk-stub::after { left: auto; top: -13px; bottom: auto; }
+  .cef-tk-stub::before { left: -12px; } .cef-tk-stub::after { right: -12px; }
+  .cef-tk-titre { font-size: 22px; }
+}
+@media print {
+  @page { size: A4; margin: 10mm; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .cef-mes-billets { max-width: none; padding: 0; background: #fff; }
+  .cef-mb-header, .cef-statut { display: none; }
+  .cef-tickets { gap: 8mm; }
+  .cef-tk { box-shadow: none; border: 1px solid #ddd; }
+  .cef-tk-stub::before, .cef-tk-stub::after { background: #fff; }
+}
