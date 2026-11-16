@@ -253,11 +253,10 @@ export default function CirqueEnFusion2026() {
             <div>
               <p className="cef-eyebrow cef-eyebrow-y">Exposer au village</p>
               <h3>Louez un stand pour tout le festival</h3>
-              <p>30 emplacements dans la zone à côté de la Grande Salle · 1 prise électrique incluse.</p>
+              <p>30 emplacements dans la zone à côté de la Grande Salle · 1 prise électrique incluse. Les exposants apportent leur propre matériel d'installation (tente, table, chaises).</p>
             </div>
             <div className="cef-stands-prix">
-              <div><strong>Stand avec tente</strong><span>Tarif sur demande</span></div>
-              <div className="is-y"><strong>Espace vide</strong><span>Tarif sur demande</span></div>
+              <div className="is-y"><strong>50 000 FCFA</strong><span>Espace seul, pour les 4 jours</span></div>
             </div>
             <a className="cef-btn cef-btn-primary" href={mail('Réservation stand – Cirque en Fusion 2026')}>Réserver un stand</a>
           </div>
