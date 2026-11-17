@@ -93,7 +93,7 @@ function Programme() {
                 <p className="cef-item-meta">
                   <span className="cef-type">{TYPES[it.type]}</span>
                   {it.compagnie && <span>{it.compagnie}</span>}
-                  <span className={it.lieu !== 'Village' ? 'cef-hors' : ''}>{it.lieu === 'Village' ? 'Village du festival' : it.lieu}</span>
+                  <span className={it.lieu !== 'Village' ? 'cef-hors' : ''}>{it.lieu === 'Village' ? 'Village du festival · Maison des Jeunes d’Agla' : it.lieu}</span>
                 </p>
                 {it.note && <p className="cef-item-note">{it.note}</p>}
               </div>
@@ -227,7 +227,7 @@ export default function CirqueEnFusion2026() {
       {/* VILLAGE */}
       <section id="village" className="cef-section">
         <div className="cef-wrap">
-          <p className="cef-eyebrow">Le village du festival · quartier d'Agla</p>
+          <p className="cef-eyebrow">Le village du festival · Maison des Jeunes d'Agla</p>
           <h2 className="cef-h2">Un village pour passer la journée et la soirée</h2>
           <p className="cef-lead">On y vient voir des spectacles, pratiquer, découvrir les stands, se restaurer et se retrouver, de l'après-midi jusqu'à la nuit.</p>
 
@@ -301,7 +301,7 @@ export default function CirqueEnFusion2026() {
             <h2 className="cef-h2">À savoir avant de venir</h2>
             <dl>
               <dt>Dates</dt><dd>Du mercredi 25 au samedi 28 novembre 2026</dd>
-              <dt>Lieu</dt><dd>Village du festival, quartier d'Agla, Cotonou. Spectacle du 25 à 18h30 à l'Institut français de Cotonou (400 places) ; spectacles payants en Grande Salle ; séances scolaires au village du festival.</dd>
+              <dt>Lieu</dt><dd>Village du festival à la Maison des Jeunes d'Agla, Cotonou : scène extérieure, esplanade et Grande Salle (spectacles payants), séances scolaires. Spectacle du 25 à 18h30 à l'Institut français de Cotonou (400 places).</dd>
               <dt>Accès libre</dt><dd>Entrée du village gratuite, comme les spectacles extérieurs, les ateliers et les soirées DJ.</dd>
               <dt>Tarifs</dt><dd>Spectacles payants : 3 000 FCFA (Basketteuses de Bamako : 5 000 FCFA). Gala : 3 000 FCFA, ou 15 000 FCFA en VIP. Séances scolaires : 3 000 FCFA par élève.</dd>
               <dt>Fermeture</dt><dd>Minuit les 25, 26 et 27 novembre ; 1h le 28.</dd>
