@@ -59,7 +59,7 @@ export const PROGRAMME = [
     items: [
       { heure: '9h30', titre: 'Ouverture des stands', type: 'stands', lieu: 'Village' },
       { heure: '9h30', titre: 'Petite Rêverie · séance scolaire n° 1', compagnie: 'Cie Thomas Guérineau', type: 'scolaire', lieu: 'Maison des Jeunes d’Agla', acces: 'payant' },
-      { heure: '10h45', titre: 'Petite Rêverie · séance scolaire n° 2', compagnie: 'Cie Thomas Guérineau', type: 'scolaire', lieu: 'Maison des Jeunes d’Agla', acces: 'payant' },
+      { heure: '10h15', titre: 'Petite Rêverie · séance scolaire n° 2', compagnie: 'Cie Thomas Guérineau', type: 'scolaire', lieu: 'Maison des Jeunes d’Agla', acces: 'payant' },
       { heure: '15h00', titre: 'Rencontres professionnelles', type: 'pro', lieu: 'Site de Circo Bénin' },
       { heure: '17h15', titre: 'La Roulotte', compagnie: 'Cie Afuma', type: 'spectacle', lieu: 'Scène extérieure · Maison des Jeunes d’Agla', acces: 'gratuit' },
       { heure: '18h15', titre: "Les Monocyclistes d'Abomey", type: 'spectacle', lieu: 'Scène extérieure · Maison des Jeunes d’Agla', acces: 'gratuit' },
@@ -74,7 +74,7 @@ export const PROGRAMME = [
     items: [
       { heure: '9h30', titre: 'Ouverture des stands', type: 'stands', lieu: 'Village' },
       { heure: '9h30', titre: 'La pluie et le beau temps · séance scolaire n° 1', compagnie: 'Loup Pinel', type: 'scolaire', lieu: 'Maison des Jeunes d’Agla', acces: 'payant' },
-      { heure: '10h45', titre: 'La pluie et le beau temps · séance scolaire n° 2', compagnie: 'Loup Pinel', type: 'scolaire', lieu: 'Maison des Jeunes d’Agla', acces: 'payant' },
+      { heure: '10h15', titre: 'La pluie et le beau temps · séance scolaire n° 2', compagnie: 'Loup Pinel', type: 'scolaire', lieu: 'Maison des Jeunes d’Agla', acces: 'payant' },
       { heure: '16h00', titre: 'Atelier cirque', type: 'atelier', lieu: 'Village', acces: 'gratuit' },
       { heure: '16h30', titre: "Les Monocyclistes d'Abomey", type: 'spectacle', lieu: 'Scène extérieure · Maison des Jeunes d’Agla', acces: 'gratuit' },
       { heure: '17h00', titre: 'Acroforce de Parakou', type: 'spectacle', lieu: 'Scène extérieure · Maison des Jeunes d’Agla', acces: 'gratuit' },

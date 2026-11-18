@@ -277,7 +277,7 @@ export default function CirqueEnFusion2026() {
             </figure>
             <div className="cef-carte cef-bl-blue">
               <h4>Écoles · séances scolaires</h4>
-              <p>À 9h30 et 10h45, au village du festival : <strong>Petite Rêverie</strong> (Cie Thomas Guérineau) le jeudi 26, <strong>La pluie et le beau temps</strong> (Loup Pinel) le vendredi 27. Pour les 6–18 ans, avec introduction pédagogique et échange avec les artistes. <strong>3 000 FCFA par élève</strong>, transport en bus organisé depuis l'établissement, fiches pédagogiques remises en amont.</p>
+              <p>À 9h30 et 10h15, à la Maison des Jeunes d'Agla : <strong>Petite Rêverie</strong> (Cie Thomas Guérineau) le jeudi 26, <strong>La pluie et le beau temps</strong> (Loup Pinel) le vendredi 27. Pour les 6–18 ans, avec introduction pédagogique et échange avec les artistes. <strong>3 000 FCFA par élève</strong>, transport en bus organisé depuis l'établissement, fiches pédagogiques remises en amont.</p>
               <a className="cef-btn cef-btn-dark" href={mail('Réservation séance scolaire – Cirque en Fusion 2026')}>Réserver pour une classe</a>
             </div>
             <div className="cef-carte cef-bl-plum">
